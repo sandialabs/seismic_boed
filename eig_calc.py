@@ -218,13 +218,15 @@ if __name__ == '__main__':
     #Now summarize and return results
     if rank == 0:
         eig = np.mean(ig)
+        seig = np.std(ig)
         
         if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1))
         
-            np.savez(save_file, eig=eig, ig=ig, theta_data=theta_data,
+            np.savez(save_file, eig=eig, seig=seig, ig=ig, theta_data=theta_data,
                  theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
-                     depth_range=depth_range,loglike=loglike)
- 
-        print(eig)
+                     depth_range=depth_range, loglikes=loglikes)
+            
+        #Probs should retrun some uncertainty on this...
+        print(str(eig) + " " + str(seig))
