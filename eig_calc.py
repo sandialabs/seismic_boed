@@ -38,7 +38,7 @@ if __name__ == '__main__':
             if verbose == 1:
                 print("Configuring Run: " + str(t0))
         else:
-            #python3 eig_cal.py ./inputs.dat ../data/eigest1.dat 1
+            #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_cal.py inputs.dat outputs.npz 1
             sys.exit('Usage: python3 eig_cal.py loc_file save_path verbose')
             
         #Sample prior some how to generate events that we will use to generate data
