@@ -38,8 +38,8 @@ if __name__ == '__main__':
             if verbose == 1:
                 print("Configuring Run: " + str(t0))
         else:
-            #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_cal.py inputs.dat outputs.npz 1
-            sys.exit('Usage: python3 eig_cal.py loc_file save_path verbose')
+            #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_calc.py inputs.dat outputs.npz 1
+            sys.exit('Usage: python3 eig_calc.py loc_file save_path verbose')
             
         #Sample prior some how to generate events that we will use to generate data
         #This is not distributed
@@ -193,6 +193,7 @@ if __name__ == '__main__':
     #Now compute the ig for each set of likelihoods    
     #Combine data to compute posterior and KL divergence
     local_ig = np.zeros(local_ndataz)
+    local_ess = np.zeros(local_ndataz)
     for idata in range(0,local_ndataz):
         if (rank == 0) and (verbose == 1):
             t1 = time.time() - t0
@@ -202,31 +203,43 @@ if __name__ == '__main__':
         logprobs = (loglike - np.max(loglike)) - np.log(np.sum(np.exp(loglike - np.max(loglike))))
         local_ig[idata] = np.sum(probs*(logprobs+np.log(probs.size)))
         
+        #lets also compute ess of the weights so we can return that too...
+        local_ess[idata] = 1.0 / np.sum(probs**2)
         
-    #now gather all the igs
+        
+    #now gather all the igs and ess
     scounts = local_ndataz
     rcounts = local_ndataz * np.ones(size, dtype=int)
     rdspls = range(0, ndata*nlpts, local_ndataz)
 
     # send core information to the root
     ig = None
+    ess = None
     if rank == 0:
         ig = np.zeros(ndata*nlpts)
-        
+        ess = np.zeros(ndata*nlpts)
     comm.Gatherv([local_ig, scounts, MPI.DOUBLE], [ig, rcounts, rdspls, MPI.DOUBLE], root=0)    
-        
+    comm.Gatherv([local_ess, scounts, MPI.DOUBLE], [ess, rcounts, rdspls, MPI.DOUBLE], root=0)  
+ 
+    
     #Now summarize and return results
     if rank == 0:
         eig = np.mean(ig)
         seig = np.std(ig)
+        miness = np.min(ess)
         
         if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1))
         
-            np.savez(save_file, eig=eig, seig=seig, ig=ig, theta_data=theta_data,
+            np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness, theta_data=theta_data,
                  theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
-                     depth_range=depth_range, loglikes=loglikes)
+                     depth_range=depth_range, loglikes=loglikes, dataz=dataz)
+            
+        if verbose == 2:
+            np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness,
+                 theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
+                     depth_range=depth_range) 
             
         #Probs should retrun some uncertainty on this...
-        print(str(eig) + " " + str(seig))
+        print(str(eig) + " " + str(seig) + " " + str(miness))
