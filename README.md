@@ -1,5 +1,5 @@
 # Cloning this repo
-To clone this repo, first you need to have/generate an ssh key on the system you wish to clone it to. Then add your ssh key into your cee-gitlab profile. After the key has been added you can clone normally via:<br>
+To clone this repo, first you need to have/generate an ssh key on the system you wish to clone it to. Then add your ssh key into your cee-gitlab settings. See [https://cee-gitlab.sandia.gov/-/profile/keys](https://cee-gitlab.sandia.gov/-/profile/keys) for details. After the key has been added you can clone normally via:<br>
 git clone git@cee-gitlab.sandia.gov:tacatan/seismic_oed.git
 
 # Required Python Packages
