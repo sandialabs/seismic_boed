@@ -103,7 +103,7 @@ This will run locally on 4 cores.
 |Line 3| Sensor Latitude Range | 40.0, 42.0 |
 |Line 4| Sensor Longitude Range | -112.0, -108.38 |
 |Line 5| Fixed Sensor Parameters:  Noise Std, Length of sensor output vec, Sensor type | 0.1,2,0 |
-|Line 6| Optimization Objective (Currenlty on 0 -> EI is supported) | 0 |
+|Line 6| Optimization Objective (Currenlty only 0 i.e. EI is supported) | 0 |
 |Line 7| # Synthetic events to test | 512 |
 |Line 8| # Possible Events in the event space | 8192 |
 |Line 9| # Realizations of Data per event | 8 |
