@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
         if verbose == 1:
             t1 = time.time()-t0
-            print("Configuring Optimizer: Nsensor " + str(nsensor_place) + " Ntrials "+ str(nopt_total)+ " " +str(t1))
+            print("Configuring Optimizer: Nsensor " + str(nsensor_place) + " Ntrials "+ str(nopt_total)+ " " +str(t1), flush=True)
     else:
         #python3 network_opt.py inputs_opt.dat sensor_opt.npz 1
         #verbose options: 0 (only output is the final sensor network), 1 full output
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     for isamp in range(0,nsensor_place):
         if verbose == 1:
             t1 = time.time() - t0
-            print("Starting optimization of sensor "+ str(sensors.shape[0]+1) + " " + str(t1))
+            print("Starting optimization of sensor "+ str(sensors.shape[0]+1) + " " + str(t1), flush=True)
         
         #Randomly selection the random trial points (right now this is going to be the same every isamp stage)
         #becuase we are intializing the psuedo random seed the same each time.
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         for inc in range(0,nopt_random):
             if verbose == 1:
                 t1 = time.time() - t0
-                print(str(sensors.shape[0]+1) + ' ' + str(inc) + ' ' + str(t1))
+                print(str(sensors.shape[0]+1) + ' ' + str(inc) + ' ' + str(t1), flush=True)
                 
             #write temp input file
             fname = 'input_runner.dat'
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             
             if verbose == 1:
                 t1 = time.time() - t0
-                print(str(sensors.shape[0]+1) + ' '+ str(inc)+ " " + str(-1.0*opt.get_result().fun) + " " + str(t1))
+                print(str(sensors.shape[0]+1) + ' '+ str(inc)+ " " + str(-1.0*opt.get_result().fun) + " " + str(t1), flush=True)
             
             #write temp input file
             fname = 'input_runner.dat'
@@ -122,6 +122,6 @@ if __name__ == '__main__':
         
     if verbose == 1:
             t1 = time.time() - t0
-            print("Returning Results: " + str(t1))
-            print(sensors)
+            print("Returning Results: " + str(t1), flush=True)
+            print(sensors, flush=True)
             np.savez(save_file, sensors=sensors)

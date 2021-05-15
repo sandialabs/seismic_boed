@@ -36,7 +36,7 @@ if __name__ == '__main__':
             verbose = int(sys.argv[3])
 
             if verbose == 1:
-                print("Configuring Run: " + str(t0))
+                print("Configuring Run: " + str(t0), flush=True)
         else:
             #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_calc.py inputs.dat outputs.npz 1
             #verbose options: 0 (only output is to the screen with EIG STD and MIN_ESS), 1 full output, 2 simpel output file
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     if (rank == 0) and (verbose == 1):
         t1 = time.time() - t0
-        print("Generating Synthetic Data: " + str(t1))
+        print("Generating Synthetic Data: " + str(t1), flush=True)
     
     local_nlpts_data = nlpts_data // size
     #prepaire to recieve the theta_data for each node
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     for ievent in range(0,local_nlpts_data):
         if (rank == 0) and (verbose == 1):
             t1 = time.time() - t0
-            print(str(ievent) + " of " + str(local_nlpts_data) + " " + str(t1))
+            print(str(ievent) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
             
         theta = recvtheta_data[ievent,:]
         localdataz[(ievent*ndata):((ievent+1)*ndata),:] = generate_data(theta,sensors,ndata)
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     
     if (rank == 0) and (verbose == 1):
         t1 = time.time() - t0
-        print("Computing Likelihood: " + str(t1))
+        print("Computing Likelihood: " + str(t1), flush=True)
             
     #prepaire to recieve the theta_space for each node
     # holder for everyone to recive there part of the theta vector
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     for ievent in range(0,local_nlpts_space):
         if (rank == 0) and (verbose == 1):
             t1 = time.time() - t0
-            print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1))
+            print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
             
         theta = recvtheta_space[ievent,:]
     
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     #Now need to compute EIG/KL
     if (rank == 0) and (verbose == 1):
         t1 = time.time() - t0
-        print("Computing EIG: " + str(t1))
+        print("Computing EIG: " + str(t1), flush=True)
     
     
     #Distribute loglikes for each bit of data to the cores
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     for idata in range(0,local_ndataz):
         if (rank == 0) and (verbose == 1):
             t1 = time.time() - t0
-            print(str(idata) + " of " + str(local_ndataz) + " " + str(t1))
+            print(str(idata) + " of " + str(local_ndataz) + " " + str(t1), flush=True)
         loglike = recloglikes[idata,:]
         probs = np.exp(loglike - np.max(loglike))/np.sum(np.exp(loglike - np.max(loglike)))
         logprobs = (loglike - np.max(loglike)) - np.log(np.sum(np.exp(loglike - np.max(loglike))))
@@ -241,7 +241,7 @@ if __name__ == '__main__':
             
         if verbose == 1:
             t1 = time.time() - t0
-            print("Returning Results: " + str(t1))
+            print("Returning Results: " + str(t1), flush=True)
         
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness, theta_data=theta_data,
                  theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
@@ -253,4 +253,4 @@ if __name__ == '__main__':
                      depth_range=depth_range) 
             
         #Probs should retrun some uncertainty on this...
-        print(str(eig) + " " + str(seig) + " " + str(miness))
+        print(str(eig) + " " + str(seig) + " " + str(miness), flush=True)
