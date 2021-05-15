@@ -248,8 +248,8 @@ if __name__ == '__main__':
                      depth_range=depth_range, loglikes=loglikes, dataz=dataz)
             
         if verbose == 2:
-            np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness,
-                 theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
+            np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness,theta_data=theta_data,
+                 sensors=sensors, lat_range=lat_range, long_range=long_range,
                      depth_range=depth_range) 
             
         #Probs should retrun some uncertainty on this...
