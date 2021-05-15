@@ -3,7 +3,7 @@
 ## Overview
 ## Contents
 
-[Seismic Optimal Experimental Design (OED)](SOED)
+[Seismic Optimal Experimental Design (OED)](#SOED)
 
 # Cloning this repo
 To clone this repo, first you need to have/generate an ssh key on the system you wish to clone it to. Then add your ssh key into your cee-gitlab settings. See [https://cee-gitlab.sandia.gov/-/profile/keys](https://cee-gitlab.sandia.gov/-/profile/keys) for details. After the key has been added you can clone normally via:<br>
