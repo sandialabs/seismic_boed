@@ -96,6 +96,8 @@ def arrival_likelihood_gaussian(theta, sensors, data):
         mask = data[idata,nsens:]
         maskidx = np.nonzero(mask)[0]
         
+        #I could decompose this into an iterative operation where I sequentally condition on each sensor? That would maybe be computationally more tractable becuase I could apply to all as update the distributions?
+        
         if len(maskidx) > 0:
             #only extracts detections
             means = mean_tt[maskidx]

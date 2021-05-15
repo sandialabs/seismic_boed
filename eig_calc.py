@@ -236,7 +236,9 @@ if __name__ == '__main__':
         eig = np.mean(ig)
         seig = np.std(ig)
         miness = np.min(ess)
-        
+        if verbose == 0:
+            np.savez(save_file, eig=eig, seig=seig, miness=miness)
+            
         if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1))
