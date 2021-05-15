@@ -1,5 +1,5 @@
 # Seismic Optimal Experimental Design (OED) <a name="SOED"></a>
-
+[Catanach_SeisAcousticOED_final.pdf](Catanach_SeisAcousticOED_final.pdf)
 ## Overview <a name="Overview"></a>
 ## Contents <a name="Conents"></a>
 
