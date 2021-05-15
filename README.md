@@ -1,6 +1,12 @@
 # Seismic Optimal Experimental Design (OED) <a name="SOED"></a>
-[Catanach_SeisAcousticOED_final.pdf](Catanach_SeisAcousticOED_final.pdf)
 ## Overview <a name="Overview"></a>
+This code provides the tools necessary to analyze and optimize seismic monitoring networks. Currently we target the location problem in which we want to study how well the network will identify the location of an event and then optimize the network to provide better locations. The user can specify models for generating synthetic data and assessing the likeihood of that synthetic data for diffrent sensors and events in the domain of candidate events. The code is designed to use MPI so that it can run on HPC resources becuase OED is computationally expensive.
+
+The analysis code estimates the Expected Information Gain (EIG) of a given seismic monitoring networks for a given prior distribution of potential events. The code samples these candidate events and then generates synthetic datasets that could plausibly be seen by the sensors. For each of the datasets, the code constructs the posterior distribution and computes the information gain (IG) according to the KL-divergence. This information gain is averaged overall synthetic datasets to compute the EIG. The code can also return a list of the IG for different hypothetical events which can be used to generate a map of sensitivies of the network to different event locations, depths, and magnitudes.
+
+The optimization code is a wrapper around the analysis code. Given an initial network configuration of sensors, the code will add a desired number of sensors to the network. The goal of the optimization is to maximized the EIG of the new sensor network. This is done with a sequential (greedy) optimization that adds sensors one at a time to the initial network. Each optimization is done using a Bayesian optimization method that construct a Gaussian process (GP) surrogate model of the EIG optimization surface. This is done by evaluating many potential new sensor locations and measuring the EIG using the analysis code. This data is then used to construct the surrogate and inform new trial points to query the EIG function. The code then returns the new sensor network after the optimal sensors have been added.
+
+More details on the theory and application can be found in [Catanach_SeisAcousticOED_final.pdf](Catanach_SeisAcousticOED_final.pdf).
 ## Contents <a name="Conents"></a>
 
 1. [Seismic Optimal Experimental Design (OED)](#SOED)
