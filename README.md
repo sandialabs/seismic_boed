@@ -135,8 +135,8 @@ Additionally, an output numpy file (e.g. outputs.npz) is created. The variables 
 |ig|  Information Gain assessed for each experiment| 1,2  |
 |ess| Effective Sample Size (ESS) of weighted posterior samples for each experiment| 1,2 |
 |miness| Min ESS overall experiments  | 0,1,2 |
-|theta_data| Parameters (lat,long,depth,magnitude) of synthetic events | 1 |
-|theta_space|Parameters (lat,long,depth,magnitude) that define the posterior event space | 1,2 |
+|theta_data| Parameters (lat,long,depth,magnitude) of synthetic events | 1,2 |
+|theta_space|Parameters (lat,long,depth,magnitude) that define the posterior event space | 1 |
 |sensors| Sensor network configuration | 1,2 |
 |lat_range| Latitude Range of Events | 1,2 |
 |long_range| Longitude Range of Events | 1,2 |
