@@ -1,16 +1,22 @@
 # Seismic Optimal Experimental Design (OED) <a name="SOED"></a>
 
-## Overview
-## Contents
+## Overview <a name="Overview"></a>
+## Contents <a name="Conents"></a>
 
 [Seismic Optimal Experimental Design (OED)](#SOED)
+[Overview](#Overview)
+[Contents](#Contents)
+[Getting Started](#Start)
+[Cloning this repo](#Clone)
+[Install Required Python Packages](#Packages)
 
-# Cloning this repo
+# Getting Started <a name="Start"></a>
+## Cloning this repo <a name="Clone"></a>
 To clone this repo, first you need to have/generate an ssh key on the system you wish to clone it to. Then add your ssh key into your cee-gitlab settings. See [https://cee-gitlab.sandia.gov/-/profile/keys](https://cee-gitlab.sandia.gov/-/profile/keys) for details. After the key has been added you can clone normally via:<br>
 git clone git@cee-gitlab.sandia.gov:tacatan/seismic_oed.git
 
-# Required Python Packages
-## List of Packages
+## Install Required Python Packages <a name="Packages"></a>
+### List of Packages
 <ol>
 <li>Numpy [https://numpy.org/](https://numpy.org/)</li>
 <li>Obspy [https://docs.obspy.org/](https://docs.obspy.org/)</li>
@@ -20,7 +26,7 @@ git clone git@cee-gitlab.sandia.gov:tacatan/seismic_oed.git
 <li>Scikit-learn [https://scikit-learn.org/stable/](https://scikit-learn.org/stable/)</li>
 </ol>
 
-## Installing Python Packages on Sandia HPC with pip (e.g. numpy)
+### Installing Python Packages on Sandia HPC with pip (e.g. numpy)
 [tacatan@skybridge-login7 seismic_oed]$ export http_proxy="http://user:pass@proxy.sandia.gov:80"<br>
 [tacatan@skybridge-login7 seismic_oed]$ export https_proxy="http://user:pass@proxy.sandia.gov:80"<br>
 [tacatan@skybridge-login7 seismic_oed]$ pip install --cert=/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt --user numpy<br>
