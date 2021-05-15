@@ -3,12 +3,20 @@
 ## Overview <a name="Overview"></a>
 ## Contents <a name="Conents"></a>
 
-[Seismic Optimal Experimental Design (OED)](#SOED)
-[Overview](#Overview)
-[Contents](#Contents)
-[Getting Started](#Start)
-[Cloning this repo](#Clone)
-[Install Required Python Packages](#Packages)
+1. [Seismic Optimal Experimental Design (OED)](#SOED)
+    * [Overview](#Overview)
+    * [Contents](#Contents)
+2. [Getting Started](#Start)
+    * [Cloning this repo](#Clone)
+    * [Install Required Python Packages](#Packages)
+3. [Network Analysis](#Analysis)
+    * [Define an input file e.g. inputs.dat](#AInput)
+    * [Running the Analysis code (eig_calc.py)](#ARunning)
+    * [Analysis outputs](#AOutput)
+4. [Network Optimization](#Opt)
+    * [Define an input file e.g. inputs_opt.dat](#OInput)
+    * [Running the Optimization code (network_opt.py)](#ORunning)
+    * [Optimization output](#OOutput)
 
 # Getting Started <a name="Start"></a>
 ## Cloning this repo <a name="Clone"></a>
@@ -31,9 +39,9 @@ git clone git@cee-gitlab.sandia.gov:tacatan/seismic_oed.git
 [tacatan@skybridge-login7 seismic_oed]$ export https_proxy="http://user:pass@proxy.sandia.gov:80"<br>
 [tacatan@skybridge-login7 seismic_oed]$ pip install --cert=/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt --user numpy<br>
 
-# Network Analysis
+# Network Analysis <a name="Analysis"></a>
 
-## Define an input file e.g. inputs.dat
+## Define an input file e.g. inputs.dat <a name="AInput"></a>
 |Line Number| Description        | Example      |
 | -------------| ------------- |:-------------:| 
 |Line 1| # Synthetic events to test | 32 |
@@ -49,7 +57,7 @@ git clone git@cee-gitlab.sandia.gov:tacatan/seismic_oed.git
 
 Note that for HPC simulations, # Synthetic events to test and # Possible Events in the event space must be divisible by the number of cores. For example this configuration is valid if ncores = 1,2,4,8,16, or 32.
 
-## Running the Analysis code (eig_calc.py)
+## Running the Analysis code (eig_calc.py) <a name="ARunning"></a>
 This code assumes you are running it on skybridge where the number of cores per node is 16. For ghost the number of cores is 36. If you are running locally on your machine, you do not have to worry about the number of cores per node. For HPC systems, before running the code you have to request access to a certain number of cores/nodes. This can be done either interactively or with a batch script.
 
 ### Running on Sandia HPC Interactively
@@ -104,7 +112,7 @@ mpiexec -n 4 python3 eig_calc.py inputs.dat outputs.npz 0
 
 This will run locally on 4 cores.
 
-## Analysis outputs
+## Analysis outputs <a name="AOutput"></a>
 At the end of running eig_calc.py the code will print to screen the following results: EIG, standard deviation of the EIG, and the minimum effective sample size (ESS) for all realizations of synthetic data of the weighted samples that make up the posterior distribution estimate. In some sense, the std and ess numbers relate to the variance and bias of the EIG estimator.
 
 Additionally, an output numpy file (e.g. outputs.npz) is created. The variables stored in this file depend on the verbose flag. They are given in the following table. 
@@ -125,9 +133,9 @@ Additionally, an output numpy file (e.g. outputs.npz) is created. The variables 
 |loglikes| Loglikelihood of event candidate event for every synthetic experiment | 1 |
 |dataz| Data used of each synthetic experiment | 1 |
 
-# Network Optimization
+# Network Optimization <a name="Opt"></a>
 
-## Define an input file e.g. inputs_opt.dat
+## Define an input file e.g. inputs_opt.dat <a name="OInput"></a>
 |Line Number| Description        | Example      |
 | -------------| ------------- |:-------------:| 
 |Line 1| # Random initial sensors to build GP model | 8 |
@@ -153,7 +161,7 @@ This code will take initial set of N sensors defined by this list and then itera
 
 Note that for HPC simulations, # Synthetic events to test and # Possible Events in the event space must be divisible by the number of cores. For example this configuration is valid if ncores that is a power of 2 up to 512.
 
-## Running the Optimization code (network_opt.py)
+## Running the Optimization code (network_opt.py) <a name="ORunning"></a>
 There are similar assumptions about running the optimization code as running the analysis code. The optimization code in effect just calls the analysis code as part of the optimization loop. Therefore, the optimization code does not use MPI since it is just a wrapper around the analysis code that uses MPI to compute the EIG.
 
 ### Running on Sandia HPC Interactively
@@ -205,7 +213,7 @@ Running network_opt.py locally is much the same others. The input file e.g. inpu
 Then to run the code simply run it like in the other examples:<br>
 python3 network_opt.py inputs_opt.dat opt_network.npz 1
 
-## Optimization output
+## Optimization output <a name="OOutput"></a>
 When network_opt.py finishes, it will display the optimized sensor nework configuration e.g. for each sensor its lat, long, noise level, number of output variables, and sensor type. This network configuration will then be saved in the output numpy file (e.g. opt_network.npz). 
 
 Additionally, if the verbose flag is set to 1, two files are created per optimization level where a new sensor number is being places. The first file is result*.pkl, where * is the sensor number being placed. This file contains an optization result object. This object contains information about the GP surrogate used to find the optimization objective and the data used to fit it. More information can be found in the documentation [https://scikit-optimize.github.io/stable/auto_examples/store-and-load-results.html](https://scikit-optimize.github.io/stable/auto_examples/store-and-load-results.html). The second file, result_eigdata*.npz is a numpy file that contains three variables: sensors, eigdata_full, and Xs. sensors lists the current network configuration before optimization. eigdata_full contains the [EIG, std EIG, minESS] for each trial new sensor location to augment the current network. Xs includes the trial sensor locations.
