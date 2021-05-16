@@ -66,7 +66,7 @@ git clone git@cee-gitlab.sandia.gov:tacatan/seismic_oed.git
 |... | ... | ... |
 |Line 6+N| Sensor N: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -110.0,0.1,2,0 |
 
-Note that for HPC simulations, # Synthetic events to test and # Possible Events in the event space must be divisible by the number of cores. For example this configuration is valid if ncores = 1,2,4,8,16, or 32.
+Note that for HPC simulations, # Synthetic events to test and # Possible Events in the event space must be divisible by the number of cores. For example this configuration is valid if ncores = 1,2,4,8,16, or 32. Also note that (# Synthetic Events) x (# Possible Events) x (# Ralizations) must be less than 2147483647 due to MPI constraints.
 
 ## Running the Analysis code (eig_calc.py) <a name="ARunning"></a>
 This code assumes you are running it on skybridge where the number of cores per node is 16. For ghost the number of cores is 36. If you are running locally on your machine, you do not have to worry about the number of cores per node. For HPC systems, before running the code you have to request access to a certain number of cores/nodes. This can be done either interactively or with a batch script.
@@ -110,7 +110,7 @@ nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of nodes you
 cores=16                             # Number MPI processes to run on each node (a.k.a. PPN)
                                      # CTS1 has 36 cores per node, skybridge 16
 
-mpiexec --bind-to core --npernode $cores --n $(($cores*$nodes)) python3 eig_calc.py inputs.dat outputs.npz 0
+mpiexec --bind-to core --npernode $cores --n $(($cores*$nodes)) python3 -u eig_calc.py inputs.dat outputs.npz 0
 ```
 
 This can then be submitted by:<br>
@@ -170,7 +170,7 @@ Additionally, an output numpy file (e.g. outputs.npz) is created. The variables 
 
 This code will take initial set of N sensors defined by this list and then iteratively add the number of sensors defined by line 14 e.g. 5 in this example to the existing network.
 
-Note that for HPC simulations, # Synthetic events to test and # Possible Events in the event space must be divisible by the number of cores. For example this configuration is valid if ncores that is a power of 2 up to 512.
+Note that for HPC simulations, # Synthetic events to test and # Possible Events in the event space must be divisible by the number of cores. For example this configuration is valid if ncores that is a power of 2 up to 512. Also note that (# Synthetic Events) x (# Possible Events) x (# Ralizations) must be less than 2147483647 due to MPI constraints.
 
 ## Running the Optimization code (network_opt.py) <a name="ORunning"></a>
 There are similar assumptions about running the optimization code as running the analysis code. The optimization code in effect just calls the analysis code as part of the optimization loop. Therefore, the optimization code does not use MPI since it is just a wrapper around the analysis code that uses MPI to compute the EIG.
@@ -212,7 +212,7 @@ nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of nodes you
 cores=16                             # Number MPI processes to run on each node (a.k.a. PPN)
                                      # CTS1 has 36 cores per node, skybridge 16
 
-python3 network_opt.py inputs_opt.dat opt_network.npz 1
+python3 -u network_opt.py inputs_opt.dat opt_network.npz 1
 ```
 
 This can then be submitted by:<br>
