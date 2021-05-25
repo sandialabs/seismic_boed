@@ -18,7 +18,7 @@ from skopt import Optimizer, expected_minimum, dump
 
 if __name__ == '__main__':
     t0 = time.time()
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 5:
         #Load optimization parameters + parameters that will be needed to bulid the input file to the eig code
         #Needed for input files: nlpts, ndata, lat_range, long_range, depth_range, sensors
         #Assume we are doing sequential greedy sensor placement
@@ -29,7 +29,8 @@ if __name__ == '__main__':
         nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sensors, mpirunstring, nsensor_place = read_opt_file(sys.argv[1])
 
         save_file = sys.argv[2]
-        verbose = int(sys.argv[3])
+        save_path = sys.argv[3]
+        verbose = int(sys.argv[4])
 
         if verbose == 1:
             t1 = time.time()-t0
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     else:
         #python3 network_opt.py inputs_opt.dat sensor_opt.npz 1
         #verbose options: 0 (only output is the final sensor network), 1 full output
-        sys.exit('Usage: python3 network_opt.py loc_file save_file verbose')
+        sys.exit('Usage: python3 network_opt.py loc_file save_file save_path verbose')
     
     
     for isamp in range(0,nsensor_place):
@@ -105,8 +106,16 @@ if __name__ == '__main__':
 
             #save the optimization results for fun
             if verbose == 1:
-                dump(opt.get_result, 'result' + str(sensors.shape[0]+1) + '.pkl')
-                np.savez('result_eigdata' + str(sensors.shape[0]+1)+'.npz', sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
+                # Filenames for outputs
+                opt_result_str = f'result{str(sensors.shape[0]+1)}.pkl'
+                eig_result_str = f'result_eigdata{str(sensors.shape[0]+1)}.npz'
+
+                # Paths for outputs
+                opt_result_path = os.path.join(save_path, opt_result_str)
+                eig_result_path = os.path.join(save_path, eig_result_str)
+
+                dump(opt.get_result, opt_result_path)
+                np.savez(eig_result_path, sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
 
         #now find optimial placement
         newsensor, neig = expected_minimum(opt.get_result())
@@ -116,12 +125,15 @@ if __name__ == '__main__':
         sensorvec[0:2] = newsensor
         sensorvec[2:] = sensor_params
         sensors = np.vstack((sensors,sensorvec))
-        
+    
+    # Path to save final output
+    result_path = os.path.join(save_path, save_file)
+
     if verbose == 0:        
-            np.savez(save_file, sensors=sensors)
+            np.savez(result_path, sensors=sensors)
         
     if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1), flush=True)
             print(sensors, flush=True)
-            np.savez(save_file, sensors=sensors)
+            np.savez(result_path, sensors=sensors)
