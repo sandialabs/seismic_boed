@@ -107,8 +107,8 @@ if __name__ == '__main__':
             #save the optimization results for fun
             if verbose == 1:
                 # Filenames for outputs
-                opt_result_str = f'result{str(sensors.shape[0]+1)}.pkl'
-                eig_result_str = f'result_eigdata{str(sensors.shape[0]+1)}.npz'
+                opt_result_str = f'result{sensors.shape[0]+1}.pkl'
+                eig_result_str = f'result_eigdata{sensors.shape[0]+1}.npz'
 
                 # Paths for outputs
                 opt_result_path = os.path.join(save_path, opt_result_str)
