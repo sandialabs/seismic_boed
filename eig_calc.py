@@ -309,7 +309,7 @@ if __name__ == '__main__':
             print(f'Generating graph at depth {0}...') #TODO: Make this interactive
             plot_surface({'ig': ig, 
                           'theta_data': theta_data,
-                          'lat_range': lat_range',
+                          'lat_range': lat_range,
                           'long_range': long_range}
                         )
 
