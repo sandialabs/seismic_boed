@@ -311,7 +311,8 @@ if __name__ == '__main__':
             plot_surface({'ig': ig, 
                           'theta_data': theta_data,
                           'lat_range': lat_range,
-                          'long_range': long_range}
+                          'long_range': long_range,
+                          'sensors': sensors}
                         )
 
 
