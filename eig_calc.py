@@ -18,7 +18,7 @@ from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 from mpi4py import MPI
 
 def plot_surface(data,
-                 output_file='eiggraph_depth0mag0.npz', 
+                 output_file='eiggraph_depth0mag0.pdf', 
                  depth_slice=0, mag_slice=1, stepsize=100):
 
     # Specify training data for Gaussian Process
