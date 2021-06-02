@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from utils import read_input_file
 from sample_gen import sample_prior,descritize_space
