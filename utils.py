@@ -1,5 +1,9 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import os
+
+from sklearn.gaussian_process import GaussianProcessRegressor as GPR
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 
 #Load Configuration
 def read_input_file(file):
@@ -79,5 +83,58 @@ def read_opt_file(file):
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             sensors[inc,:] = sensorline
-            
     return nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sensors, mpirunstring, nsensor_place
+
+
+def plot_surface(data,
+                 output_file='eiggraph_depth0mag0.pdf', 
+                 depth_slice=0, mag_slice=1, stepsize=100):
+
+    # Specify training data for Gaussian Process
+    target = data['ig']
+    inputs = data['theta_data'] # (lat, long, depth, magnitude)
+    # Specify graphing domain
+    lat_range = data['lat_range']
+    long_range = data['long_range']
+
+    # Format target variable
+    target = target.reshape(len(inputs),-1).mean(axis=1)
+    
+    # Create domain to make predictions on
+
+    # Lat/long features
+    x = np.linspace(lat_range[0], lat_range[1], stepsize)
+    y = np.linspace(long_range[0], long_range[1], stepsize)
+    xv, yv = np.meshgrid(x, y)
+    xy = np.vstack([xv.ravel(), yv.ravel()]).T
+
+    # Create full featureset
+    domain = np.zeros((stepsize**2, 4))
+    domain[:,:2] = xy
+    # Specify 2d slice (depth and magnitude features)
+    domain[:,2] = depth_slice
+    domain[:,3] = mag_slice
+    
+    # Create and fit model, make predictions to generate map
+    model = GPR()
+    model.fit(inputs,target)
+    preds = model.predict(domain)
+    
+    # Plot IG map
+    plt.pcolormesh(xv, yv, preds.reshape((stepsize, stepsize)),
+                   shading='auto', cmap='viridis')
+
+    # Plot sensor locations
+    plt.scatter(data['sensors'][:,0],data['sensors'][:,1], 
+                marker='o',facecolors='none', edgecolors='red', 
+                label='Sensor location')
+    
+    # Label and plot
+    plt.xlabel('Latitude')
+    plt.ylabel('Longitude')
+    plt.title(f'Expected Information Gain for events with depth = {depth_slice}')
+    plt.colorbar()
+    plt.legend()
+    plt.savefig(output_file)
+    plt.show()
+            
