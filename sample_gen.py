@@ -2,7 +2,7 @@ import numpy as np
 import sobol_seq as sq
 
 #Sample prior some how to generate events that we will use to generate data
-def generate_theta_data(lat_range,long_range, depth_range, nsamp, skip):
+def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
