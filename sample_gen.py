@@ -28,7 +28,7 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
 #This may be something that we should change in the future to add a prior likleihood associated with each sample
 #so that we dont have to consider them to be uniform.
 
-def sample_theta_prior(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+def sample_theta_prior(lat_range,long_range, depth_range, nsamp, skip):
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
     dim_num = 4

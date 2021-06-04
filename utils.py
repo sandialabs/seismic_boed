@@ -14,6 +14,7 @@ def read_input_file(file):
         lat_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         long_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         
         #rest of lines are sensors
         sensorlines=readdata.readlines()
@@ -26,7 +27,7 @@ def read_input_file(file):
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             sensors[inc,:] = sensorline
-    return nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sensors
+    return nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors
 
 
 #Write Configuration

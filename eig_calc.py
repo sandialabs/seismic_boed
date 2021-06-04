@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from utils import read_input_file
-from sample_gen import sample_prior,descritize_space
+from sample_gen import generate_theta_data, sample_theta_prior
 from data_gen import generate_data
 from like_models import compute_loglikes
 
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         t0 = time.time()
         
         if len(sys.argv) == 4:
-            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sensors = read_input_file(sys.argv[1])
+            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         #Sample prior some how to generate events that we will use to generate data
         #This is not distributed
         #Set seed to 0 here
-        theta_data = sample_prior(lat_range,long_range, depth_range, nlpts_data,0)
+        theta_data = generate_theta_data(lat_range,long_range, depth_range, mag_range, nlpts_data, 0)
         nthetadim = theta_data.shape[1]
         
         counts = nthetadim * nlpts_data // size * np.ones(size, dtype=int)
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     
     if rank == 0:
         #seed with nlpts_data so that it starts sampling after that so we dont overlap pts.
-        theta_space = descritize_space(lat_range,long_range, depth_range, nlpts_space,nlpts_data)    
+        theta_space = sample_theta_prior(lat_range,long_range, depth_range, nlpts_space,nlpts_data)    
         counts = nthetadim * nlpts_space // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_space * nthetadim, nthetadim * nlpts_space // size)
     else:
