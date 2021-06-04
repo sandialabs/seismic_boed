@@ -124,6 +124,9 @@ def plot_surface(data,
     model = GPR()
     model.fit(inputs,target)
     preds = model.predict(domain)
+
+    print(f'Max pred: {preds.max()}')
+    print(f'Min pred: {preds.min()}')
     
     # Plot IG map
     plt.pcolormesh(xv, yv, preds.reshape((stepsize, stepsize)),
