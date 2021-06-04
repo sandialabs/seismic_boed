@@ -4,7 +4,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import read_input_file
+from utils import read_input_file, plot_surface
 from sample_gen import generate_theta_data, sample_theta_prior
 from data_gen import generate_data
 from like_models import compute_loglikes
