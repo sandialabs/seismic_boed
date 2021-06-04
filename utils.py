@@ -88,12 +88,16 @@ def read_opt_file(file):
 
 
 def plot_surface(data,
-                 output_file='eiggraph_depth0mag0.pdf', 
+                 output_file='eiggraph_depth0mag0_test.pdf', 
                  depth_slice=0, mag_slice=1, stepsize=100):
 
-    # Specify training data for Gaussian Process
+    # Specify training data for Gaussian Processs
     target = data['ig']
+    print(f'Target shape:{target.shape}')
+    print(target)
     inputs = data['theta_data'] # (lat, long, depth, magnitude)
+    print(f'Input shape: {inputs.shape}')
+    print(inputs)
     # Specify graphing domain
     lat_range = data['lat_range']
     long_range = data['long_range']
