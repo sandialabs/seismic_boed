@@ -62,8 +62,8 @@ if __name__ == '__main__':
                 print(f'Mag slice: {mag_slice}')
 
                 # Range for training GP model
-                mag_range = [np.max(mag_slice-mag_tol,0), np.min(mag_slice+mag_tol,10)]
-                depth_range = [np.max(depth_slice-depth_tol,0), np.min(depth_slice+depth_tol,40)]
+                mag_range = [np.maximum(mag_slice-mag_tol,0), np.minimum(mag_slice+mag_tol,10.)]
+                depth_range = [np.maximum(depth_slice-depth_tol,0), np.mininum(depth_slice+depth_tol,40.)]
 
           
         else:
