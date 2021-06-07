@@ -41,8 +41,8 @@ if __name__ == '__main__':
 
             if verbose == 2:
                 # Ensure visualization control variables exist
-                if type(vis_controls) is not list:
-                    raise ValueError('Visualization control variables must be stored in list')
+                if type(vis_controls) is not np.ndarray:
+                    raise ValueError('Visualization control variables must be stored in iterable')
                 if len(vis_controls) < 4:
                     vis_controls += [0]*(4-len(vis_controls)) # Fill missing variables with 0
 
