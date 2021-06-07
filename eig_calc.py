@@ -31,12 +31,34 @@ if __name__ == '__main__':
         t0 = time.time()
         
         if len(sys.argv) == 4:
-            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors = read_input_file(sys.argv[1])
+            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, vis_controls, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
+            print(f'Type: {type(depth_range)}')
 
             if verbose == 1:
                 print("Configuring Run: " + str(t0), flush=True)
+
+            if verbose == 2:
+                # Ensure visualization control variables exist
+                if type(vis_control) is not list:
+                    raise ValueError('Visualization control variables must be stored in list')
+                if len(vis_controls) < 4:
+                    vis_controls += [0]*(4-len(vis_controls)) # Fill missing variables with 0
+
+                # Slice of depth and magnitude axes to visualize
+                depth_slice = vis_controls[0]
+                mag_slice = vis_controls[1]
+
+                # How wide a range around the slices to train model on
+                depth_tol = vis_controls[2]
+                mag_tol = vis_controls[3]
+
+                # Range for training GP model
+                mag_range = [np.max(mag_slice-mag_tol,0), np.min(mag_slice+mag_tol,10)]
+                depth_range = [np.max(depth_slice-depth_tol,0), np.min(depth_slice+depth_tol,40)]
+
+          
         else:
             #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_calc.py inputs.dat outputs.npz 1
             #verbose options: 0 (only output is to the screen with EIG STD and MIN_ESS), 1 full output, 2 simpel output file
