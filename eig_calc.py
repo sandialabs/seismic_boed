@@ -35,6 +35,8 @@ if __name__ == '__main__':
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
             print(f'vis_controls: {vis_controls}')
+            print(f'Length: {len(vis_controls)}')
+            print(f'Type: {type(vis_controls)}')
 
             if verbose == 1:
                 print("Configuring Run: " + str(t0), flush=True)
@@ -53,6 +55,9 @@ if __name__ == '__main__':
                 # How wide a range around the slices to train model on
                 depth_tol = vis_controls[2]
                 mag_tol = vis_controls[3]
+
+                print(f'Depth tol: {depth_tol}')
+                print(f'Mag tol: {mag_tol}')
 
                 # Range for training GP model
                 mag_range = [np.max(mag_slice-mag_tol,0), np.min(mag_slice+mag_tol,10)]
