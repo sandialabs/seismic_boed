@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
                 # Range for training GP model
                 mag_range = [np.maximum(mag_slice-mag_tol,0), np.minimum(mag_slice+mag_tol,10.)]
-                depth_range = [np.maximum(depth_slice-depth_tol,0), np.mininum(depth_slice+depth_tol,40.)]
+                depth_range = [np.maximum(depth_slice-depth_tol,0), np.minimum(depth_slice+depth_tol,40.)]
 
           
         else:
