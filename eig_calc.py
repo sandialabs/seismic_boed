@@ -58,6 +58,8 @@ if __name__ == '__main__':
 
                 print(f'Depth tol: {depth_tol}')
                 print(f'Mag tol: {mag_tol}')
+                print(f'Depth slice: {depth_slice}')
+                print(f'Mag slice: {mag_slice}')
 
                 # Range for training GP model
                 mag_range = [np.max(mag_slice-mag_tol,0), np.min(mag_slice+mag_tol,10)]
