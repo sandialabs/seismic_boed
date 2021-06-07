@@ -34,7 +34,7 @@ if __name__ == '__main__':
             nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, vis_controls, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
-            print(f'Type: {type(depth_range)}')
+            print(f'vis_controls: {vis_controls}')
 
             if verbose == 1:
                 print("Configuring Run: " + str(t0), flush=True)
