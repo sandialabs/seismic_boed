@@ -133,7 +133,7 @@ def plot_surface(data,
     plt.pcolormesh(xv, yv, preds.reshape((stepsize, stepsize)),
                    shading='auto', cmap='viridis')
     plt.colorbar()
-    
+
     # Plot sensor locations
     plt.scatter(data['sensors'][:,0],data['sensors'][:,1], 
                 marker='o',facecolors='none', edgecolors='red', 
@@ -143,7 +143,7 @@ def plot_surface(data,
     plt.xlabel('Latitude')
     plt.ylabel('Longitude')
     plt.title(f'Expected Information Gain for events with depth = {depth_slice}')
-\
+
     plt.legend()
     plt.savefig(output_file)
     plt.show()
