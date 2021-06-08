@@ -11,6 +11,8 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
     for j in range(nsamp):
         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
 
+    print(f'Generating data at mag range {mag_range}')
+    print(f'Generating data at depth range {depth_range}')
     # Calculate min and max value for magnitutde range
     max_mag = 1 - 10**(-mag_range[1])
     min_mag = 1 - 10**(-mag_range[0])

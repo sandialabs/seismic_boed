@@ -56,15 +56,11 @@ if __name__ == '__main__':
                 depth_tol = vis_controls[2]
                 mag_tol = vis_controls[3]
 
-                print(f'Depth tol: {depth_tol}')
-                print(f'Mag tol: {mag_tol}')
-                print(f'Depth slice: {depth_slice}')
-                print(f'Mag slice: {mag_slice}')
-
                 # Range for training GP model
                 mag_range = [np.maximum(mag_slice-mag_tol,0), np.minimum(mag_slice+mag_tol,10.)]
                 depth_range = [np.maximum(depth_slice-depth_tol,0), np.minimum(depth_slice+depth_tol,40.)]
-
+                print(f'mag range should be {mag_range}')
+                print(f'depth range should be {depth_range}')
           
         else:
             #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_calc.py inputs.dat outputs.npz 1
@@ -281,12 +277,14 @@ if __name__ == '__main__':
                  sensors=sensors, lat_range=lat_range, long_range=long_range,
                      depth_range=depth_range) 
 
-            print(f'Generating graph at depth {0}...') #TODO: Make this interactive
+            print(f'Generating graph at depth {depth_slice} and mag {mag_slice}...') #TODO: Make this interactive
             plot_surface({'ig': ig, 
                           'theta_data': theta_data,
                           'lat_range': lat_range,
                           'long_range': long_range,
-                          'sensors': sensors}
+                          'sensors': sensors},
+                          depth_slice=depth_slice,
+                          mag_slice=mag_slice
                         )
 
 
