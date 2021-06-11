@@ -34,11 +34,8 @@ if __name__ == '__main__':
             nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, vis_controls, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
-            print(f'vis_controls: {vis_controls}')
-            print(f'Length: {len(vis_controls)}')
-            print(f'Type: {type(vis_controls)}')
 
-            if verbose == 1:
+            if (verbose == 1 or verbose == 2):
                 print("Configuring Run: " + str(t0), flush=True)
         
         else:
@@ -78,7 +75,7 @@ if __name__ == '__main__':
     sensors = comm.bcast(sensors, root=0)
     nthetadim = comm.bcast(nthetadim, root=0)
 
-    if (rank == 0) and (verbose == 1):
+    if (rank == 0) and (verbose == 1 or verbose == 2):
         t1 = time.time() - t0
         print("Generating Synthetic Data: " + str(t1), flush=True)
     
@@ -135,7 +132,7 @@ if __name__ == '__main__':
         counts = None
         dspls = None
     
-    if (rank == 0) and (verbose == 1):
+    if (rank == 0) and (verbose == 1 or verbose == 2):
         t1 = time.time() - t0
         print("Computing Likelihood: " + str(t1), flush=True)
             
@@ -152,7 +149,7 @@ if __name__ == '__main__':
     #Compute likelhood of each event given dataset
     local_loglikes = np.zeros([local_nlpts_space,nlpts_data*ndata])
     for ievent in range(0,local_nlpts_space):
-        if (rank == 0) and (verbose == 1):
+        if (rank == 0) and (verbose == 1 or verbose == 2):
             t1 = time.time() - t0
             print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
             
@@ -178,7 +175,7 @@ if __name__ == '__main__':
         loglikes = loglikes.transpose().copy()
     
     #Now need to compute EIG/KL
-    if (rank == 0) and (verbose == 1):
+    if (rank == 0) and (verbose == 1 or verbose == 2):
         t1 = time.time() - t0
         print("Computing EIG: " + str(t1), flush=True)
     
@@ -208,7 +205,7 @@ if __name__ == '__main__':
     local_ig = np.zeros(local_ndataz)
     local_ess = np.zeros(local_ndataz)
     for idata in range(0,local_ndataz):
-        if (rank == 0) and (verbose == 1):
+        if (rank == 0) and (verbose == 1 or verbose == 2):
             t1 = time.time() - t0
             print(str(idata) + " of " + str(local_ndataz) + " " + str(t1), flush=True)
         loglike = recloglikes[idata,:]
@@ -243,7 +240,7 @@ if __name__ == '__main__':
         if verbose == 0:
             np.savez(save_file, eig=eig, seig=seig, miness=miness)
             
-        if verbose == 1:
+        if (verbose == 1 or verbose == 2):
             t1 = time.time() - t0
             print("Returning Results: " + str(t1), flush=True)
         
