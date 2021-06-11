@@ -94,7 +94,7 @@ if __name__ == '__main__':
     dataveclen = np.int(sensors.shape[0]*sensors[0,3])
     localdataz = np.zeros([local_nlpts_data*ndata,dataveclen])
     for ievent in range(0,local_nlpts_data):
-        if (rank == 0) and (verbose == 1):
+        if (rank == 0) and (verbose == 1 or verbose == 2):
             t1 = time.time() - t0
             print(str(ievent) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
             
@@ -249,6 +249,9 @@ if __name__ == '__main__':
                      depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, dataz=dataz)
             
         if verbose == 2:
+            t1 = time.time() - t0
+            print("Returning Results and generating graphs: " + str(t1), flush=True)
+            
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness,theta_data=theta_data,
                  sensors=sensors, lat_range=lat_range, long_range=long_range,
                      depth_range=depth_range) 
@@ -262,7 +265,8 @@ if __name__ == '__main__':
                           'depth_range': depth_range,
                           'mag_range': mag_range},
                         depth_step = vis_controls[0],
-                        mag_step = vis_controls[1]
+                        mag_step = vis_controls[1],
+                        t0
                         )
 
 

@@ -92,8 +92,10 @@ def read_opt_file(file):
 def plot_surface(data,
                  output_path='eig_plots', 
                  depth_step=1, mag_step=1, 
-                 stepsize=100):
+                 stepsize=100,
+                 t0):
 
+    print(f'Configuring data for plots: {time.time() - t0}')
     # Specify training data for Gaussian Processs
     target = data['ig']
     inputs = data['theta_data'] # (lat, long, depth, magnitude)
@@ -119,6 +121,7 @@ def plot_surface(data,
     domain = np.zeros((stepsize**2, 4))
     domain[:,:2] = xy
 
+    print(f'Training GP model: {time.time() -t0}')
     model = GPR()
     model.fit(inputs,target)
     
@@ -132,9 +135,12 @@ def plot_surface(data,
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
+    total_plots = len(depth_slices)* len(mag_slices)
+    curr_plot = 1
+
     for depth_slice in depth_slices:
         for mag_slice in mag_slices:
-
+            print('Generating plot {curr_plot} of {total_plots}')
             # Specify 2d slice (depth and magnitude features)
             domain[:,2] = depth_slice
             domain[:,3] = mag_slice
@@ -165,4 +171,6 @@ def plot_surface(data,
 
             plotname = f'depth-{np.round(depth_slice,3)}_mag-{np.round(mag_slice,3)}.pdf'
             plt.savefig(os.path.join(save_dir, plotname))
+
+            curr_plot += 1
             
