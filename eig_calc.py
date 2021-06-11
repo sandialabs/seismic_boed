@@ -261,7 +261,7 @@ if __name__ == '__main__':
                           'theta_data': theta_data,
                           'lat_range': lat_range,
                           'long_range': long_range,
-                          'sensors': sensors},
+                          'sensors': sensors,
                           depth_slice=depth_slice,
                           mag_slice=mag_slice},
                         depth_step = vis_controls[0],
