@@ -127,6 +127,10 @@ def plot_surface(data,
 
     now = datetime.now()
     timestamp = f'{now.year}-{now.month}-{now.day}_{now.hour}:{now.minute}:{now.second}'
+    save_dir = os.path.join(output_path, timestamp)
+
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
 
     for depth_slice in depth_slices:
         for mag_slice in mag_slices:
@@ -160,5 +164,5 @@ def plot_surface(data,
             plt.legend()
 
             plotname = f'depth-{np.round(depth_slice,3)}_mag-{np.round(mag_slice,3)}.pdf'
-            plt.savefig(os.path.join(output_path, timestamp, plotname))
+            plt.savefig(os.path.join(save_dir, plotname))
             
