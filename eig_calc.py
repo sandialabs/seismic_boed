@@ -256,7 +256,7 @@ if __name__ == '__main__':
                  sensors=sensors, lat_range=lat_range, long_range=long_range,
                      depth_range=depth_range) 
 
-            print(f'Generating graph at depth {depth_slice} and mag {mag_slice}...') #TODO: Make this interactive
+            # print(f'Generating graph at depth {depth_slice} and mag {mag_slice}...') #TODO: Make this interactive
             plot_surface({'ig': ig, 
                           'theta_data': theta_data,
                           'lat_range': lat_range,
