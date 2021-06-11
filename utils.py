@@ -140,7 +140,7 @@ def plot_surface(data,
 
     for depth_slice in depth_slices:
         for mag_slice in mag_slices:
-            print('Generating plot {curr_plot} of {total_plots}')
+            print(f'Generating plot {curr_plot} of {total_plots}: {time.time()-t0}')
             # Specify 2d slice (depth and magnitude features)
             domain[:,2] = depth_slice
             domain[:,3] = mag_slice
@@ -149,8 +149,6 @@ def plot_surface(data,
             model = GPR()
             model.fit(inputs,target)
             preds = model.predict(domain)
-
-            
             
             # Plot IG map
             plt.pcolormesh(xv, yv, preds.reshape((stepsize, stepsize)),
