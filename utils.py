@@ -90,10 +90,10 @@ def read_opt_file(file):
 
 
 def plot_surface(data,
+                 t0,
                  output_path='eig_plots', 
                  depth_step=1, mag_step=1, 
-                 stepsize=100,
-                 t0):
+                 stepsize=100):
 
     print(f'Configuring data for plots: {time.time() - t0}')
     # Specify training data for Gaussian Processs

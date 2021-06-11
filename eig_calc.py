@@ -251,7 +251,7 @@ if __name__ == '__main__':
         if verbose == 2:
             t1 = time.time() - t0
             print("Returning Results and generating graphs: " + str(t1), flush=True)
-            
+
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness,theta_data=theta_data,
                  sensors=sensors, lat_range=lat_range, long_range=long_range,
                      depth_range=depth_range) 
@@ -264,9 +264,9 @@ if __name__ == '__main__':
                           'sensors': sensors,
                           'depth_range': depth_range,
                           'mag_range': mag_range},
+                        t0,
                         depth_step = vis_controls[0],
                         mag_step = vis_controls[1],
-                        t0
                         )
 
 
