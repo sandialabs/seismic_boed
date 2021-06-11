@@ -169,5 +169,6 @@ def plot_surface(data,
             plotname = f'depth-{np.round(depth_slice,3)}_mag-{np.round(mag_slice,3)}.pdf'
             plt.savefig(os.path.join(save_dir, plotname))
 
+            plt.clf()
             curr_plot += 1
             
