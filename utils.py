@@ -98,7 +98,7 @@ def plot_surface(data,
     inputs = data['theta_data'] # (lat, long, depth, magnitude)
     # Specify graphing domain
     lat_range = data['lat_range']
-    long_range = data['long_range'
+    long_range = data['long_range']
     
     depth_range = data['depth_range']
     mag_range = data['mag_range']
