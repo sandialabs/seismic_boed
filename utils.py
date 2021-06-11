@@ -146,9 +146,7 @@ def plot_surface(data,
             domain[:,2] = depth_slice
             domain[:,3] = mag_slice
             
-            # Create and fit model, make predictions to generate map
-            model = GPR()
-            model.fit(inputs,target)
+            # Make predictions to generate map
             preds = model.predict(domain)
             
             # Plot IG map
