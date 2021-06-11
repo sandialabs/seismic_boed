@@ -89,19 +89,19 @@ def read_opt_file(file):
 
 
 def plot_surface(data,
-                 output_file='eiggraph_depth0mag0_test.pdf', 
-                 depth_slice=0, mag_slice=1, stepsize=100):
+                 output_path='eig_plots', 
+                 depth_step=1, mag_step=1, 
+                 stepsize=100):
 
     # Specify training data for Gaussian Processs
     target = data['ig']
-    print(f'Target shape:{target.shape}')
-    print(target)
     inputs = data['theta_data'] # (lat, long, depth, magnitude)
-    print(f'Input shape: {inputs.shape}')
-    print(inputs)
     # Specify graphing domain
     lat_range = data['lat_range']
-    long_range = data['long_range']
+    long_range = data['long_range'
+    
+    depth_range = data['depth_range']
+    mag_range = data['mag_range']
 
     # Format target variable
     target = target.reshape(len(inputs),-1).mean(axis=1)
@@ -117,34 +117,47 @@ def plot_surface(data,
     # Create full featureset
     domain = np.zeros((stepsize**2, 4))
     domain[:,:2] = xy
-    # Specify 2d slice (depth and magnitude features)
-    domain[:,2] = depth_slice
-    domain[:,3] = mag_slice
-    
-    # Create and fit model, make predictions to generate map
+
     model = GPR()
     model.fit(inputs,target)
-    preds = model.predict(domain)
-
-    print(f'Max pred: {preds.max()}')
-    print(f'Min pred: {preds.min()}')
     
-    # Plot IG map
-    plt.pcolormesh(xv, yv, preds.reshape((stepsize, stepsize)),
-                   shading='auto', cmap='viridis')
-    plt.colorbar()
+    depth_slices = np.arange(depth_range[0], depth_range[1]+depth_step, depth_step)
+    mag_slices = np.arange(mag_range[0], mag_range[1]+mag_step, mag_step)
 
-    # Plot sensor locations
-    plt.scatter(data['sensors'][:,0],data['sensors'][:,1], 
-                marker='o',facecolors='none', edgecolors='red', 
-                label='Sensor location')
-    
-    # Label and plot
-    plt.xlabel('Latitude')
-    plt.ylabel('Longitude')
-    plt.title(f'Expected Information Gain for events with depth = {depth_slice}')
+    now = datetime.now()
+    timestamp = f'{now.year}-{now.month}-{now.day}_{now.hour}:{now.minute}:{now.second}'
 
-    plt.legend()
-    plt.savefig(output_file)
-    plt.show()
+    for depth_slice in depth_slices:
+        for mag_slice in mag_slices:
+
+            # Specify 2d slice (depth and magnitude features)
+            domain[:,2] = depth_slice
+            domain[:,3] = mag_slice
+            
+            # Create and fit model, make predictions to generate map
+            model = GPR()
+            model.fit(inputs,target)
+            preds = model.predict(domain)
+
+            
+            
+            # Plot IG map
+            plt.pcolormesh(xv, yv, preds.reshape((stepsize, stepsize)),
+                        shading='auto', cmap='viridis')
+            plt.colorbar()
+
+            # Plot sensor locations
+            plt.scatter(data['sensors'][:,0],data['sensors'][:,1], 
+                        marker='o',facecolors='none', edgecolors='red', 
+                        label='Sensor location')
+            
+            # Label and plot
+            plt.xlabel('Latitude')
+            plt.ylabel('Longitude')
+            plt.title(f'Expected Information Gain for events with depth = {depth_slice}, mag = {mag_slice}')
+
+            plt.legend()
+
+            plotname = f'depth-{np.round(depth_slice,3)}_mag-{np.round(mag_slice,3)}.pdf'
+            plt.savefig(os.path.join(output_path, timestamp, plotname))
             

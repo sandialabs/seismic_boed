@@ -40,28 +40,7 @@ if __name__ == '__main__':
 
             if verbose == 1:
                 print("Configuring Run: " + str(t0), flush=True)
-
-            if verbose == 2:
-                # Ensure visualization control variables exist
-                if type(vis_controls) is not np.ndarray:
-                    raise ValueError('Visualization control variables must be stored in iterable')
-                if len(vis_controls) < 4:
-                    vis_controls += [0]*(4-len(vis_controls)) # Fill missing variables with 0
-
-                # Slice of depth and magnitude axes to visualize
-                depth_slice = vis_controls[0]
-                mag_slice = vis_controls[1]
-
-                # How wide a range around the slices to train model on
-                depth_tol = vis_controls[2]
-                mag_tol = vis_controls[3]
-
-                # Range for training GP model
-                mag_range = [np.maximum(mag_slice-mag_tol,0), np.minimum(mag_slice+mag_tol,10.)]
-                depth_range = [np.maximum(depth_slice-depth_tol,0), np.minimum(depth_slice+depth_tol,40.)]
-                print(f'mag range should be {mag_range}')
-                print(f'depth range should be {depth_range}')
-          
+        
         else:
             #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_calc.py inputs.dat outputs.npz 1
             #verbose options: 0 (only output is to the screen with EIG STD and MIN_ESS), 1 full output, 2 simpel output file
@@ -270,7 +249,7 @@ if __name__ == '__main__':
         
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness, theta_data=theta_data,
                  theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
-                     depth_range=depth_range, loglikes=loglikes, dataz=dataz)
+                     depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, dataz=dataz)
             
         if verbose == 2:
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness,theta_data=theta_data,
@@ -284,7 +263,9 @@ if __name__ == '__main__':
                           'long_range': long_range,
                           'sensors': sensors},
                           depth_slice=depth_slice,
-                          mag_slice=mag_slice
+                          mag_slice=mag_slice},
+                        depth_step = vis_controls[0],
+                        mag_step = vis_controls[1]
                         )
 
 

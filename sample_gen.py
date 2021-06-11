@@ -11,8 +11,6 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
     for j in range(nsamp):
         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
 
-    print(f'Generating data at mag range {mag_range}')
-    print(f'Generating data at depth range {depth_range}')
     # Calculate min and max value for magnitutde range
     max_mag = 1 - 10**(-mag_range[1])
     min_mag = 1 - 10**(-mag_range[0])
@@ -30,7 +28,7 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
 #This may be something that we should change in the future to add a prior likleihood associated with each sample
 #so that we dont have to consider them to be uniform.
 
-def sample_theta_prior(lat_range,long_range, depth_range, nsamp, skip):
+def sample_theta_space(lat_range,long_range, depth_range, nsamp, skip):
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
     dim_num = 4
@@ -45,6 +43,10 @@ def sample_theta_prior(lat_range,long_range, depth_range, nsamp, skip):
     sbvals[:, 3] += 0.5
     
     return sbvals
+
+def compute_theta_prior(theta):
+    # compute log prior likelihood
+    pass
 
 #Generate psuedo random sensor distribution for initial OED
 def sample_sensors(lat_range,long_range, nsamp,skip):
