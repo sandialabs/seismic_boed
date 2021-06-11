@@ -262,7 +262,7 @@ if __name__ == '__main__':
                           'lat_range': lat_range,
                           'long_range': long_range,
                           'sensors': sensors,
-                          'depth_range': depth_rangee,
+                          'depth_range': depth_range,
                           'mag_range': mag_range},
                         depth_step = vis_controls[0],
                         mag_step = vis_controls[1]
