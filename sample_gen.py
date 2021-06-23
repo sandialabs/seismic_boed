@@ -68,8 +68,8 @@ def eval_theta_prior(thetas):
     # p(location,mag)
     return loc_probs*mag_probs
 
-def eval_importance(thetas, nlpts_space):
-    return (1/nlpts_space) * (1-(1/(10*np.exp(thetas[:,3]))))
+def eval_importance(thetas):
+    return (1/len(theta)) * (np.log(10)/10**thetas[:,3])
 
 #Generate psuedo random sensor distribution for initial OED
 def sample_sensors(lat_range,long_range, nsamp,skip):

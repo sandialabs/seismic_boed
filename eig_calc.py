@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from utils import read_input_file, plot_surface
-from sample_gen import generate_theta_data, sample_theta_space
+from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from data_gen import generate_data
 from like_models import compute_loglikes
 
@@ -156,7 +156,7 @@ if __name__ == '__main__':
             print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
             
         theta = recvtheta_space[ievent,:]
-        importance_weight = eval_prior(theta)/eval_importance(theta)
+        importance_weight = eval__theta_prior(theta)/eval_importance(theta)
     
         #compute likelihoods
         local_loglikes[ievent,:] = compute_loglikes(theta,sensors,dataz)
