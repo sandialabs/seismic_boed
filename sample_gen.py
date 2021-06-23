@@ -1,5 +1,6 @@
 import numpy as np
 import sobol_seq as sq
+from scipy import stats
 
 #Sample prior some how to generate events that we will use to generate data
 def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
@@ -78,7 +79,7 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range):
 def eval_importance(thetas, lat_range, long_range, depth_range):
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
-        
+
     lat_prob = 1/(lat_range[1]-lat_range[0])
     long_prob = 1/(long_range[1] - long_range[0])
     depth_prob = 1/(depth_range[1] - depth_range[0])
