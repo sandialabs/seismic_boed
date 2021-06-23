@@ -156,7 +156,7 @@ if __name__ == '__main__':
             print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
             
         theta = recvtheta_space[ievent,:]
-        importance_weight = eval__theta_prior(theta)/eval_importance(theta)
+        importance_weight = eval_theta_prior(theta)/eval_importance(theta)
     
         #compute likelihoods
         local_loglikes[ievent,:] = compute_loglikes(theta,sensors,dataz)
