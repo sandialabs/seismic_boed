@@ -17,7 +17,6 @@ def read_input_file(file):
         long_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        vis_slices = np.fromstring(readdata.readline(), dtype=float, sep=',')
         
         #rest of lines are sensors
         sensorlines=readdata.readlines()
@@ -30,7 +29,7 @@ def read_input_file(file):
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             sensors[inc,:] = sensorline
-    return nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, vis_slices, sensors
+    return nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors
 
 
 #Write Configuration
@@ -91,11 +90,11 @@ def read_opt_file(file):
 
 
 def plot_surface(data,
-                 t0,
                  output_path='eig_plots', 
                  depth_step=1, mag_step=1, 
                  stepsize=100):
 
+    t0 = time.time()
     print(f'Configuring data for plots: {time.time() - t0}')
     # Specify training data for Gaussian Processs
     target = data['ig']
@@ -169,6 +168,7 @@ def plot_surface(data,
             plotname = f'depth-{np.round(depth_slice,3)}_mag-{np.round(mag_slice,3)}.pdf'
             plt.savefig(os.path.join(save_dir, plotname))
 
+            plt.close()
             plt.clf()
             curr_plot += 1
             

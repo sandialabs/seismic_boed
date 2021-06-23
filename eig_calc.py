@@ -46,7 +46,7 @@ if __name__ == '__main__':
         #Sample prior some how to generate events that we will use to generate data
         #This is not distributed
         #Set seed to 0 here
-        theta_data = generate_theta_data(lat_range,long_range, depth_range, mag_range, nlpts_data, 0)
+        theta_data = generate_theta_data(lat_range, long_range, depth_range, mag_range, nlpts_data, 0)
         nthetadim = theta_data.shape[1]
         
         counts = nthetadim * nlpts_data // size * np.ones(size, dtype=int)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     sensors = comm.bcast(sensors, root=0)
     nthetadim = comm.bcast(nthetadim, root=0)
 
-    if (rank == 0) and (verbose == 1 or verbose == 2):
+    if rank == 0 and verbose == 1:
         t1 = time.time() - t0
         print("Generating Synthetic Data: " + str(t1), flush=True)
     
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     dataveclen = np.int(sensors.shape[0]*sensors[0,3])
     localdataz = np.zeros([local_nlpts_data*ndata,dataveclen])
     for ievent in range(0,local_nlpts_data):
-        if (rank == 0) and (verbose == 1 or verbose == 2):
+        if rank == 0 and verbose == 1:
             t1 = time.time() - t0
             print(str(ievent) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
             
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     
     if rank == 0:
         #seed with nlpts_data so that it starts sampling after that so we dont overlap pts.
-        theta_space = sample_theta_space(lat_range,long_range, depth_range, nlpts_space,nlpts_data)    
+        theta_space = sample_theta_space(lat_range,long_range, depth_range, nlpts_space,nlpts_data) # Could return theta space and sample weight    
         counts = nthetadim * nlpts_space // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_space * nthetadim, nthetadim * nlpts_space // size)
     else:
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         counts = None
         dspls = None
     
-    if (rank == 0) and (verbose == 1 or verbose == 2):
+    if rank == 0 and verbose == 1:
         t1 = time.time() - t0
         print("Computing Likelihood: " + str(t1), flush=True)
             
@@ -148,15 +148,19 @@ if __name__ == '__main__':
     #Now everyone computes a bunch of likelihoods
     #Compute likelhood of each event given dataset
     local_loglikes = np.zeros([local_nlpts_space,nlpts_data*ndata])
+    local_weight_loglikes = local_loglikes.copy()
+
     for ievent in range(0,local_nlpts_space):
-        if (rank == 0) and (verbose == 1 or verbose == 2):
+        if rank == 0 and verbose == 1:
             t1 = time.time() - t0
             print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
             
         theta = recvtheta_space[ievent,:]
+        importance_weight = eval_prior(theta)/eval_importance(theta)
     
         #compute likelihoods
         local_loglikes[ievent,:] = compute_loglikes(theta,sensors,dataz)
+        local_weight_loglikes[ievent,:] = local_loglikes[ievent,:] + np.log(importance_weight)
 
     
     #Gather the likelihoods
@@ -167,15 +171,18 @@ if __name__ == '__main__':
        
     if rank == 0:
         loglikes = np.zeros((nlpts_space, nlpts_data * ndata))
+        weight_loglikes = loglikes.copy()
         
-    comm.Gatherv([local_loglikes, scounts, MPI.DOUBLE], [loglikes, rcounts, rdspls, MPI.DOUBLE], root=0)   
-    
+    comm.Gatherv([local_loglikes, scounts, MPI.DOUBLE], [loglikes, rcounts, rdspls, MPI.DOUBLE], root=0)
+    comm.Gatherv([local_weight_loglikes, scounts, MPI.DOUBLE], [weight_loglikes, rcounts, rdspls, MPI.DOUBLE], root=0)   
+
     #I really want transpose of loglike for everything
     if rank==0:
         loglikes = loglikes.transpose().copy()
-    
+        weight_loglikes = weight_loglikes.transpose().copy()
+
     #Now need to compute EIG/KL
-    if (rank == 0) and (verbose == 1 or verbose == 2):
+    if rank == 0 and verbose == 1:
         t1 = time.time() - t0
         print("Computing EIG: " + str(t1), flush=True)
     
@@ -198,20 +205,22 @@ if __name__ == '__main__':
     
     # get your theta values to use for computing likelihoods
     comm.Scatterv([loglikes, counts, dspls, MPI.DOUBLE], recloglikes, root=0)  
-    
+    comm.Scatterv([weight_loglikes, counts, dspls, MPI.DOUBLE], recweight_loglikes, root=0)     
     
     #Now compute the ig for each set of likelihoods    
     #Combine data to compute posterior and KL divergence
     local_ig = np.zeros(local_ndataz)
     local_ess = np.zeros(local_ndataz)
     for idata in range(0,local_ndataz):
-        if (rank == 0) and (verbose == 1 or verbose == 2):
+        if rank == 0 and verbose == 1:
             t1 = time.time() - t0
             print(str(idata) + " of " + str(local_ndataz) + " " + str(t1), flush=True)
         loglike = recloglikes[idata,:]
-        probs = np.exp(loglike - np.max(loglike))/np.sum(np.exp(loglike - np.max(loglike)))
-        logprobs = (loglike - np.max(loglike)) - np.log(np.sum(np.exp(loglike - np.max(loglike))))
-        local_ig[idata] = np.sum(probs*(logprobs+np.log(probs.size)))
+        weight_loglike = rec_weightloglike[idata,:]
+
+        probs = np.exp(weight_loglike - np.max(weigh_loglike))/np.sum(np.exp(weight_loglike - np.max(weight_loglike)))
+        logprobs = (loglike - np.max(weight_loglike)) - np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))
+        local_ig[idata] = np.sum(probs*(likes)) - np.log(np.mean(np.exp(weight_loglikes - np.max(weight_loglikes)))) - np.max(weight_loglikes)
         
         #lets also compute ess of the weights so we can return that too...
         local_ess[idata] = 1.0 / np.sum(probs**2)
@@ -240,35 +249,13 @@ if __name__ == '__main__':
         if verbose == 0:
             np.savez(save_file, eig=eig, seig=seig, miness=miness)
             
-        if (verbose == 1 or verbose == 2):
+        if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1), flush=True)
         
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness, theta_data=theta_data,
                  theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
                      depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, dataz=dataz)
-            
-        if verbose == 2:
-            t1 = time.time() - t0
-            print("Returning Results and generating graphs: " + str(t1), flush=True)
-
-            np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness,theta_data=theta_data,
-                 sensors=sensors, lat_range=lat_range, long_range=long_range,
-                     depth_range=depth_range) 
-
-            # print(f'Generating graph at depth {depth_slice} and mag {mag_slice}...') #TODO: Make this interactive
-            plot_surface({'ig': ig, 
-                          'theta_data': theta_data,
-                          'lat_range': lat_range,
-                          'long_range': long_range,
-                          'sensors': sensors,
-                          'depth_range': depth_range,
-                          'mag_range': mag_range},
-                        t0,
-                        depth_step = vis_controls[0],
-                        mag_step = vis_controls[1],
-                        )
-
 
             
         #Probs should retrun some uncertainty on this...
