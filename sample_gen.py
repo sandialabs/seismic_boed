@@ -44,32 +44,42 @@ def sample_theta_space(lat_range,long_range, depth_range, nsamp, skip):
     
     return sbvals
 
-def eval_theta_prior(thetas):
+def eval_theta_prior(thetas, lat_range, long_range, depth_range):
     # compute log prior likelihood
-    # Compute p(location)
-
-    loc_probs = np.zeros(len(thetas))
-
-    # Events within fault line zone
-    mask = (thetas[:,1] >= -111.) & (thetas[:,1] <= -110.)
+    # Compute p(lat)
+    lat_prob = 1/(lat_range[1] - lat_range[0])
+    
+    # Compute p(long)
+    fault_min = -111.
+    fault_max = -110.
+    long_probs = np.zeros(len(thetas))
+    
+    mask = (thetas[:,1] >= fault_min) & (thetas[:,1] <= fault_max)
     
     num_in_fault = sum(mask)
     
     fault_prob = stats.norm(loc=-110.5,scale=1)
-    fault_density = fault_prob.cdf(-110) - fault_prob.cdf(-111)
-    outside_prob = (1-fault_density)/(len(thetas)-num_in_fault)
-
-    loc_probs[:] = outside_prob
-    loc_probs[mask] = fault_prob.pdf(thetas[mask][:,1])
+    outside_prob = 1/(np.abs(fault_min - long_range[0]) + np.abs(long_range[1]-fault_max))
+    
+    long_probs[:] = outside_prob
+    long_probs[mask] = fault_prob.pdf(thetas[mask][:,1])
+    
+    # Compute p(depth)
+    depth_prob = 1/(depth_range[1]-depth_range[0])
     
     # Compute p(mag)
     mag_probs = np.log(10)/(10**(thetas[:,3]))
     
-    # p(location,mag)
-    return loc_probs*mag_probs
+    # p(lat,long,depth,mag)
+    return long_probs*mag_probs*lat_prob*depth_prob
 
-def eval_importance(thetas):
-    return (1/len(theta)) * (np.log(10)/10**thetas[:,3])
+def eval_importance(thetas, lat_range, long_range, depth_range):
+    lat_prob = 1/(lat_range[1]-lat_range[0])
+    long_prob = 1/(long_range[1] - long_range[0])
+    depth_prob = 1/(depth_range[1] - depth_range[0])
+    mag_prob = (np.log(10)/10**thetas[:,3])
+
+    return lat_prob*long_prob*depth_prob*mag_prob
 
 #Generate psuedo random sensor distribution for initial OED
 def sample_sensors(lat_range,long_range, nsamp,skip):
