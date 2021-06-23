@@ -45,6 +45,8 @@ def sample_theta_space(lat_range,long_range, depth_range, nsamp, skip):
     return sbvals
 
 def eval_theta_prior(thetas, lat_range, long_range, depth_range):
+    if len(thetas.shape) == 1:
+        thetas = thetas.reshape((1,-1))
     # compute log prior likelihood
     # Compute p(lat)
     lat_prob = 1/(lat_range[1] - lat_range[0])
@@ -74,6 +76,9 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range):
     return long_probs*mag_probs*lat_prob*depth_prob
 
 def eval_importance(thetas, lat_range, long_range, depth_range):
+    if len(thetas.shape) == 1:
+        thetas = thetas.reshape((1,-1))
+        
     lat_prob = 1/(lat_range[1]-lat_range[0])
     long_prob = 1/(long_range[1] - long_range[0])
     depth_prob = 1/(depth_range[1] - depth_range[0])
