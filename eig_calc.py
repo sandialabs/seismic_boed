@@ -204,6 +204,7 @@ if __name__ == '__main__':
     #prepaire to recieve the loglikes for each separed data at the node
     # holder for everyone to recive there part of the loglikes we need
     recloglikes = np.zeros((local_ndataz, nlpts_space))
+    recweight_loglikes = np.zeros((local_ndataz, nlpts_space))
     
     # get your theta values to use for computing likelihoods
     comm.Scatterv([loglikes, counts, dspls, MPI.DOUBLE], recloglikes, root=0)  
