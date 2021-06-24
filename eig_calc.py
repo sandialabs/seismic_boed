@@ -170,6 +170,7 @@ if __name__ == '__main__':
     rcounts = local_nlpts_space * ndata * nlpts_data * np.ones(size, dtype=int)
     rdspls = range(0, nlpts_space * ndata * nlpts_data, local_nlpts_space * ndata * nlpts_data)
     loglikes = None
+    weight_loglikes = None
        
     if rank == 0:
         loglikes = np.zeros((nlpts_space, nlpts_data * ndata))
