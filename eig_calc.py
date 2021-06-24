@@ -222,8 +222,18 @@ if __name__ == '__main__':
         loglike = recloglikes[idata,:]
         weight_loglike = recweight_loglikes[idata,:]
 
+        print(f'loglikelen: {len(loglike)}')
+        print(f'loglike {loglike[0]}')
+
+        print(f'wloglikelen: {len(weight_loglike)}')
+        print(f'wloglike {weight_loglike[0]}')
+
         probs = np.exp(weight_loglike - np.max(weight_loglike))/np.sum(np.exp(weight_loglike - np.max(weight_loglike)))
         logprobs = (loglike - np.max(weight_loglike)) - np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))
+        
+        print(f'probs: {type(probs)}')
+        print(f'logprobs: {type(logprobs)}')
+        
         local_ig[idata] = np.sum(probs*(loglike)) - np.log(np.mean(np.exp(weight_loglikes - np.max(weight_loglikes)))) - np.max(weight_loglikes)
         
         #lets also compute ess of the weights so we can return that too...
