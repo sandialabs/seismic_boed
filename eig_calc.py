@@ -235,8 +235,8 @@ if __name__ == '__main__':
         print(f'logprobs: {type(logprobs)}')
         
         print(f'first term: {np.sum(probs*(loglike))}')
-        print(f'second term: {np.log(np.mean(np.exp(weight_loglikes - np.max(weight_loglikes))))}')
-        
+        print(f'second term: {np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))}')
+
         local_ig[idata] = np.sum(probs*(loglike)) - np.log(np.mean(np.exp(weight_loglikes - np.max(weight_loglikes)))) - np.max(weight_loglikes)
         
         #lets also compute ess of the weights so we can return that too...
