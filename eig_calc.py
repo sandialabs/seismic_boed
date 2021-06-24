@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
         probs = np.exp(weight_loglike - np.max(weight_loglike))/np.sum(np.exp(weight_loglike - np.max(weight_loglike)))
         logprobs = (loglike - np.max(weight_loglike)) - np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))
-        local_ig[idata] = np.sum(probs*(likes)) - np.log(np.mean(np.exp(weight_loglikes - np.max(weight_loglikes)))) - np.max(weight_loglikes)
+        local_ig[idata] = np.sum(probs*(loglike)) - np.log(np.mean(np.exp(weight_loglikes - np.max(weight_loglikes)))) - np.max(weight_loglikes)
         
         #lets also compute ess of the weights so we can return that too...
         local_ess[idata] = 1.0 / np.sum(probs**2)
