@@ -220,7 +220,7 @@ if __name__ == '__main__':
             t1 = time.time() - t0
             print(str(idata) + " of " + str(local_ndataz) + " " + str(t1), flush=True)
         loglike = recloglikes[idata,:]
-        weight_loglike = recweight_loglike[idata,:]
+        weight_loglike = recweight_loglikes[idata,:]
 
         probs = np.exp(weight_loglike - np.max(weigh_loglike))/np.sum(np.exp(weight_loglike - np.max(weight_loglike)))
         logprobs = (loglike - np.max(weight_loglike)) - np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))
