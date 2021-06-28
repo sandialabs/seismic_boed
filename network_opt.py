@@ -68,6 +68,7 @@ if __name__ == '__main__':
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
+            print(stdout)
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
             eigdata[inc,:] = outputdata
 
