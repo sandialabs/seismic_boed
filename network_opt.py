@@ -63,7 +63,7 @@ if __name__ == '__main__':
             #write temp input file
             fname = 'input_runner.dat'
             sloc_trial = sensor_loc_random[inc,:]
-            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sloc_trial, sensor_params, sensors)
+            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
