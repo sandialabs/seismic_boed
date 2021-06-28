@@ -58,7 +58,7 @@ def eval_importance(thetas, lat_range, long_range, depth_range):
     return lat_prob*long_prob*depth_prob*mag_prob
 
 
-def eval_theta_prior(thetas, lat_range, long_range, depth_range):
+# def eval_theta_prior(thetas, lat_range, long_range, depth_range):
     # if len(thetas.shape) == 1:
     #     thetas = thetas.reshape((1,-1))
     # # compute log prior likelihood
@@ -88,7 +88,45 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range):
     
     # # p(lat,long,depth,mag)
     # return long_probs*mag_probs*lat_prob*depth_prob
-    return eval_importance(thetas, lat_range, long_range, depth_range)
+    # return eval_importance(thetas, lat_range, long_range, depth_range)
+def eval_theta_prior(thetas, lat_range, long_range, depth_range):
+    # compute log prior likelihood
+    # Compute p(lat)
+    # lat_probs = 1/(lat_range[1] - lat_range[0])
+    fault_min_lat = 41.1
+    fault_max_lat = 41.6
+    lat_probs = np.zeros(len(thetas))
+    
+    lat_mask = (thetas[:,0] >= fault_min_lat) & (thetas[:,0] <= fault_max_lat)
+    
+    fault_prob_lat = stats.norm(loc=41.35,scale=.2)
+    outside_prob_lat = 1/(np.abs(fault_min_lat - lat_range[0]) + np.abs(lat_range[1]-fault_max_lat))
+    
+    lat_probs[:] = outside_prob_lat
+    lat_probs[lat_mask] = fault_prob_lat.pdf(thetas[lat_mask][:,0])
+    
+    
+    # Compute p(long)
+    fault_min_long = -111
+    fault_max_long = -110.
+    long_probs = np.zeros(len(thetas))
+    
+    long_mask = (thetas[:,1] >= fault_min_long) & (thetas[:,1] <= fault_max_long)
+    
+    fault_prob = stats.norm(loc=-110.5,scale=1)
+    outside_prob = 1/(np.abs(fault_min_long - long_range[0]) + np.abs(long_range[1]-fault_max_long))
+    
+    long_probs[:] = outside_prob
+    long_probs[long_mask] = fault_prob.pdf(thetas[long_mask][:,1])
+    
+    # Compute p(depth)
+    depth_prob = 1/(depth_range[1]-depth_range[0])
+    
+    # Compute p(mag)
+    mag_probs = np.log(10)/(10**(thetas[:,3]))
+    
+    # p(lat,long,depth,mag)
+    return long_probs*mag_probs*lat_probs*depth_prob
 
 
 #Generate psuedo random sensor distribution for initial OED

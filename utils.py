@@ -33,7 +33,7 @@ def read_input_file(file):
 
 
 #Write Configuration
-def write_input_file(file, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sloc_trial, sensor_params, sensors):
+def write_input_file(file, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors):
 
     writedata=open(file,"w+")
     writedata.write(str(np.int(nlpts_data)) + "\n")
@@ -44,6 +44,7 @@ def write_input_file(file, nlpts_data, nlpts_space, ndata, lat_range, long_range
     writedata.write((np.array2string(lat_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
     writedata.write((np.array2string(long_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
     writedata.write((np.array2string(depth_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
+    writedata.write((np.array2string(mag_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
 
     #rest of lines are sensors
     writedata.write((np.array2string(sensors,separator=',',max_line_width=1000)).replace('[','').replace('],','').replace(']','').replace(' ', '') + "\n")
@@ -71,7 +72,8 @@ def read_opt_file(file):
         lat_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         long_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        
+        mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+
         mpirunstring = readdata.readline()
         nsensor_place = np.int(readdata.readline())
         
