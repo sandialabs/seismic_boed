@@ -91,6 +91,8 @@ def eval_importance(thetas, lat_range, long_range, depth_range):
     # return eval_importance(thetas, lat_range, long_range, depth_range)
 def eval_theta_prior(thetas, lat_range, long_range, depth_range):
     # compute log prior likelihood
+    if len(thetas.shape) == 1:
+        thetas = thetas.reshape((1,-1))
     # Compute p(lat)
     # lat_probs = 1/(lat_range[1] - lat_range[0])
     fault_min_lat = 41.1
