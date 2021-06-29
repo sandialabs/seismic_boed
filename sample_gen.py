@@ -95,13 +95,13 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range):
         thetas = thetas.reshape((1,-1))
     # Compute p(lat)
     # lat_probs = 1/(lat_range[1] - lat_range[0])
-    fault_min_lat = 41.1
-    fault_max_lat = 41.6
+    fault_min_lat = 41.0
+    fault_max_lat = 41.25
     lat_probs = np.zeros(len(thetas))
     
     lat_mask = (thetas[:,0] >= fault_min_lat) & (thetas[:,0] <= fault_max_lat)
     
-    fault_prob_lat = stats.norm(loc=41.35,scale=.2)
+    fault_prob_lat = stats.norm(loc=41.125,scale=.2)
     outside_prob_lat = 1/(np.abs(fault_min_lat - lat_range[0]) + np.abs(lat_range[1]-fault_max_lat))
     
     lat_probs[:] = outside_prob_lat
@@ -109,13 +109,13 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range):
     
     
     # Compute p(long)
-    fault_min_long = -111
+    fault_min_long = -110.25
     fault_max_long = -110.
     long_probs = np.zeros(len(thetas))
     
     long_mask = (thetas[:,1] >= fault_min_long) & (thetas[:,1] <= fault_max_long)
     
-    fault_prob = stats.norm(loc=-110.5,scale=1)
+    fault_prob = stats.norm(loc=-110.125,scale=.2)
     outside_prob = 1/(np.abs(fault_min_long - long_range[0]) + np.abs(long_range[1]-fault_max_long))
     
     long_probs[:] = outside_prob
