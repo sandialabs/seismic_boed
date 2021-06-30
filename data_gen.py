@@ -13,6 +13,7 @@ def gen_arrival_normal(theta, sensors, ndata):
     stdmodel = (2.75758229e-02)*mean_tt + (-5.57985096e-04)*(mean_tt**2.0) + (1.63610033e-05)*(mean_tt**3.0)
     
     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
+    np.random.seed(42)
     return np.random.multivariate_normal(mean_tt, cov, ndata)
 
 
@@ -22,6 +23,7 @@ def generate_data(theta,sensors,ndata):
     
     #make probs bigger
     fullprobs = np.outer(np.ones(ndata),probs)
+    np.random.seed(42)
     u_mat = np.random.uniform(size = fullprobs.shape)
     
     #sample arrival times
