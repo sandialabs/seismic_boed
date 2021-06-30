@@ -163,7 +163,7 @@ if __name__ == '__main__':
         #compute likelihoods
         local_loglikes[ievent,:] = compute_loglikes(theta,sensors,dataz)
         local_weight_loglikes[ievent,:] = local_loglikes[ievent,:] + np.log(importance_weight)
-        print(f'likes equal: {local_weight_loglikes[ievent,:]==local_loglikes[ievent,:]}')
+        print(f'likes equal: {sum(local_weight_loglikes[ievent,:]==local_loglikes[ievent,:])}')
     
     #Gather the likelihoods
     scounts = local_nlpts_space * ndata * nlpts_data
