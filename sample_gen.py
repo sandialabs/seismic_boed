@@ -29,66 +29,72 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
 #This may be something that we should change in the future to add a prior likleihood associated with each sample
 #so that we dont have to consider them to be uniform.
 
+# def sample_theta_space(lat_range,long_range, depth_range, nsamp, skip):
+#     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
+#     #Change so seed can be set
+#     dim_num = 4
+#     sbvals = np.full((nsamp, dim_num), np.nan)
+#     for j in range(nsamp):
+#         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)    
+
+#     sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
+#     sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
+#     sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
+#     sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
+#     sbvals[:, 3] += 0.5
+    
+#     return sbvals
 def sample_theta_space(lat_range,long_range, depth_range, nsamp, skip):
-    #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-    #Change so seed can be set
+    lat_interval = np.abs(lat_range[1]-lat_range[0])
+    long_interval = np.abs(long_range[1] - long_range[0])
+    depth_interval = np.abs(depth_range[1] - depth_range[0])
+    mag_interval = np.abs(mag_range[1] - mag_range[0])
+
+    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
+    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
+    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
+    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
+
     dim_num = 4
     sbvals = np.full((nsamp, dim_num), np.nan)
-    for j in range(nsamp):
-        sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)    
-
-    sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
-    sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
-    sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
-    sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
-    sbvals[:, 3] += 0.5
     
+    sbvals[:,0] = lat_norm.rvs(nsamp)
+    sbvals[:,1] = long_norm.rvs(nsamp)
+    sbvals[:,2] = depth_norm.rvs(nsamp)
+    sbvals[:,3] = mag_norm.rvs(nsamp)
+
     return sbvals
+    
 
-
-def eval_importance(thetas, lat_range, long_range, depth_range):
+def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
 
-    lat_prob = 1/(lat_range[1]-lat_range[0])
-    long_prob = 1/(long_range[1] - long_range[0])
-    depth_prob = 1/(depth_range[1] - depth_range[0])
+    lat_prob = 1/np.abs(lat_range[1]-lat_range[0])
+    long_prob = 1/np.abs(long_range[1] - long_range[0])
+    depth_prob = 1/np.abs(depth_range[1] - depth_range[0])
     mag_prob = (np.log(10)/10**thetas[:,3])
 
     return lat_prob*long_prob*depth_prob*mag_prob
 
 
-def eval_theta_prior(thetas, lat_range, long_range, depth_range):
-    # if len(thetas.shape) == 1:
-    #     thetas = thetas.reshape((1,-1))
-    # # compute log prior likelihood
-    # # Compute p(lat)
-    # lat_prob = 1/(lat_range[1] - lat_range[0])
+def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
+    if len(thetas.shape) == 1:
+        thetas = thetas.reshape((1,-1))
     
-    # # Compute p(long)
-    # fault_min = -111.
-    # fault_max = -110.
-    # long_probs = np.zeros(len(thetas))
-    
-    # mask = (thetas[:,1] >= fault_min) & (thetas[:,1] <= fault_max)
-    
-    # num_in_fault = sum(mask)
-    
-    # fault_prob = stats.norm(loc=-110.5,scale=1)
-    # outside_prob = 1/(np.abs(fault_min - long_range[0]) + np.abs(long_range[1]-fault_max))
-    
-    # long_probs[:] = outside_prob
-    # long_probs[mask] = fault_prob.pdf(thetas[mask][:,1])
-    
-    # # Compute p(depth)
-    # depth_prob = 1/(depth_range[1]-depth_range[0])
-    
-    # # Compute p(mag)
-    # mag_probs = np.log(10)/(10**(thetas[:,3]))
-    
-    # # p(lat,long,depth,mag)
-    # return long_probs*mag_probs*lat_prob*depth_prob
-    return eval_importance(thetas, lat_range, long_range, depth_range)
+    lat_interval = np.abs(lat_range[1]-lat_range[0])
+    long_interval = np.abs(long_range[1] - long_range[0])
+    depth_interval = np.abs(depth_range[1] - depth_range[0])
+    mag_interval = np.abs(mag_range[1] - mag_range[0])
+
+    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
+    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
+    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
+    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
+
+    return lat_norm.pdf(thetas[:,0])*long_norm.pdf(thetas[:,1])*depth_norm.pdf(thetas[:,2])*mag_norm.pdf(thetas[:,3])
+
+
     
 # def eval_theta_prior(thetas, lat_range, long_range, depth_range):
 #     # compute log prior likelihood
