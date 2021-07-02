@@ -63,6 +63,8 @@ def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip
     sbvals[:,2] = np.clip(depth_norm.rvs(nsamp), *depth_range)
     sbvals[:,3] = np.clip(mag_norm.rvs(nsamp), *mag_range)
 
+    print(sbvals[:,3].min(), sbvals[]:,3].max())
+
     return sbvals
     
 
