@@ -126,7 +126,7 @@ if __name__ == '__main__':
     
     if rank == 0:
         #seed with nlpts_data so that it starts sampling after that so we dont overlap pts.
-        theta_space = sample_theta_space(lat_range,long_range, depth_range, mag_range, nlpts_space) # Could return theta space and sample weight    
+        theta_space = sample_theta_space(lat_range,long_range, depth_range, mag_range, nlpts_space, nlpts_data) # Could return theta space and sample weight    
         counts = nthetadim * nlpts_space // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_space * nthetadim, nthetadim * nlpts_space // size)
     else:
