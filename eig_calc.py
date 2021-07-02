@@ -60,6 +60,7 @@ if __name__ == '__main__':
         lat_range = None
         long_range = None
         depth_range = None
+        mag_range = None
         sensors = None
         nthetadim = None
         theta_data = None
@@ -73,6 +74,7 @@ if __name__ == '__main__':
     lat_range = comm.bcast(lat_range, root=0)
     long_range = comm.bcast(long_range, root=0)
     depth_range = comm.bcast(depth_range, root=0)
+    mag_range = comm.bcast(depth_range, root=0)
     sensors = comm.bcast(sensors, root=0)
     nthetadim = comm.bcast(nthetadim, root=0)
 
