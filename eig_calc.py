@@ -74,7 +74,7 @@ if __name__ == '__main__':
     lat_range = comm.bcast(lat_range, root=0)
     long_range = comm.bcast(long_range, root=0)
     depth_range = comm.bcast(depth_range, root=0)
-    mag_range = comm.bcast(depth_range, root=0)
+    mag_range = comm.bcast(mag_range, root=0)
     sensors = comm.bcast(sensors, root=0)
     nthetadim = comm.bcast(nthetadim, root=0)
 
@@ -159,7 +159,7 @@ if __name__ == '__main__':
             print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
             
         theta = recvtheta_space[ievent,:]
-        print(theta)
+
         importance_evals = eval_importance(theta,lat_range,long_range,depth_range,mag_range)
         prior_evals = eval_theta_prior(theta,lat_range,long_range,depth_range,mag_range)
         importance_weight = prior_evals/importance_evals

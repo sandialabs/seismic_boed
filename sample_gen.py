@@ -45,6 +45,11 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
     
 #     return sbvals
 def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+    print(f'lat range:{lat_range}')
+    print(f'long_range: {long_range}')
+    print(f'depth_range: {depth_range}')
+    print(f'mag_range: {mag_range}')
+    
     lat_interval = np.abs(lat_range[1]-lat_range[0])
     long_interval = np.abs(long_range[1] - long_range[0])
     depth_interval = np.abs(depth_range[1] - depth_range[0])
