@@ -46,6 +46,7 @@ if __name__ == '__main__':
         #Sample prior some how to generate events that we will use to generate data
         #This is not distributed
         #Set seed to 0 here
+        print(mag_range)
         theta_data = generate_theta_data(lat_range, long_range, depth_range, mag_range, nlpts_data, 0)
         nthetadim = theta_data.shape[1]
         
