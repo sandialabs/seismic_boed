@@ -58,10 +58,10 @@ def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip
     dim_num = 4
     sbvals = np.full((nsamp, dim_num), np.nan)
     
-    sbvals[:,0] = lat_norm.rvs(nsamp)
-    sbvals[:,1] = long_norm.rvs(nsamp)
-    sbvals[:,2] = depth_norm.rvs(nsamp)
-    sbvals[:,3] = mag_norm.rvs(nsamp)
+    sbvals[:,0] = np.clip(lat_norm.rvs(nsamp),*lat_range)
+    sbvals[:,1] = np.cip(long_norm.rvs(nsamp), *long_range)
+    sbvals[:,2] = np.clip(depth_norm.rvs(nsamp), *depth_range)
+    sbvals[:,3] = np.clip(mag_norm.rvs(nsamp), *mag_range)
 
     return sbvals
     
