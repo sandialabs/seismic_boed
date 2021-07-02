@@ -117,7 +117,6 @@ def arrival_likelihood_gaussian(theta, sensors, data):
 
 def detection_likelihood(theta, sensors, data):
     probs = detection_probability(theta,sensors)
-    print(probs)
     
     [ndata, ndpt] = data.shape
     nsens = np.int(ndpt/2)
