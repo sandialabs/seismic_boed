@@ -5,22 +5,59 @@ from scipy import stats
 #Sample prior some how to generate events that we will use to generate data
 def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     
-    #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-    #Change so seed can be set
+    # #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
+    # #Change so seed can be set
+    # dim_num = 4
+    # sbvals = np.full((nsamp, dim_num), np.nan)
+    # for j in range(nsamp):
+    #     sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
+
+    # # Calculate min and max value for magnitutde range
+    # max_mag = 1 - 10**(-mag_range[1])
+    # min_mag = 1 - 10**(-mag_range[0])
+
+    # sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
+    # sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
+    # sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
+    # sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
+    # sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
+    
+    # return sbvals
+
+    lat_interval = np.abs(lat_range[1]-lat_range[0])
+    long_interval = np.abs(long_range[1] - long_range[0])
+    depth_interval = np.abs(depth_range[1] - depth_range[0])
+    mag_interval = np.abs(mag_range[1] - mag_range[0])
+
+    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
+    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
+    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
+    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
+    
+    min_lat = lat_norm.cdf(lat_range[0])
+    max_lat = lat_norm.cdf(lat_range[1])
+    min_long = long_norm.cdf(long_range[0])
+    max_long = long_norm.cdf(long_range[1])
+    min_depth = depth_norm.cdf(depth_range[0])
+    max_depth = depth_norm.cdf(depth_range[1])
+    min_mag = mag_norm.cdf(mag_range[0])
+    max_mag = mag_norm.cdf(mag_range[1])
+    
     dim_num = 4
     sbvals = np.full((nsamp, dim_num), np.nan)
+    
     for j in range(nsamp):
         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
-
-    # Calculate min and max value for magnitutde range
-    max_mag = 1 - 10**(-mag_range[1])
-    min_mag = 1 - 10**(-mag_range[0])
-
-    sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
-    sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
-    sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
-    sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
-    sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
+        
+    sbvals[:,0] = sbvals[:,0]*(max_lat - min_lat) + min_lat 
+    sbvals[:,1] = sbvals[:,1]*(max_long - min_long) + min_long
+    sbvals[:,2] = sbvals[:,2]*(max_depth - min_depth) + min_depth
+    sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag 
+    
+    sbvals[:,0] = lat_norm.ppf(sbvals[:,0])
+    sbvals[:,1] = long_norm.ppf(sbvals[:,1])
+    sbvals[:,2] = depth_norm.ppf(sbvals[:,2])
+    sbvals[:,3] = mag_norm.ppf(sbvals[:,3])
     
     return sbvals
 
