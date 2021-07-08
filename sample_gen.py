@@ -5,25 +5,47 @@ from scipy import stats
 #Sample prior some how to generate events that we will use to generate data
 def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     
-    # #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-    # #Change so seed can be set
-    # dim_num = 4
-    # sbvals = np.full((nsamp, dim_num), np.nan)
-    # for j in range(nsamp):
-    #     sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
+    #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
+    #Change so seed can be set
+    dim_num = 4
+    sbvals = np.full((nsamp, dim_num), np.nan)
+    for j in range(nsamp):
+        sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
 
-    # # Calculate min and max value for magnitutde range
-    # max_mag = 1 - 10**(-mag_range[1])
-    # min_mag = 1 - 10**(-mag_range[0])
+    # Calculate min and max value for magnitutde range
+    max_mag = 1 - 10**(-mag_range[1])
+    min_mag = 1 - 10**(-mag_range[0])
 
-    # sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
-    # sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
-    # sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
-    # sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
-    # sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
+    sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
+    sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
+    sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
+    sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
+    sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
     
-    # return sbvals
+    return sbvals
 
+
+#Define the event space descritization
+#We assume that these are uniformly sampled from the prior so they all have equal aprior likelihood.
+#This may be something that we should change in the future to add a prior likleihood associated with each sample
+#so that we dont have to consider them to be uniform.
+
+# def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+#     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
+#     #Change so seed can be set
+#     dim_num = 4
+#     sbvals = np.full((nsamp, dim_num), np.nan)
+#     for j in range(nsamp):
+#         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)    
+
+#     sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
+#     sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
+#     sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
+#     sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
+#     sbvals[:, 3] += 0.5
+    
+#     return sbvals
+def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     lat_interval = np.abs(lat_range[1]-lat_range[0])
     long_interval = np.abs(long_range[1] - long_range[0])
     depth_interval = np.abs(depth_range[1] - depth_range[0])
@@ -59,54 +81,6 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
     sbvals[:,2] = depth_norm.ppf(sbvals[:,2])
     sbvals[:,3] = mag_norm.ppf(sbvals[:,3])
     
-    return sbvals
-
-#Define the event space descritization
-#We assume that these are uniformly sampled from the prior so they all have equal aprior likelihood.
-#This may be something that we should change in the future to add a prior likleihood associated with each sample
-#so that we dont have to consider them to be uniform.
-
-# def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
-#     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-#     #Change so seed can be set
-#     dim_num = 4
-#     sbvals = np.full((nsamp, dim_num), np.nan)
-#     for j in range(nsamp):
-#         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)    
-
-#     sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
-#     sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
-#     sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
-#     sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
-#     sbvals[:, 3] += 0.5
-    
-#     return sbvals
-def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
-    print(f'lat range:{lat_range}')
-    print(f'long_range: {long_range}')
-    print(f'depth_range: {depth_range}')
-    print(f'mag_range: {mag_range}')
-    
-    lat_interval = np.abs(lat_range[1]-lat_range[0])
-    long_interval = np.abs(long_range[1] - long_range[0])
-    depth_interval = np.abs(depth_range[1] - depth_range[0])
-    mag_interval = np.abs(mag_range[1] - mag_range[0])
-
-    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
-    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
-    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
-    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
-
-    dim_num = 4
-    sbvals = np.full((nsamp, dim_num), np.nan)
-    
-    sbvals[:,0] = np.clip(lat_norm.rvs(nsamp),*lat_range)
-    sbvals[:,1] = np.clip(long_norm.rvs(nsamp), *long_range)
-    sbvals[:,2] = np.clip(depth_norm.rvs(nsamp), *depth_range)
-    sbvals[:,3] = np.clip(mag_norm.rvs(nsamp), *mag_range)
-
-    print(sbvals[:,3].min(), sbvals[:,3].max())
-
     return sbvals
     
 
