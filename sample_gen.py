@@ -3,7 +3,7 @@ import sobol_seq as sq
 from scipy import stats
 
 #Sample prior some how to generate events that we will use to generate data
-def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
@@ -45,7 +45,7 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
 #     sbvals[:, 3] += 0.5
     
 #     return sbvals
-def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     lat_interval = np.abs(lat_range[1]-lat_range[0])
     long_interval = np.abs(long_range[1] - long_range[0])
     depth_interval = np.abs(depth_range[1] - depth_range[0])
@@ -84,7 +84,7 @@ def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip
     return sbvals
     
 
-def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
+def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
 
@@ -96,7 +96,7 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
     return lat_prob*long_prob*depth_prob*mag_prob
 
 
-def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
+def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
     
