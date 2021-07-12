@@ -3,7 +3,7 @@ import sobol_seq as sq
 from scipy import stats
 
 #Sample prior some how to generate events that we will use to generate data
-def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
@@ -45,16 +45,16 @@ def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip
 #     sbvals[:, 3] += 0.5
     
 #     return sbvals
-def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip):
     lat_interval = np.abs(lat_range[1]-lat_range[0])
     long_interval = np.abs(long_range[1] - long_range[0])
     depth_interval = np.abs(depth_range[1] - depth_range[0])
     mag_interval = np.abs(mag_range[1] - mag_range[0])
 
-    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
-    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
-    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
-    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
+    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval)
+    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval)
+    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval)
+    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval)
     
     min_lat = lat_norm.cdf(lat_range[0])
     max_lat = lat_norm.cdf(lat_range[1])
@@ -84,7 +84,7 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
     return sbvals
     
 
-def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
+def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
 
@@ -96,7 +96,7 @@ def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
     return lat_prob*long_prob*depth_prob*mag_prob
 
 
-def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
+def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
     
@@ -105,10 +105,10 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
     depth_interval = np.abs(depth_range[1] - depth_range[0])
     mag_interval = np.abs(mag_range[1] - mag_range[0])
 
-    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
-    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
-    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
-    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
+    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval)
+    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval)
+    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval)
+    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval)
 
     return lat_norm.pdf(thetas[:,0])*long_norm.pdf(thetas[:,1])*depth_norm.pdf(thetas[:,2])*mag_norm.pdf(thetas[:,3])
 
