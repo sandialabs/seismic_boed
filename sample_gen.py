@@ -51,10 +51,10 @@ def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp, skip
     depth_interval = np.abs(depth_range[1] - depth_range[0])
     mag_interval = np.abs(mag_range[1] - mag_range[0])
 
-    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval*10)
-    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval*10)
-    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval*10)
-    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval*10)
+    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
+    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
+    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
+    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
     
     min_lat = lat_norm.cdf(lat_range[0])
     max_lat = lat_norm.cdf(lat_range[1])
@@ -105,10 +105,10 @@ def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
     depth_interval = np.abs(depth_range[1] - depth_range[0])
     mag_interval = np.abs(mag_range[1] - mag_range[0])
 
-    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval*10)
-    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval*10)
-    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval*10)
-    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval*10)
+    lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=lat_interval/3)
+    long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=long_interval/3)
+    depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval/3)
+    mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval/3)
 
     return lat_norm.pdf(thetas[:,0])*long_norm.pdf(thetas[:,1])*depth_norm.pdf(thetas[:,2])*mag_norm.pdf(thetas[:,3])
 
