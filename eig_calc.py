@@ -226,7 +226,7 @@ if __name__ == '__main__':
         weight_loglike = recweight_loglikes[idata,:]
 
         probs = np.exp(weight_loglike - np.max(weight_loglike))/np.sum(np.exp(weight_loglike - np.max(weight_loglike)))
-        logprobs = (loglike - np.max(weight_loglike)) - np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))
+        #logprobs = (loglike - np.max(weight_loglike)) - np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))
 
         local_ig[idata] = np.sum(probs*(loglike)) - np.log(np.mean(np.exp(weight_loglike - np.max(weight_loglike)))) - np.max(weight_loglike)
         
