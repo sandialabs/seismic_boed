@@ -110,10 +110,10 @@ def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
     depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=depth_interval)
     mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=mag_interval)
 
-    lat_prob = lat_norm.pdf(thetas[:,0])/(lat_norm.cdf(lat_range[1]) - lat_norm.cdf(lat_range[0]))
-    long_prob = long_norm.pdf(thetas[:,1])/(long_norm.cdf(long_range[1]) - long_norm.cdf(long_range[0]))
-    depth_prob = depth_norm.pdf(thetas[:,2])/(depth_norm.cdf(depth_range[1]) - depth_norm.cdf(depth_range[0]))
-    mag_prob = mag_norm.pdf(thetas[:,3])/(mag_norm.cdf(mag_range[1]) - mag_norm.cdf(mag_range[0]))
+    lat_prob = lat_norm.pdf(thetas[:,0])#/(lat_norm.cdf(lat_range[1]) - lat_norm.cdf(lat_range[0]))
+    long_prob = long_norm.pdf(thetas[:,1])#/(long_norm.cdf(long_range[1]) - long_norm.cdf(long_range[0]))
+    depth_prob = depth_norm.pdf(thetas[:,2])#/(depth_norm.cdf(depth_range[1]) - depth_norm.cdf(depth_range[0]))
+    mag_prob = mag_norm.pdf(thetas[:,3])#/(mag_norm.cdf(mag_range[1]) - mag_norm.cdf(mag_range[0]))
 
     return lat_prob * long_prob * depth_prob * mag_prob
 
