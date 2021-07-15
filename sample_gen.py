@@ -102,7 +102,7 @@ def sample_theta_space(lat_range, long_range, depth_range, mag_range, nsamp, ski
     
     return sbvals
 
-def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_prob):
+def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
 
