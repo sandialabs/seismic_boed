@@ -262,7 +262,7 @@ if __name__ == '__main__':
         
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness, theta_data=theta_data,
                  theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
-                     depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, weight_loglikes=weight_loglikes, dataz=dataz)
+                     depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, weight_loglike=weight_loglike, dataz=dataz)
 
             
         #Probs should retrun some uncertainty on this...
