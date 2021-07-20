@@ -126,7 +126,7 @@ def detection_likelihood(theta, sensors, data):
     for idata in range(0,ndata):
         mask = data[idata,nsens:]
         loglike[idata] = np.sum(mask*np.log(probs) + (1.0 - mask) * np.log(1.0 - probs))
-        return loglike
+    return loglike
 
 
 def compute_loglikes(theta,sensors,data):
