@@ -89,8 +89,8 @@ def sample_theta_space(lat_range, long_range, depth_range, mag_range, nsamp, ski
 
 def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
     def lat_pdf(x, lat_range):
-        unif_pi = .80
-        norm_pi = .20
+        unif_pi = .02
+        norm_pi = .98
 
         norm_dist = stats.norm(loc=(lat_range[1] - lat_range[0])/2 + lat_range[0], scale=.125)
         unif_dist = stats.uniform(loc=lat_range[0],scale=lat_range[1] - lat_range[0])
