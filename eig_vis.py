@@ -27,11 +27,11 @@ def select_training_samples(samples, targets, depth_slice, mag_slice, depth_tol,
 
 
 def plot_surface(data,
-                 t0,
-                 output_path='eig_plots', 
+                 t0, 
                  depth_step=1, mag_step=1,
                  depth_tol=10, mag_tol=.5, 
-                 stepsize=100):
+                 stepsize=100,
+                 output_path='eig_plots',):
 
     print(f'Configuring data for plots: {time.time() - t0}')
     # Specify training data for Gaussian Processs
