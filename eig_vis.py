@@ -94,7 +94,7 @@ def plot_surface(data,
                 curr_plot += 1
                 continue
 
-            print(f'Training GP model: {time.time() -t0}')
+            print(f'Training GP model with {len(training_targets)} samples: {time.time() -t0}')
             model = GPR()
             model.fit(training_inputs, training_targets)
     #             
