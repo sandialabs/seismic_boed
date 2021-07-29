@@ -31,8 +31,8 @@ def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, ski
 #so that we dont have to consider them to be uniform.
 
 def sample_theta_space(lat_range, long_range, depth_range, mag_range, nsamp, skip):
-    sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-    Change so seed can be set
+    # sbvals = sq.i4_sobol_generate(4, 1*nsamp)
+    # Change so seed can be set
     dim_num = 4
     sbvals = np.full((nsamp, dim_num), np.nan)
     for j in range(nsamp):
@@ -88,33 +88,44 @@ def sample_theta_space(lat_range, long_range, depth_range, mag_range, nsamp, ski
     # return sbvals
 
 def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
-    def lat_pdf(x, lat_range):
+    def loc_pdf(x, lat_range,long_range):
+        # Mixture weights
         unif_pi = .02
-        norm_pi = .98
+        fault_pi = .49
+        box_pi = .49
 
-        norm_dist = stats.norm(loc=(lat_range[1] - lat_range[0])/2 + lat_range[0], scale=.125)
-        unif_dist = stats.uniform(loc=lat_range[0],scale=lat_range[1] - lat_range[0])
+        # Parameters to define box of bivariate normal
+        box_lower = np.array([lat_range[0], long_range[0]])
+        box_upper = np.array([lat_range[1], long_range[1]])
+        box_means = np.array([40.25,-109])
+        box_cov = np.array([[.125,0],[0,.125]])
 
-        norm_const = norm_dist.cdf(lat_range[1]) - norm_dist.cdf(lat_range[0])
+        # Parameters to define normal distribution along fault line
+        fault_mean = (long_range[1] - long_range[0])/2 + long_range[0]
+        fault_std = .125
 
-        unif_prob = unif_dist.pdf(x)
-        norm_prob = norm_dist.pdf(x) / norm_const   
+        # Define distributions
+        box_dist = stats.multivariate_normal(mean=box_means, cov=box_cov, allow_singular=False)
+        fault_long = stats.norm(loc=fault_mean, scale=fault_std) # Fault line is normally distributed along longitude
+        unif_lat = stats.uniform(loc=lat_range[0],scale=lat_range[1] - lat_range[0])
+        unif_long = stats.uniform(loc=long_range[0],scale=long_range[1] - long_range[0])
 
-        return unif_pi*unif_prob + norm_pi*norm_prob
+        # Constants for normalizing truncated distributions
+        fault_const = fault_long.cdf(long_range[1]) - fault_long.cdf(long_range[0])
+        box_const, _ = stats.mvn.mvnun(box_lower, box_upper, box_means, box_cov)
 
-    def long_pdf(x, long_range):
-        unif_pi = .80
-        # norm_pi = .20
+        # Get probabilities for each mixture component
+        unif_lat_prob = unif_lat.pdf(x[:,0])
+        unif_long_prob = unif_long.pdf(x[:,1])
+        unif_prob = unif_lat_prob * unif_long_prob
+        
+        fault_long_prob = fault_long.pdf(x[:,1]) / fault_const
+        fault_lat_prob = unif_lat.pdf(x[:,0])
+        fault_prob = fault_lat_prob * fault_long_prob
+        
+        box_prob = box_dist.pdf(x) / box_const
 
-        # norm_dist = stats.norm(loc=(long_range[1] - long_range[0])/2 + long_range[0], scale=.125)
-        unif_dist = stats.uniform(loc=long_range[0],scale=long_range[1] - long_range[0])
-
-        # norm_const = norm_dist.cdf(long_range[1]) - norm_dist.cdf(long_range[0])
-
-        unif_prob = unif_dist.pdf(x)
-        # norm_prob = norm_dist.pdf(x) / norm_const   
-
-        return unif_prob#*unif_pi + norm_pi*norm_prob
+        return unif_pi*unif_prob + fault_pi*fault_prob + box_pi*box_prob
 
     def depth_pdf(x, depth_range):
         dist = stats.uniform(loc=depth_range[0], scale=depth_range[1])
@@ -126,15 +137,14 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
 
         return mag_prob/mag_const
 
-  if len(thetas.shape) == 1:
-        thetas = thetas.reshape((1,-1))
+    if len(thetas.shape) == 1:
+            thetas = thetas.reshape((1,-1))
 
-    lat_prob = lat_pdf(thetas[:,0], lat_range)
-    long_prob = long_pdf(thetas[:,1], long_range)
+    loc_prob = loc_pdf(thetas[:,:2], lat_range, long_range)
     depth_prob = depth_pdf(thetas[:,2], depth_range)
     mag_prob = mag_pdf(thetas[:,3], mag_range)
     
-    return lat_prob * long_prob * depth_prob * mag_prob
+    return loc_prob * depth_prob * mag_prob
     # lat_prob = 1/np.abs(lat_range[1]-lat_range[0])
     # long_prob = 1/np.abs(long_range[1] - long_range[0])
     # depth_prob = 1/np.abs(depth_range[1] - depth_range[0])
