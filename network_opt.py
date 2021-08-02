@@ -106,6 +106,7 @@ if __name__ == '__main__':
 
             print("OUTPUTDATA:", outputdata.shape)
             print(outputdata)
+            print(sloc_trial.tolist())
             #update the optimizer
             opt.tell(sloc_trial.tolist(),-1.0*outputdata[0])
 
