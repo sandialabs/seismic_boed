@@ -104,6 +104,8 @@ if __name__ == '__main__':
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
             eigdata_full[inc,:] = outputdata
 
+            print('OUTPUTDATA:", outputdata.shape)
+            print(outputdata)
             #update the optimizer
             opt.tell(sloc_trial.tolist(),-1.0*outputdata[0])
 
