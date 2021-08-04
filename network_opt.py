@@ -134,12 +134,15 @@ if __name__ == '__main__':
     
     # Path to save final output
     result_path = os.path.join(save_path, save_file)
+    opt_res_path = os.path.join(save_path, 'opt_obj.pkl')
 
     if verbose == 0:        
             np.savez(result_path, sensors=sensors)
+            dump(opt, opt_res_path)
         
     if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1), flush=True)
             print(sensors, flush=True)
             np.savez(result_path, sensors=sensors)
+            dump(opt, opt_res_path)
