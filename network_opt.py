@@ -65,6 +65,7 @@ if __name__ == '__main__':
             #write temp input file
             fname = 'input_runner.dat'
             sloc_trial = sensor_loc_random[inc,:]
+            print(sloc_trial)
             write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors)
 
             #run my MPI
