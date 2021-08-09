@@ -114,14 +114,17 @@ if __name__ == '__main__':
             #save the optimization results for fun
             if verbose == 1:
                 # Filenames for outputs
+                opt_obj_str = f'opt_opj{sensors.shape[0]+1}.pkl'
                 opt_result_str = f'result{sensors.shape[0]+1}.pkl'
                 eig_result_str = f'result_eigdata{sensors.shape[0]+1}.npz'
 
                 # Paths for outputs
+                opt_obj_path = os.path.join(save_path, opt_obj_str)
                 opt_result_path = os.path.join(save_path, opt_result_str)
                 eig_result_path = os.path.join(save_path, eig_result_str)
 
-                dump(opt.get_result, opt_result_path)
+                dump(opt.get_result(), opt_result_path)
+                dump(opt, opt_obj_path)
                 np.savez(eig_result_path, sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
 
         #now find optimial placement
@@ -135,15 +138,12 @@ if __name__ == '__main__':
     
     # Path to save final output
     result_path = os.path.join(save_path, save_file)
-    opt_res_path = os.path.join(save_path, 'opt_obj.pkl')
 
     if verbose == 0:        
             np.savez(result_path, sensors=sensors)
-            dump(opt, opt_res_path)
         
     if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1), flush=True)
             print(sensors, flush=True)
             np.savez(result_path, sensors=sensors)
-            dump(opt, opt_res_path)
