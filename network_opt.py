@@ -114,7 +114,7 @@ if __name__ == '__main__':
             #save the optimization results for fun
             if verbose == 1:
                 # Filenames for outputs
-                opt_obj_str = f'opt_opj{sensors.shape[0]+1}.pkl'
+                opt_obj_str = f'opt_obj{sensors.shape[0]+1}.pkl'
                 opt_result_str = f'result{sensors.shape[0]+1}.pkl'
                 eig_result_str = f'result_eigdata{sensors.shape[0]+1}.npz'
 
