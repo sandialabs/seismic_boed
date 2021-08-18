@@ -78,7 +78,11 @@ if __name__ == '__main__':
         #Initialize the optimizer not it minimizes
         #0 -> EI    
         if opt_type == 0:
-            opt = Optimizer([(sensor_lat_range[0],sensor_lat_range[1]),(sensor_long_range[0],sensor_long_range[1])], "GP", n_initial_points=0, acq_optimizer="lbfgs", acq_func="EI")
+            # Specify appropriate length scale
+            kernel = 1.0 * RBF(length_scale=[1.0, 1.0,], length_scale_bounds=(0.2, 1)) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-2, 5e-1))
+            gp = GaussianProcessRegressor(kernel=kernel,alpha=0.0, normalize_y=True)
+
+            opt = Optimizer([(sensor_lat_range[0],sensor_lat_range[1]),(sensor_long_range[0],sensor_long_range[1])], gp, n_initial_points=0, acq_optimizer="lbfgs", acq_func="EI")
 
         opt.tell(sensor_loc_random.tolist(),(-1.0*eigdata[:,0]).tolist())
 
