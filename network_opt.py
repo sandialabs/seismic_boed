@@ -12,6 +12,8 @@ from utils import read_opt_file, write_input_file
 from sample_gen import sample_sensors
 
 from skopt import Optimizer, expected_minimum, dump
+from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
+from skopt.learning import GaussianProcessRegressor
 
 
 
