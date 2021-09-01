@@ -49,6 +49,11 @@ if __name__ == '__main__':
         theta_data = generate_theta_data(lat_range, long_range, depth_range, mag_range, nlpts_data, 0)
         nthetadim = theta_data.shape[1]
         
+        #The data samples need to be importance corrected
+        data_importance_evals = eval_importance(theta_data,lat_range,long_range,depth_range,mag_range)
+        data_prior_evals = eval_theta_prior(theta_data,lat_range,long_range,depth_range,mag_range)
+        data_importance_weight = data_prior_evals/data_importance_evals
+
         counts = nthetadim * nlpts_data // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_data * nthetadim, nthetadim * nlpts_data // size)
     else:
@@ -250,9 +255,11 @@ if __name__ == '__main__':
     
     #Now summarize and return results
     if rank == 0:
-        eig = np.mean(ig)
-        seig = np.std(ig)
+        eig = np.average(ig, weights=data_importance_weight)
+        veig = np.average((ig-eig)**2, weights=data_importance_weight)
+        seig = np.sqrt(veig)
         miness = np.min(ess)
+
         if verbose == 0:
             np.savez(save_file, eig=eig, seig=seig, miness=miness)
             
@@ -262,7 +269,7 @@ if __name__ == '__main__':
         
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness, theta_data=theta_data,
                  theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
-                     depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, weight_loglike=weight_loglike, dataz=dataz)
+                     depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, weight_loglike=weight_loglike, dataz=dataz, data_importance_weight=data_importance_weight)
 
             
         #Probs should retrun some uncertainty on this...
