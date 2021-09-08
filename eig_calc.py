@@ -255,8 +255,9 @@ if __name__ == '__main__':
     
     #Now summarize and return results
     if rank == 0:
-        eig = np.average(ig, weights=data_importance_weight)
-        veig = np.average((ig-eig)**2, weights=data_importance_weight)
+        weights_arr = np.repeat(data_importance_weight,ndata)
+        eig = np.average(ig, weights=weights_arr)
+        veig = np.average((ig-eig)**2, weights=weights_arr)
         seig = np.sqrt(veig)
         miness = np.min(ess)
 
