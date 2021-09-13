@@ -123,7 +123,7 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
         fault_lat_prob = unif_lat.pdf(x[:,0])
         fault_prob = fault_lat_prob * fault_long_prob
         
-        box_prob = box_dist.pdf(x) / box_const
+        box_prob = box_dist.pdf(x[:,:2]) / box_const
 
         return unif_pi*unif_prob + fault_pi*fault_prob + box_pi*box_prob
 
