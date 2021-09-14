@@ -28,7 +28,7 @@ if __name__ == '__main__':
         #                sensor type and accuracy, optimization criteria (e.g. UCB, EI)
         #Also need info for how to run mpi and how many sensors to place
 
-        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors, mpirunstring, nsensor_place = read_opt_file(sys.argv[1])
+        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_file, sensors, mpirunstring, nsensor_place = read_opt_file(sys.argv[1])
 
         save_file = sys.argv[2]
         save_path = sys.argv[3]
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             fname = 'input_runner2.dat'
             sloc_trial = sensor_loc_random[inc,:]
             print(sloc_trial)
-            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors)
+            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)

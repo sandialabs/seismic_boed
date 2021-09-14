@@ -5,13 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from utils import read_input_file, plot_surface
-from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
+# from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from data_gen import generate_data
 from like_models import compute_loglikes
 
 import time
 import sys
 import os
+import importlib
 
 from mpi4py import MPI
 
@@ -31,9 +32,15 @@ if __name__ == '__main__':
         t0 = time.time()
         
         if len(sys.argv) == 4:
-            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors = read_input_file(sys.argv[1])
+            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_file, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
+            sampling_file = importlib.import_module(sampling_file)
+            generate_theta_data = sampling_file.generate_theta_data
+            sample_theta_space = sampling_file.sample_theta_space
+            eval_importance = sampling_file.eval_importance
+            eval_theta_prior = sampling_file.eval_theta_prior
+
 
             if (verbose == 1 or verbose == 2):
                 print("Configuring Run: " + str(t0), flush=True)
