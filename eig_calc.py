@@ -32,10 +32,10 @@ if __name__ == '__main__':
         t0 = time.time()
         
         if len(sys.argv) == 4:
-            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_file, sensors = read_input_file(sys.argv[1])
+            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_fname, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
-            sampling_file = importlib.import_module(sampling_file[:-4])
+            sampling_file = importlib.import_module(sampling_fname[:-4])
             generate_theta_data = sampling_file.generate_theta_data
             sample_theta_space = sampling_file.sample_theta_space
             eval_importance = sampling_file.eval_importance
@@ -77,6 +77,7 @@ if __name__ == '__main__':
         theta_data = None
         counts = None
         dspls = None
+        sampling_fname = None
     
     #Distribute everythong to the cores
     nlpts_data = comm.bcast(nlpts_data, root=0)
@@ -88,7 +89,13 @@ if __name__ == '__main__':
     mag_range = comm.bcast(mag_range, root=0)
     sensors = comm.bcast(sensors, root=0)
     nthetadim = comm.bcast(nthetadim, root=0)
+    sampling_fname = comm.bcast(sampling_fname, root=0)
 
+    if rank != 0:
+        sampling_file = importlib.import_module(sampling_fname[:-4])
+        eval_importance = sampling_file.eval_importance
+        eval_theta_prior = sampling_file.eval_theta_prior 
+      
     if rank == 0 and verbose == 1:
         t1 = time.time() - t0
         print("Generating Synthetic Data: " + str(t1), flush=True)
