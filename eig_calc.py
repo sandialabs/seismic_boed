@@ -35,7 +35,7 @@ if __name__ == '__main__':
             nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_file, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
-            sampling_file = importlib.import_module(sampling_file)
+            sampling_file = importlib.import_module(sampling_file[:-3])
             generate_theta_data = sampling_file.generate_theta_data
             sample_theta_space = sampling_file.sample_theta_space
             eval_importance = sampling_file.eval_importance
