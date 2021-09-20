@@ -75,6 +75,8 @@ if __name__ == '__main__':
             stdout, stderr = process.communicate()
             print(stdout)
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
+            if type(outputdata) == str:
+                print(outputdata)
             eigdata[inc,:] = outputdata
 
         #Initialize the optimizer not it minimizes
