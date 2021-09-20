@@ -28,7 +28,7 @@ if __name__ == '__main__':
         #                sensor type and accuracy, optimization criteria (e.g. UCB, EI)
         #Also need info for how to run mpi and how many sensors to place
 
-        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_file, sensors, mpirunstring, nsensor_place = read_opt_file(sys.argv[1])
+        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place = read_opt_file(sys.argv[1])
 
         save_file = sys.argv[2]
         save_path = sys.argv[3]
@@ -74,9 +74,9 @@ if __name__ == '__main__':
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
             print(stdout)
+
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
-            if type(outputdata) == str:
-                print(outputdata)
+
             eigdata[inc,:] = outputdata
 
         #Initialize the optimizer not it minimizes
