@@ -65,13 +65,13 @@ if __name__ == '__main__':
                 print(str(sensors.shape[0]+1) + ' ' + str(inc) + ' ' + str(t1), flush=True)
                 
             #write temp input file
-            fname = 'input_runner2.dat'
+            fname = 'input_runner.dat'
             sloc_trial = sensor_loc_random[inc,:]
             print(sloc_trial)
             write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 ../eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
             print(stdout)
 
@@ -105,10 +105,10 @@ if __name__ == '__main__':
 
             #get the test pt
             sloc_trial = np.array(opt.ask())
-            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors)
+            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 ../eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
             eigdata_full[inc,:] = outputdata
