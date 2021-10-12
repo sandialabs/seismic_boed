@@ -53,7 +53,7 @@ if __name__ == '__main__':
         #Randomly selection the random trial points (right now this is going to be the same every isamp stage)
         #becuase we are intializing the psuedo random seed the same each time.
         sensor_loc_random = sample_sensors(sensor_lat_range,sensor_long_range, nopt_random,nlpts_data+nlpts_space)
-        print(sensor_loc_random)
+
         #For each trial point:
         #     Write the input ifile with the sensor info under consideration
         #     run the eig calculator
@@ -67,13 +67,12 @@ if __name__ == '__main__':
             #write temp input file
             fname = 'input_runner.dat'
             sloc_trial = sensor_loc_random[inc,:]
-            print(sloc_trial)
+
             write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 ../eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
-            print(stdout)
 
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
 
@@ -108,14 +107,11 @@ if __name__ == '__main__':
             write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 ../eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
             eigdata_full[inc,:] = outputdata
 
-            print("OUTPUTDATA:", outputdata.shape)
-            print(outputdata)
-            print(sloc_trial.tolist())
             #update the optimizer
             opt.tell(sloc_trial.tolist(),-1.0*outputdata[0])
 
