@@ -270,8 +270,8 @@ if __name__ == '__main__':
     #Now summarize and return results
     if rank == 0:
         weights_arr = np.repeat(data_importance_weight,ndata)
-        eig = np.average(ig, weights=weights_arr)
-        veig = np.mean((ig*weights_arr)**2) - eig**2
+        eig = np.mean(ig * weights_arr)
+        veig = 1/len(weights_arr) * (np.mean((ig*weights_arr)**2) - eig**2)
         seig = np.sqrt(veig)
         miness = np.min(ess)
 
