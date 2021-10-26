@@ -61,10 +61,12 @@ git clone git@cee-gitlab.sandia.gov:tacatan/seismic_oed.git
 |Line 4| Latitude Range | 40.0, 42.0 |
 |Line 5| Longitude Range | -112.0, -108.38 |
 |Line 6| Depth Range | 0.0, 40.0 |
-|Line 7| Sensor 1: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -111.5,0.1,2,0 |
-|Line 8| Sensor 2: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 41.0, -111.9,0.1,2,0 |
+|Line 7| Magnitude Range | 0.5, 10.0|
+|Line 8| Sample Generation Filename: file containing sampling functions and pdfs for both prior distribution and importance distribution |sample_gen.py|
+|Line 9| Sensor 1: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -111.5,0.1,2,0 |
+|Line 10| Sensor 2: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 41.0, -111.9,0.1,2,0 |
 |... | ... | ... |
-|Line 6+N| Sensor N: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -110.0,0.1,2,0 |
+|Line 8+N| Sensor N: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -110.0,0.1,2,0 |
 
 Note that for HPC simulations, # Synthetic events to test and # Possible Events in the event space must be divisible by the number of cores. For example this configuration is valid if ncores = 1,2,4,8,16, or 32. Also note that (# Synthetic Events) x (# Possible Events) x (# Ralizations) must be less than 2147483647 due to MPI constraints.
 
@@ -161,12 +163,14 @@ Additionally, an output numpy file (e.g. outputs.npz) is created. The variables 
 |Line 10| Event Latitude Range | 40.0, 42.0 |
 |Line 11| Event Longitude Range | -112.0, -108.38 |
 |Line 12| Event Depth Range | 0.0, 40.0 |
-|Line 13| MPI string to run code | mpiexec --bind-to core --npernode 16 --n 256 |
-|Line 14| # sensors to add e.g. number of optimization levels| 5 |
-|Line 15| Sensor 1: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -111.5,0.1,2,0 |
-|Line 16| Sensor 2: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 41.0, -111.9,0.1,2,0 |
+|Line 13| Event Magnitude Range |0.5, 10.0|
+|Line 14| MPI string to run code | mpiexec --bind-to core --npernode 16 --n 256 |
+|Line 15|  Sample Generation Filename: file containing sampling functions and pdfs for both prior distribution and importance distribution |sample_gen.py|
+|Line 16| # sensors to add e.g. number of optimization levels| 5 |
+|Line 17| Sensor 1: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -111.5,0.1,2,0 |
+|Line 18| Sensor 2: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 41.0, -111.9,0.1,2,0 |
 |... | ... | ... |
-|Line 14+N| Sensor N: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -110.0,0.1,2,0 |
+|Line 16+N| Sensor N: Lat, Long, Noise Std, Length of sensor output vec, Sensor type| 40.0, -110.0,0.1,2,0 |
 
 This code will take initial set of N sensors defined by this list and then iteratively add the number of sensors defined by line 14 e.g. 5 in this example to the existing network.
 
@@ -180,10 +184,10 @@ First request an allocation like before. Here the number of nodes and cores need
 To submit an Interactive Job: salloc -N16 --time=2:00:00 --account=FY210056 --partition=short,batch
 
 Then run the code. This is done with the following syntax:<br>
-python3 network_opt.py [Input File] [Output Numpy File] [Verbose]
+python3 network_opt.py [Input File] [Output Numpy File] [Output File Save Directory] [Verbose]
 
 For example on skybridge:<br>
-python3 network_opt.py inputs_opt.dat opt_network.npz 1
+python3 network_opt.py inputs_opt.dat opt_network.npz opt_outputs 1
 
 There are two levels of verbose. 0 corresponds to no output except the final list of sensors in the output file e.g. opt_network.npz. 1 gives print statements to describe how the optimzation process is proceeding. At every step the results of the optimization model and the EIG statistics used to fit that model are saved in the files result*.pkl and result_eigdata*.npz respectively, where * is the sensor number being placed.
 
@@ -212,7 +216,7 @@ nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of nodes you
 cores=16                             # Number MPI processes to run on each node (a.k.a. PPN)
                                      # CTS1 has 36 cores per node, skybridge 16
 
-python3 -u network_opt.py inputs_opt.dat opt_network.npz 1
+python3 -u network_opt.py inputs_opt.dat opt_network.npz opt_outputs 1
 ```
 
 This can then be submitted by:<br>
@@ -222,7 +226,7 @@ sbatch opt_batch.bash
 Running network_opt.py locally is much the same others. The input file e.g. inputs_opt.dat will need to be modified so that the mpi script corresponds to how you run MPI code locally. For example, line 13 for my machine would be "mpiexec -n 8" to run on 8 cores.
 
 Then to run the code simply run it like in the other examples:<br>
-python3 network_opt.py inputs_opt.dat opt_network.npz 1
+python3 network_opt.py inputs_opt.dat opt_network.npz opt_outputs 1
 
 ## Optimization output <a name="OOutput"></a>
 When network_opt.py finishes, it will display the optimized sensor network configuration e.g. for each sensor its lat, long, noise level, number of output variables, and sensor type. This network configuration will then be saved in the output numpy file (e.g. opt_network.npz). 
@@ -233,12 +237,21 @@ Additionally, if the verbose flag is set to 1, two files are created per optimiz
 There are several basic components to the Bayesian model for OED that need to be specified. The first three components are for both optimization and analysis. The first is how we sample the event space. This means how we are going to generate our synthetic events for generating data and our set of candidate events that we use during inference. Second is sampling the synthetic data which means how we take a synthetic event and a sensor configuration and then generate a synthetic dataset for that event. Third, are the likelihood models that we use in Bayesian inference to compute the posterior probability of our candidate events given the synthetic data. Finally, if we are also doing optimization, we need to define how we generate random trial sensor configuration to seed the optimization algorithm.
 
 ## Sampling the event space <a name="Events"></a>
-The module sample_gen.py contains two functions sample_prior and descritize_space that are used to sample the event space. Modifying these functions can be used to change the model. The two functions serve very similar purposes, e.g. returning a set of events, so for many applications they can be the same. An event corresponds to the theta vector that contains the full distribution we are considering about an event like an earthquake or explosion. Both of these functions take as input the variables lat_range, long_range, depth_range, nsamp, and skip. The variables lat_range, long_range, and depth_range correspond to the limits of our spatial domain for generating events. The variable nsamp defines how many events we want to generate. And skip is a seed variable that tells us how to start our quasi-random number generator so that we don't duplicate events. Both these codes return the variable sbvals which contain the description of the event. This event description can have any dimension that are set by modifying these codes. In the examples provided, it is 4D corresponding to lat, long, depth, and event magnitude. In principle, other characteristics could be added such as a seismic moment tensor or a source time function parameter. The provided codes uses the quasi monte carlo sobol sequence to generate a uniform set of events, but any sampling method could be used in these codes.
+This code uses importance sampling to sample the event space, meaning that it draws samples from a non-prior distribution called the importance distribution and then weights those samples according to the likelihood ratio between the importance and the prior in order to approximate the prior distribution. The sample generation file that is given in line 8 of the input file for eig_calc.py or in line 15 of the input file for network_opt.py should contain four functions with these specific names: 
+|Function Name| Description        |
+| -------------| ------------- |
+|generate_theta_data| Generates synthetic events by sampling from the importance distribution |
+|sample_theta_space| Discretizes the sample space according to the importance distribution |
+|eval_theta_prior| Evaluates the PDF of the prior distribution on a set of samples  |
+|eval_importance| Evaluates the PDF of the importance distribution on a set of samples |
 
-The sample_prior function returns a set of events generated from the prior distribution over data generating events. These events will be used to generate the synthetic data and in the code are called theta_data. For computing EIG, the prior distribution over data generating events should be the prior distribution over event hypothesis. However, for some applications it may make sense to bias this distribution meaning that you care more about EIG about a certain type of events. For example, you may only care about EIG for events less than magnitude 2 or events within 1km of the surface. This information could be used to bias the distribution.
+ The two functions ```generate_theta_data``` and ```sample_theta_space``` serve very similar purposes, e.g. returning a set of events, so for many applications they can be the same. The distribution according to which they are returned can be modified to serve a variety of purposes. An event corresponds to the theta vector that contains the full distribution we are considering about an event like an earthquake or explosion. By default, both of these functions take as input the variables lat_range, long_range, depth_range, mag_range, nsamp, and skip. The variables lat_range, long_range, and depth_range correspond to the limits of our spatial domain for generating events. The variable nsamp defines how many events we want to generate. And skip is a seed variable that tells us how to start our quasi-random number generator so that we don't duplicate events. Both these codes return the variable sbvals which contain the description of the event. This event description can have any dimension that are set by modifying these codes. In the examples provided, it is 4D corresponding to lat, long, depth, and event magnitude. In principle, other characteristics could be added such as a seismic moment tensor or a source time function parameter.
+
+The ```generate_theta_data``` function should return a set of events generated from the importance distribution over data generating events. These events will be used to generate the synthetic data and in the code are called theta_data. For computing EIG, the prior distribution over data generating events should be the prior distribution over event hypothesis. However, for some applications it may make sense to bias this distribution, meaning that you care more about EIG about a certain type of events. For example, you may only care about EIG for events less than magnitude 2 or events within 1km of the surface. This information could be used to bias the distribution.
+
 
 ```python
-def sample_prior(lat_range,long_range, depth_range, nsamp, skip):
+def generate_theta_data(lat_range, long_range, depth_range, mag_range, nsamp, skip):
     dim_num = 4
     sbvals = np.full((nsamp, dim_num), np.nan)
     for j in range(nsamp):
@@ -252,9 +265,9 @@ def sample_prior(lat_range,long_range, depth_range, nsamp, skip):
     
     return sbvals
 ```
-The descritize_space function returns a set of events distributed according to the prior over event hypotheses e.g. our prior knowledge in Bayesian inference. These events will be used to define the space of candidate events whose likelihood we will infer from the synthetic data. In the code this is the variable theta_space. These finite number of events from the prior will in effect be used to discretize the posterior distribution so that solving the Bayesian inference problem is easier. In the current version of the code, these events must be distributed according to the prior over candidate events.
+The ``sample_theta_space`` function returns a set of events distributed according to importance distribution, which will then be used to approximate the prior over event hypotheses e.g. our prior knowledge in Bayesian inference. These events will be used to define the space of candidate events whose likelihood we will infer from the synthetic data. In the code this is the variable theta_space. These finite number of events from the prior will in effect be used to discretize the posterior distribution so that solving the Bayesian inference problem is easier.
 ```python
-def descritize_space(lat_range,long_range, depth_range, nsamp,skip):
+def sample_theta_space(lat_range,long_range, depth_range, mag_range, nsamp,skip):
     dim_num = 4
     sbvals = np.full((nsamp, dim_num), np.nan)
     for j in range(nsamp):
@@ -289,9 +302,9 @@ def generate_data(theta,sensors,ndata):
 ```
 
 ## Constructing the likelihood <a name="Like"></a>
-In module like_models.py we have our likelihood function models. Therefore, this is very similar to the data_gen.py module except instead of generating the synthetic data given an event, it computes the log likelihood of synthetic data given an event. The core function for this is compute_loglikes. This function takes as input the variables theta, sensors, and data. Theta corresponds to the event hypothesis whose likelihood we want to assess. Sensors corresponds to the sensor network configuration. And data, is the synthetic data that we want to compute the likelihood of for each sensor. In this code, data is the full dataset for all experiments since for each experiment we need to compute the likelihood for each event hypothesis so it is most efficient to do it in this vectorized form. So data has dimensions [nlpts_data * ndata, # of sensors * Length of sensor output vec] and corresponds to the variables dataz in the eig_calc.py code. The output, loglikes, of this code is the log likelihood of the data given the event hypothesis theta and has dimensions [nlpts_data * ndata].
+In module like_models.py we have our likelihood function models. Therefore, this is very similar to the data_gen.py module except instead of generating the synthetic data given an event, it computes the log likelihood of synthetic data given an event. The core function for this is ``compute_loglikes``. This function takes as input the variables theta, sensors, and data. Theta corresponds to the event hypothesis whose likelihood we want to assess. Sensors corresponds to the sensor network configuration. And data, is the synthetic data that we want to compute the likelihood of for each sensor. In this code, data is the full dataset for all experiments since for each experiment we need to compute the likelihood for each event hypothesis so it is most efficient to do it in this vectorized form. So data has dimensions [nlpts_data * ndata, # of sensors * Length of sensor output vec] and corresponds to the variables dataz in the eig_calc.py code. The output, loglikes, of this code is the log likelihood of the data given the event hypothesis theta and has dimensions [nlpts_data * ndata].
 
-Within the compute_loglike funciton, any sensor type model can be implemented as long as it agrees with the models used in the data_gen.py module. In this example, the likelihood, given the event hypothesis theta, is computed based on the probability of detecting an arrival at each station and if an arrival is detected then the probability of detecting an arrival with that arrival time. Other likelihood models could be easily added to the module and put into this function.
+Within the ``compute_loglikes`` funciton, any sensor type model can be implemented as long as it agrees with the models used in the data_gen.py module. In this example, the likelihood, given the event hypothesis theta, is computed based on the probability of detecting an arrival at each station and if an arrival is detected then the probability of detecting an arrival with that arrival time. Other likelihood models could be easily added to the module and put into this function.
 ```python
 def compute_loglikes(theta,sensors,data):
     dloglikes = detection_likelihood(theta,sensors,data)
@@ -302,7 +315,7 @@ def compute_loglikes(theta,sensors,data):
 ```
 
 ## Sampling sensor locations <a name="Sensors"></a>
-The module sample_gen.py contains a functions sample_sensors that is used to generate random sensor locations. This is useful for seeding the optimization problem. These initial stations are used to build an initial GP model of the optimization surface that can then be refined through Bayesian optimization. It takes as input the variables: lat_range, long_range, nsamp, and skip. Lat_range and Long_range define the domain on which we can place sensors. Nsamp defines the number of quasi-random sensors we want to generate. Skip defines the seed of the quasi random generator. The output of the code, sbvals, is a set of sensor locations. In principle any method could be used to generate the random stations but in this code we use a quasi random uniform distribution through the Sobol sequence. 
+The module sample_gen.py contains a functions ``sample_sensors`` that is used to generate random sensor locations. This is useful for seeding the optimization problem. These initial stations are used to build an initial GP model of the optimization surface that can then be refined through Bayesian optimization. It takes as input the variables: lat_range, long_range, nsamp, and skip. Lat_range and Long_range define the domain on which we can place sensors. Nsamp defines the number of quasi-random sensors we want to generate. Skip defines the seed of the quasi random generator. The output of the code, sbvals, is a set of sensor locations. In principle any method could be used to generate the random stations but in this code we use a quasi random uniform distribution through the Sobol sequence. 
 
 ```python
 def sample_sensors(lat_range,long_range, nsamp,skip):

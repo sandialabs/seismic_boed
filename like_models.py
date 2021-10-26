@@ -26,33 +26,70 @@ def detection_probability(theta,sensors):
             probs[isens] = model.predict_proba(x)[0][1]
     return probs
 
-def compute_mean_tt(theta, sensors):
-    model = TauPyModel(model="iasp91")
-    src_lat = theta[0]
-    src_long = theta[1]
-    zdepth = theta[2]
 
-    rlats = sensors[:,0]
-    rlongs = sensors[:,1]
+#Improved TT STD Model
+def tt_std_cal(depth, dist):
+    params = np.array([ -2.56472101e+02,   1.74085841e+01,  -1.19406851e-03,
+        -1.66597693e-04,   9.91187799e-08,   1.17056345e+01,
+        -8.13371656e-01,   8.42272315e-04,   2.80802067e-06,
+         3.60764706e-09,   1.21624463e-01,  -8.63214584e-03,
+        -7.45214280e-06,   1.25905904e-07,  -1.21859595e-10,
+        -1.19443389e-02,   8.67089566e-04,  -1.11453054e-06,
+        -1.11651169e-09,  -7.07702285e-12,   1.39921004e-04,
+        -1.03707528e-05,   1.97886651e-08,  -2.93026404e-11,
+         1.57527073e-13,   1.23554461e-03,   1.84229583e-02,
+        -2.18347658e-04,   9.53900469e-07,  -1.26729653e-09,
+         3.64225546e-02,  -3.39939908e-03,   3.16659333e-05,
+        -1.02362420e-07,   1.11272994e-10,  -3.75764388e-03,
+         2.73743286e-04,  -2.10488918e-06,   5.69748506e-09,
+        -5.17365299e-12,   1.49883472e-04,  -9.66468438e-06,
+         6.99133567e-08,  -1.79611764e-10,   1.56300210e-13,
+        -1.98606449e-06,   1.21461076e-07,  -8.71278276e-10,
+         2.26330123e-12,  -2.03871471e-15,  -3.61047221e+01,
+         1.75671838e+01])
     
-    ptime = np.zeros(len(rlats))
-    #iangle = np.zeros(len(rlats))
-    #azmth = np.zeros(len(rlats))
+    ndim = 5
+    poly0 = np.reshape(params[0:(ndim**2)],(ndim,ndim))
+    poly1 = np.reshape(params[(ndim**2):(2*ndim**2)],(ndim,ndim))
+    g = -1.0*np.abs(params[2*ndim**2])
+    h = np.abs(params[2*ndim**2+1])
+    
+    boolg = 1.0/(1.0+np.exp(-h*(depth+g)))
+    std0 = np.polynomial.polynomial.polyval2d(depth,dist,poly0)
+    std1 = np.polynomial.polynomial.polyval2d(depth,dist,poly1)
+    std = std0*boolg + std1*(1.0-boolg)
+    return std
 
-    for isens in range(0,len(rlats)):
-        rlat = rlats[isens]
-        rlong = rlongs[isens]
-
-        #models
-        arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, receiver_longitude_in_deg=rlong, phase_list=["P","p"])
-        #azmthdata = geodetics.gps2dist_azimuth(src_lat, src_long, rlat, rlong)
-
-        #record data from the first arrival. Assume always in the azimuthal plane.
-        ptime[isens] = arrivals[0].time
-        #iangle[isens] = arrivals[0].incident_angle
-        #azmth[isens] = azmthdata[1]
-        
-    return ptime
+#magnitude dependeint measurment error
+def meas_std_cal(dist, mag, snroffset):
+    #fit from TA Arrray Data nominally, snroffset = 0
+    a = 0.90593911
+    b = 0.92684044
+    c = 5.54237317
+    
+    #add nugget for numerical stablity
+    logsnr = a*mag + c - b*np.log(dist+10**-10) + snroffset
+    
+    #Uncertainty in Phase Arrival Time Picks for Regional Seismic Events: An Experimental Design
+    # Velasco et al 2001 (SAND Report)
+    #Simple IDC SNR only model
+    
+    #Nomial values from "Improving Regional Seismic Event Location in China"
+    #Steck et al 2001
+    
+    sig0 = 1.0
+    gamma = 0.1
+    tl = 5
+    tu = 50
+    
+    if logsnr < np.log(tl):
+        sig = sig0
+    else:
+        if logsnr > np.log(tu):
+                sig = gamma*sig0
+        else:
+                sig = sig0 - (1.0-gamma)*sig0/(np.log(tu)-np.log(tl)) * (logsnr - np.log(tl))
+    return sig
 
 def compute_corr(theta, sensors):
     rlats = sensors[:,0]
@@ -72,19 +109,59 @@ def compute_corr(theta, sensors):
 
 
 
+def compute_tt(theta, sensors):
+    model = TauPyModel(model="iasp91")
+    src_lat = theta[0]
+    src_long = theta[1]
+    zdepth = theta[2]
+    src_mag = theta[3]
+
+    rlats = sensors[:,0]
+    rlongs = sensors[:,1]
+    sensor_fidelity = sensors[:,2]
+    
+    #mean and model std and measurment std
+    ptime = np.zeros((len(rlats),3))
+    #iangle = np.zeros(len(rlats))
+    #azmth = np.zeros(len(rlats))
+
+    for isens in range(0,len(rlats)):
+        rlat = rlats[isens]
+        rlong = rlongs[isens]
+
+        #models
+        arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, receiver_longitude_in_deg=rlong, phase_list=["P","p"])
+        #azmthdata = geodetics.gps2dist_azimuth(src_lat, src_long, rlat, rlong)
+
+        #record data from the first arrival. Assume always in the azimuthal plane.
+        ptime[isens,0] = arrivals[0].time
+        #iangle[isens] = arrivals[0].incident_angle
+        #azmth[isens] = azmthdata[1]
+
+        deltakm = geodetics.degrees2kilometers(geodetics.locations2degrees(src_lat, src_long, rlat, rlong))
+        model_std = tt_std_cal(zdepth, deltakm)
+        ptime[isens,1] = model_std
+
+        measure_std = meas_std_cal(deltakm, src_mag, sensor_fidelity[isens])
+        ptime[isens,2] = measure_std
+
+    return ptime
+
+
+
 #Compute likelhood of each event given dataset
 
 
 def arrival_likelihood_gaussian(theta, sensors, data):
     #compute mean
-    mean_tt = compute_mean_tt(theta, sensors)
+    tt_data = compute_tt(theta, sensors)
+
+    mean_tt = tt_data[:,0]
+    stdmodel = tt_data[:,1]
+    measurenoise = tt_data[:,2]
     
     #compute corr matrix
     corr = compute_corr(theta, sensors)
-    
-    measurenoise = sensors[:,2]
-    stdmodel = (2.75758229e-02)*mean_tt + (-5.57985096e-04)*(mean_tt**2.0) + (1.63610033e-05)*(mean_tt**3.0)
-    
     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
     
     [ndata, ndpt] = data.shape
