@@ -108,7 +108,8 @@ def compute_corr(theta, sensors):
     return corr
 
 
-s
+
+def compute_tt(theta, sensors):
     model = TauPyModel(model="iasp91")
     src_lat = theta[0]
     src_long = theta[1]
