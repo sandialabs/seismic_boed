@@ -77,8 +77,8 @@ def meas_std_cal(dist, mag, snroffset):
     #Nomial values from "Improving Regional Seismic Event Location in China"
     #Steck et al 2001
     
-    sig0 = 1.0
-    gamma = 0.1
+    sig0 = 10.0
+    gamma = 0.001
     tl = 5
     tu = 50
     
@@ -108,8 +108,7 @@ def compute_corr(theta, sensors):
     return corr
 
 
-
-def compute_tt(theta, sensors):
+s
     model = TauPyModel(model="iasp91")
     src_lat = theta[0]
     src_long = theta[1]
