@@ -78,7 +78,7 @@ def meas_std_cal(dist, mag, snroffset):
     #Steck et al 2001
     
     sig0 = 10.0
-    gamma = 0.001
+    gamma = 0.01
     tl = 5
     tu = 50
     
