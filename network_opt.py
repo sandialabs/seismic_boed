@@ -12,13 +12,15 @@ from utils import read_opt_file, write_input_file
 from sample_gen import sample_sensors
 
 from skopt import Optimizer, expected_minimum, dump
+from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
+from skopt.learning import GaussianProcessRegressor
 
 
 
 
 if __name__ == '__main__':
     t0 = time.time()
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 5:
         #Load optimization parameters + parameters that will be needed to bulid the input file to the eig code
         #Needed for input files: nlpts, ndata, lat_range, long_range, depth_range, sensors
         #Assume we are doing sequential greedy sensor placement
@@ -26,10 +28,13 @@ if __name__ == '__main__':
         #                sensor type and accuracy, optimization criteria (e.g. UCB, EI)
         #Also need info for how to run mpi and how many sensors to place
 
-        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sensors, mpirunstring, nsensor_place = read_opt_file(sys.argv[1])
+        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place = read_opt_file(sys.argv[1])
 
         save_file = sys.argv[2]
-        verbose = int(sys.argv[3])
+        save_path = sys.argv[3]
+        verbose = int(sys.argv[4])
+ 
+        os.makedirs(save_path, exist_ok=True)
 
         if verbose == 1:
             t1 = time.time()-t0
@@ -37,7 +42,7 @@ if __name__ == '__main__':
     else:
         #python3 network_opt.py inputs_opt.dat sensor_opt.npz 1
         #verbose options: 0 (only output is the final sensor network), 1 full output
-        sys.exit('Usage: python3 network_opt.py loc_file save_file verbose')
+        sys.exit('Usage: python3 network_opt.py loc_file save_file save_path verbose')
     
     
     for isamp in range(0,nsensor_place):
@@ -62,18 +67,25 @@ if __name__ == '__main__':
             #write temp input file
             fname = 'input_runner.dat'
             sloc_trial = sensor_loc_random[inc,:]
-            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sloc_trial, sensor_params, sensors)
+
+            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
+
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
+
             eigdata[inc,:] = outputdata
 
         #Initialize the optimizer not it minimizes
         #0 -> EI    
         if opt_type == 0:
-            opt = Optimizer([(sensor_lat_range[0],sensor_lat_range[1]),(sensor_long_range[0],sensor_long_range[1])], "GP", n_initial_points=0, acq_optimizer="lbfgs", acq_func="EI")
+            # Specify appropriate length scale
+            kernel = 1.0 * RBF(length_scale=[1.0, 1.0,], length_scale_bounds=(0.2, 1)) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-2, 5e-1))
+            gp = GaussianProcessRegressor(kernel=kernel,alpha=0.0, normalize_y=True)
+
+            opt = Optimizer([(sensor_lat_range[0],sensor_lat_range[1]),(sensor_long_range[0],sensor_long_range[1])], gp, n_initial_points=0, acq_optimizer="lbfgs", acq_func="EI")
 
         opt.tell(sensor_loc_random.tolist(),(-1.0*eigdata[:,0]).tolist())
 
@@ -92,7 +104,7 @@ if __name__ == '__main__':
 
             #get the test pt
             sloc_trial = np.array(opt.ask())
-            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, sloc_trial, sensor_params, sensors)
+            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
@@ -105,8 +117,19 @@ if __name__ == '__main__':
 
             #save the optimization results for fun
             if verbose == 1:
-                dump(opt.get_result, 'result' + str(sensors.shape[0]+1) + '.pkl')
-                np.savez('result_eigdata' + str(sensors.shape[0]+1)+'.npz', sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
+                # Filenames for outputs
+                opt_obj_str = f'opt_obj{sensors.shape[0]+1}.pkl'
+                opt_result_str = f'result{sensors.shape[0]+1}.pkl'
+                eig_result_str = f'result_eigdata{sensors.shape[0]+1}.npz'
+
+                # Paths for outputs
+                opt_obj_path = os.path.join(save_path, opt_obj_str)
+                opt_result_path = os.path.join(save_path, opt_result_str)
+                eig_result_path = os.path.join(save_path, eig_result_str)
+
+                dump(opt.get_result(), opt_result_path)
+                dump(opt, opt_obj_path)
+                np.savez(eig_result_path, sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
 
         #now find optimial placement
         newsensor, neig = expected_minimum(opt.get_result())
@@ -116,12 +139,15 @@ if __name__ == '__main__':
         sensorvec[0:2] = newsensor
         sensorvec[2:] = sensor_params
         sensors = np.vstack((sensors,sensorvec))
-        
+    
+    # Path to save final output
+    result_path = os.path.join(save_path, save_file)
+
     if verbose == 0:        
-            np.savez(save_file, sensors=sensors)
+            np.savez(result_path, sensors=sensors)
         
     if verbose == 1:
             t1 = time.time() - t0
             print("Returning Results: " + str(t1), flush=True)
             print(sensors, flush=True)
-            np.savez(save_file, sensors=sensors)
+            np.savez(result_path, sensors=sensors)
