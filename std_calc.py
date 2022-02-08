@@ -120,7 +120,9 @@ if __name__ == '__main__':
             print(str(ievent) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
             
         theta = recvtheta_data[ievent,:]
-        localdataz[(ievent*ndata):((ievent+1)*ndata),:] = generate_data(theta,sensors,ndata)
+        data_returns =  generate_data(theta,sensors,ndata)
+        localdataz[(ievent*ndata):((ievent+1)*ndata),:] = data_returns[0]
+        meas_noise = data_returns[1]
 
 
 
@@ -134,7 +136,7 @@ if __name__ == '__main__':
         dataz = np.zeros((nlpts_data*ndata,dataveclen))
         
     comm.Gatherv([localdataz, scounts, MPI.DOUBLE], [dataz, rcounts, rdspls, MPI.DOUBLE], root=0)  
-    print(dataz[:5])  
+    print(dataz)  
     
     #Now everyone needs a copy of the full dataset now
     dataz = comm.bcast(dataz, root=0)
