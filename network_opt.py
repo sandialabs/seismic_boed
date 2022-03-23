@@ -71,10 +71,10 @@ if __name__ == '__main__':
                 fname = 'input_runner.dat'
             sloc_trial = sensor_loc_random[inc,:]
 
-            write_input_file(os.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
+            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
 
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
