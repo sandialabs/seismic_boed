@@ -65,13 +65,16 @@ if __name__ == '__main__':
                 print(str(sensors.shape[0]+1) + ' ' + str(inc) + ' ' + str(t1), flush=True)
                 
             #write temp input file
-            fname = 'input_runner.dat'
+            if verbose==1:
+                fname = f'input_runner_{sensors.shape[0]+1}-{inc}.dat'
+            else:
+                fname = 'input_runner.dat'
             sloc_trial = sensor_loc_random[inc,:]
 
-            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
+            write_input_file(os.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + fname + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
 
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
@@ -100,36 +103,23 @@ if __name__ == '__main__':
                 print(str(sensors.shape[0]+1) + ' '+ str(inc)+ " " + str(-1.0*opt.get_result().fun) + " " + str(t1), flush=True)
             
             #write temp input file
-            fname = 'input_runner.dat'
+            if verbose==1:
+                fname = f'input_runner_{sensors.shape[0]+1}-{inc}.dat'
+            else:
+                fname = 'input_runner.dat'
 
             #get the test pt
             sloc_trial = np.array(opt.ask())
-            write_input_file(fname, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
+            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
-            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py input_runner.dat outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
+            process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
             eigdata_full[inc,:] = outputdata
 
             #update the optimizer
             opt.tell(sloc_trial.tolist(),-1.0*outputdata[0])
-
-            #save the optimization results for fun
-            if verbose == 1:
-                # Filenames for outputs
-                opt_obj_str = f'opt_obj{sensors.shape[0]+1}.pkl'
-                opt_result_str = f'result{sensors.shape[0]+1}.pkl'
-                eig_result_str = f'result_eigdata{sensors.shape[0]+1}.npz'
-
-                # Paths for outputs
-                opt_obj_path = os.path.join(save_path, opt_obj_str)
-                opt_result_path = os.path.join(save_path, opt_result_str)
-                eig_result_path = os.path.join(save_path, eig_result_str)
-
-                dump(opt.get_result(), opt_result_path)
-                dump(opt, opt_obj_path)
-                np.savez(eig_result_path, sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
 
         #now find optimial placement
         newsensor, neig = expected_minimum(opt.get_result())
@@ -139,6 +129,21 @@ if __name__ == '__main__':
         sensorvec[0:2] = newsensor
         sensorvec[2:] = sensor_params
         sensors = np.vstack((sensors,sensorvec))
+        #save the optimization results for fun
+        if verbose == 1:
+            # Filenames for outputs
+            opt_obj_str = f'opt_obj{sensors.shape[0]+1}.pkl'
+            opt_result_str = f'result{sensors.shape[0]+1}.pkl'
+            eig_result_str = f'result_eigdata{sensors.shape[0]+1}.npz'
+
+            # Paths for outputs
+            opt_obj_path = os.path.join(save_path, opt_obj_str)
+            opt_result_path = os.path.join(save_path, opt_result_str)
+            eig_result_path = os.path.join(save_path, eig_result_str)
+
+            dump(opt.get_result(), opt_result_path)
+            dump(opt, opt_obj_path)
+            np.savez(eig_result_path, sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
     
     # Path to save final output
     result_path = os.path.join(save_path, save_file)
