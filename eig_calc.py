@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from utils import read_input_file, plot_surface
 # from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
@@ -15,7 +14,8 @@ import os
 import importlib
 
 from mpi4py import MPI
-
+import warnings
+warnings.filterwarnings('error')
 
 if __name__ == '__main__':
     comm = MPI.COMM_WORLD
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     for ievent in range(0,local_nlpts_data):
         if rank == 0 and verbose == 1:
             t1 = time.time() - t0
-            print(str(ievent) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
+            print(str(ievent+1) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
             
         theta = recvtheta_data[ievent,:]
         localdataz[(ievent*ndata):((ievent+1)*ndata),:] = generate_data(theta,sensors,ndata)
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     for ievent in range(0,local_nlpts_space):
         if rank == 0 and verbose == 1:
             t1 = time.time() - t0
-            print(str(ievent) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
+            print(str(ievent+1) + " of " + str(local_nlpts_space) + " " + str(t1), flush=True)
             
         theta = recvtheta_space[ievent,:]
 
@@ -239,7 +239,7 @@ if __name__ == '__main__':
     for idata in range(0,local_ndataz):
         if rank == 0 and verbose == 1:
             t1 = time.time() - t0
-            print(str(idata) + " of " + str(local_ndataz) + " " + str(t1), flush=True)
+            print(str(idata + 1) + " of " + str(local_ndataz) + " " + str(t1), flush=True)
         loglike = recloglikes[idata,:]
         weight_loglike = recweight_loglikes[idata,:]
 

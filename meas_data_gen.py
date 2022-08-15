@@ -28,7 +28,7 @@ def generate_data(theta,sensors,ndata):
     
     #sample arrival times
     atimes, measurenoise = gen_arrival_normal(theta, sensors, ndata)
-    
+   
     #get data[probs arrivaltimes]
-    data = np.concatenate((atimes,u_mat<fullprobs,measurenoise),axis=1)
-    return data
+    data = np.concatenate((atimes,u_mat<fullprobs),axis=1)
+    return data, np.mean(measurenoise)

@@ -21,6 +21,10 @@ def detection_probability(theta,sensors):
     probs = np.ones(sensors.shape[0])
     
     for isens in range(0,sensors.shape[0]):
+        if sensors[isens, 4] == 1:
+            # if sensor type is instant arrival, assume detection
+            probs[isens] = 1 - 1e-15    
+        else:
             delta = geodetics.locations2degrees(slat, slong, sensors[isens][0], sensors[isens][1])
             x = np.asarray([sdepth, delta, smag]).reshape(1, -1)
             probs[isens] = model.predict_proba(x)[0][1]
@@ -101,12 +105,19 @@ def compute_corr(theta, sensors):
     for isens in range(0,len(rlats)):
         for jsens in range(isens,len(rlats)):
             #147.5 was fit from the 1D profiles
+            if sensors[isens, 4] == 1:
+                # Make instant arrival sensors uncorrelated with all others
+                if isens == jsens:
+                    corr[isens, jsens] = 1
+                else:
+                    corr[isens, jsens] = 0
+                    corr[jsens, isens] = 0
+
             azmthdata = geodetics.gps2dist_azimuth(rlats[isens], rlongs[isens], rlats[jsens], rlongs[jsens])
             corr[isens,jsens] = np.exp(-1.0/(lscal**2) * (azmthdata[0]/1000.0)**2)
             corr[jsens,isens] = np.exp(-1.0/(lscal**2) * (azmthdata[0]/1000.0)**2)
             
     return corr
-
 
 
 def compute_tt(theta, sensors):
@@ -134,15 +145,28 @@ def compute_tt(theta, sensors):
         #azmthdata = geodetics.gps2dist_azimuth(src_lat, src_long, rlat, rlong)
 
         #record data from the first arrival. Assume always in the azimuthal plane.
-        ptime[isens,0] = arrivals[0].time
+        if sensors[isens, 4] == 1:
+            # instant arrival time for sensors of that type
+            ptime[isens, 0] = 0
+        else:
+            ptime[isens,0] = arrivals[0].time
         #iangle[isens] = arrivals[0].incident_angle
         #azmth[isens] = azmthdata[1]
 
         deltakm = geodetics.degrees2kilometers(geodetics.locations2degrees(src_lat, src_long, rlat, rlong))
-        model_std = tt_std_cal(zdepth, deltakm)
+        if sensors[isens,4] ==1:
+            model_std = 0.001
+        else:
+            model_std = tt_std_cal(zdepth, deltakm)
+        
         ptime[isens,1] = model_std
 
-        measure_std = meas_std_cal(deltakm, src_mag, sensor_fidelity[isens])
+        if sensors[isens, 4] == 1:
+            # give instant arrival sensors negligible measurement error
+            measure_std = .001
+        else:
+            measure_std = meas_std_cal(deltakm, src_mag, sensor_fidelity[isens])
+        
         ptime[isens,2] = measure_std
 
     return ptime

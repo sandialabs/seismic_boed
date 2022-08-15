@@ -1,5 +1,8 @@
 import numpy as np
 import like_models as lm
+import time
+import warnings
+warnings.filterwarnings('ignore')
 
 def gen_arrival_normal(theta, sensors, ndata):
     # Variance is combination of arrival time and general sensor variance
@@ -13,8 +16,8 @@ def gen_arrival_normal(theta, sensors, ndata):
     #compute corr matrix
     corr = lm.compute_corr(theta, sensors)
     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-    return np.random.multivariate_normal(mean_tt, cov, ndata)
 
+    return np.random.multivariate_normal(mean_tt, cov, ndata)
 
 def generate_data(theta,sensors,ndata):
     #compute detection probablity
