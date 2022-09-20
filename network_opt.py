@@ -14,9 +14,10 @@ from sample_gen import sample_sensors
 from skopt import Optimizer, expected_minimum, dump
 from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 from skopt.learning import GaussianProcessRegressor
+from boundedbayesopt import BoundedBayesOpt as BBO
 
-
-
+import warnings
+warnings.filterwarnings('ignore')
 
 if __name__ == '__main__':
     t0 = time.time()
@@ -28,12 +29,12 @@ if __name__ == '__main__':
         #                sensor type and accuracy, optimization criteria (e.g. UCB, EI)
         #Also need info for how to run mpi and how many sensors to place
 
-        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place = read_opt_file(sys.argv[1])
+        nopt_random, nopt_total, sensor_lat_range, sensor_long_range, bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place = read_opt_file(sys.argv[1])
 
         save_file = sys.argv[2]
         save_path = sys.argv[3]
         verbose = int(sys.argv[4])
- 
+        location_bounds = np.load(bounds_file, allow_pickle=True)
         os.makedirs(save_path, exist_ok=True)
 
         if verbose == 1:
@@ -76,7 +77,7 @@ if __name__ == '__main__':
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
-
+            print(stdout)
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
 
             eigdata[inc,:] = outputdata
@@ -88,9 +89,7 @@ if __name__ == '__main__':
             kernel = 1.0 * RBF(length_scale=[1.0, 1.0,], length_scale_bounds=(0.2, 1)) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-2, 5e-1))
             gp = GaussianProcessRegressor(kernel=kernel,alpha=0.0, normalize_y=True)
 
-            opt = Optimizer([(sensor_lat_range[0],sensor_lat_range[1]),(sensor_long_range[0],sensor_long_range[1])], gp, n_initial_points=0, acq_optimizer="lbfgs", acq_func="EI")
-
-        opt.tell(sensor_loc_random.tolist(),(-1.0*eigdata[:,0]).tolist())
+            opt = BBO(sensor_loc_random, (-1.*eigdata[:,0]), kernel, location_bounds)
 
         eigdata_full = np.zeros([nopt_total,3])
         eigdata_full[0:nopt_random,:] = eigdata
@@ -109,20 +108,23 @@ if __name__ == '__main__':
                 fname = 'input_runner.dat'
 
             #get the test pt
-            sloc_trial = np.array(opt.ask())
+            sloc_trial = np.array(opt.ask())[:,[1,0]]
             write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
+            print(stdout)
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
             eigdata_full[inc,:] = outputdata
 
             #update the optimizer
+            print(-1.*outputdata[0])
+            print(outputdata[0].shape)
             opt.tell(sloc_trial.tolist(),-1.0*outputdata[0])
 
         #now find optimial placement
-        newsensor, neig = expected_minimum(opt.get_result())
+        newsensor, neig = opt.expected_minimum()
 
         #append sensor to the list of sensors
         sensorvec = np.zeros(sensors.shape[1])
@@ -143,7 +145,7 @@ if __name__ == '__main__':
 
             dump(opt.get_result(), opt_result_path)
             dump(opt, opt_obj_path)
-            np.savez(eig_result_path, sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.Xi))
+            np.savez(eig_result_path, sensors=sensors,eigdata_full=eigdata_full,Xs=np.array(opt.X_sample))
     
     # Path to save final output
     result_path = os.path.join(save_path, save_file)
