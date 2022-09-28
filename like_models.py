@@ -143,7 +143,6 @@ def compute_tt(theta, sensors):
         #models
         arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, receiver_longitude_in_deg=rlong, phase_list=["P","p"])
         #azmthdata = geodetics.gps2dist_azimuth(src_lat, src_long, rlat, rlong)
-
         #record data from the first arrival. Assume always in the azimuthal plane.
         if sensors[isens, 4] == 1:
             # instant arrival time for sensors of that type
@@ -189,7 +188,7 @@ def arrival_likelihood_gaussian(theta, sensors, data):
     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
     
     [ndata, ndpt] = data.shape
-    nsens = np.int(ndpt/2)
+    nsens = int(ndpt/2)
     
     loglike = np.zeros(ndata)
     
@@ -220,7 +219,7 @@ def detection_likelihood(theta, sensors, data):
     probs = detection_probability(theta,sensors)
     
     [ndata, ndpt] = data.shape
-    nsens = np.int(ndpt/2)
+    nsens = int(ndpt/2)
     
     loglike = np.zeros(ndata)
     

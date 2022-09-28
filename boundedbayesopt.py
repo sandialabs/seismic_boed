@@ -12,7 +12,7 @@ import copy
 import inspect
 
 class BoundedBayesOpt():
-    def __init__(self, init_X, init_Y, kernel, bounds, target_fun=None, noise=.1, acq_func=None, max_model_queue_size=30):
+    def __init__(self, kernel, bounds, init_X=None, init_Y=None, target_fun=None, noise=.1, acq_func=None, max_model_queue_size=30):
         self.specs = {"args": copy.copy(inspect.currentframe().f_locals),
               "function": "Optimizer"}
         # Initialize arrays for storing samples from target function
@@ -39,28 +39,30 @@ class BoundedBayesOpt():
 #             bounds = bounds.reshape((1, *bounds.shape))
 #         elif (len(bounds.shape) >3 or len(bounds.shape) < 2):
 #             raise ValueError('Must pass array of arrays of 2d boundary coordinates')
-            
-        self.bounds = bounds
+        self.bounds = []
 
-        min_x = bounds[0].min()
-        min_y = bounds[0].min()
-        max_x = bounds[0].max()
-        max_y = bounds[0].max()
-        
+        for i in range(len(bounds)):
+            self.bounds.append(bounds[i][:,[1,0]].copy())
+
+        min_x = self.bounds[0][:,0].min()
+        min_y = self.bounds[0][:,1].min()
+        max_x = self.bounds[0][:,0].max()
+        max_y = self.bounds[0][:,1].max()
+
         for i in range(1,len(bounds)):
-            curr_minx = bounds[i].min()
-            curr_miny = bounds[i].min()
-            curr_maxx = bounds[i].max()
-            curr_maxy = bounds[i].max()
-            
-        if curr_minx < min_x:
-            min_x = curr_minx
-        if curr_miny < min_y:
-            min_y = curr_miny
-        if curr_maxx > max_x:
-            max_x = curr_maxx
-        if curr_maxy > max_y:
-            max_y = curr_maxy
+            curr_minx = self.bounds[i][:,0].min()
+            curr_miny = self.bounds[i][:,1].min()
+            curr_maxx = self.bounds[i][:,0].max()
+            curr_maxy = self.bounds[i][:,1].max()
+
+            if curr_minx < min_x:
+                min_x = curr_minx
+            if curr_miny < min_y:
+                min_y = curr_miny
+            if curr_maxx > max_x:
+                max_x = curr_maxx
+            if curr_maxy > max_y:
+                max_y = curr_maxy
 
         self.sample_bounds = np.array([[min_x, max_x], 
                                   [min_y, max_y]])
@@ -154,10 +156,11 @@ class BoundedBayesOpt():
             addon_pts = np.random.uniform(self.sample_bounds[:,0], 
                                           self.sample_bounds[:,1], 
                                           size=(n_restarts - valid_test_pts.shape[0], dim))
-            
+#             print(addon_pts)
             valid_addon_pts_idx = self.check_valid(addon_pts)
             valid_test_pts = np.vstack((valid_test_pts, addon_pts[valid_addon_pts_idx]))
             
+#         print(valid_test_pts)
         # Find the best optimum by starting from n_restart different random points.
         for x0 in valid_test_pts:
 
@@ -165,15 +168,23 @@ class BoundedBayesOpt():
             if res.fun < min_val:
                 min_val = res.fun
                 min_x = res.x   
-
+        print(min_x.reshape((-1,2)))
         return min_x.reshape(-1, 2)
     
     def tell(self, X_next, Y_next):
         if not isinstance(Y_next, (list, np.ndarray)):
             Y_next = np.array(Y_next)
+        
         # Add sample to previous samples
-        self.X_sample = np.vstack((self.X_sample, X_next))
-        self.Y_sample = np.vstack((self.Y_sample, Y_next))
+        if self.X_sample is None:
+            self.X_sample = X_next
+        else:
+            self.X_sample = np.vstack((self.X_sample, X_next))
+            
+        if self.Y_sample is None:
+            self.Y_sample = Y_next
+        else:
+            self.Y_sample = np.vstack((self.Y_sample, Y_next))
         
         # Update surrogate function
         self.gpr.fit(self.X_sample, self.Y_sample)

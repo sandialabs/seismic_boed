@@ -112,7 +112,7 @@ if __name__ == '__main__':
     #Every core generate hypohtetical dataset on their bit of theta
     #Generate Hypothetical Datasets
 
-    dataveclen = np.int(sensors.shape[0]*sensors[0,3])
+    dataveclen = int(sensors.shape[0]*sensors[0,3])
     localdataz = np.zeros([local_nlpts_data*ndata,dataveclen])
     for ievent in range(0,local_nlpts_data):
         if rank == 0 and verbose == 1:
