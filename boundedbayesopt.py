@@ -35,10 +35,10 @@ class BoundedBayesOpt():
         if not isinstance(bounds, np.ndarray):
             bounds = np.array(bounds)
             
-#         if len(bounds.shape) == 2:
-#             bounds = bounds.reshape((1, *bounds.shape))
-#         elif (len(bounds.shape) >3 or len(bounds.shape) < 2):
-#             raise ValueError('Must pass array of arrays of 2d boundary coordinates')
+        if len(bounds.shape) == 2:
+            bounds = bounds.reshape((1, *bounds.shape))
+        elif (len(bounds.shape) >3 or len(bounds.shape) < 2):
+            raise ValueError('Must pass array of arrays of 2d boundary coordinates')
         self.bounds = []
 
         for i in range(len(bounds)):

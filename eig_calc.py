@@ -32,7 +32,7 @@ if __name__ == '__main__':
         t0 = time.time()
         
         if len(sys.argv) == 4:
-            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_fname, sensors = read_input_file(sys.argv[1])
+            nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_fname, bounds_file, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
             sampling_file = importlib.import_module(sampling_fname[:-4])
@@ -40,6 +40,8 @@ if __name__ == '__main__':
             sample_theta_space = sampling_file.sample_theta_space
             eval_importance = sampling_file.eval_importance
             eval_theta_prior = sampling_file.eval_theta_prior
+            bounds_fname = bounds_fname=bounds_file[:-1]
+            bounds = np.load(bounds_fname, allow_pickle=True)
 
 
             if (verbose == 1 or verbose == 2):
@@ -53,12 +55,12 @@ if __name__ == '__main__':
         #Sample prior some how to generate events that we will use to generate data
         #This is not distributed
         #Set seed to 0 here
-        theta_data = generate_theta_data(lat_range, long_range, depth_range, mag_range, nlpts_data, 0)
+        theta_data = generate_theta_data(lat_range, long_range, depth_range, mag_range, nlpts_data, 0, bounds)
         nthetadim = theta_data.shape[1]
         
         #The data samples need to be importance corrected
-        data_importance_evals = eval_importance(theta_data,lat_range,long_range,depth_range,mag_range)
-        data_prior_evals = eval_theta_prior(theta_data,lat_range,long_range,depth_range,mag_range)
+        data_importance_evals = eval_importance(theta_data,lat_range,long_range,depth_range,mag_range, bounds)
+        data_prior_evals = eval_theta_prior(theta_data,lat_range,long_range,depth_range,mag_range, bounds)
         data_importance_weight = data_prior_evals/data_importance_evals
 
         counts = nthetadim * nlpts_data // size * np.ones(size, dtype=int)
@@ -78,6 +80,7 @@ if __name__ == '__main__':
         counts = None
         dspls = None
         sampling_fname = None
+        bounds_fname = None
     
     #Distribute everythong to the cores
     nlpts_data = comm.bcast(nlpts_data, root=0)
@@ -90,11 +93,13 @@ if __name__ == '__main__':
     sensors = comm.bcast(sensors, root=0)
     nthetadim = comm.bcast(nthetadim, root=0)
     sampling_fname = comm.bcast(sampling_fname, root=0)
+    bounds_fname = comm.bcast(bounds_fname, root=0)
 
     if rank != 0:
         sampling_file = importlib.import_module(sampling_fname[:-4])
         eval_importance = sampling_file.eval_importance
         eval_theta_prior = sampling_file.eval_theta_prior 
+        bounds = np.load(bounds_fname, allow_pickle=True)
       
     if rank == 0 and verbose == 1:
         t1 = time.time() - t0
@@ -144,7 +149,7 @@ if __name__ == '__main__':
     
     if rank == 0:
         #seed with nlpts_data so that it starts sampling after that so we dont overlap pts.
-        theta_space = sample_theta_space(lat_range,long_range, depth_range, mag_range, nlpts_space, nlpts_data) # Could return theta space and sample weight    
+        theta_space = sample_theta_space(lat_range,long_range, depth_range, mag_range, nlpts_space, nlpts_data, bounds) # Could return theta space and sample weight    
         counts = nthetadim * nlpts_space // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_space * nthetadim, nthetadim * nlpts_space // size)
     else:
@@ -178,8 +183,8 @@ if __name__ == '__main__':
             
         theta = recvtheta_space[ievent,:]
 
-        importance_evals = eval_importance(theta,lat_range,long_range,depth_range,mag_range)
-        prior_evals = eval_theta_prior(theta,lat_range,long_range,depth_range,mag_range)
+        importance_evals = eval_importance(theta,lat_range,long_range,depth_range,mag_range,bounds)
+        prior_evals = eval_theta_prior(theta,lat_range,long_range,depth_range,mag_range,bounds)
         importance_weight = prior_evals/importance_evals
     
         #compute likelihoods
