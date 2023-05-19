@@ -15,7 +15,7 @@ import importlib
 
 from mpi4py import MPI
 import warnings
-warnings.filterwarnings('error')
+# warnings.filterwarnings('error')
 
 if __name__ == '__main__':
     comm = MPI.COMM_WORLD
@@ -116,8 +116,9 @@ if __name__ == '__main__':
     
     #Every core generate hypohtetical dataset on their bit of theta
     #Generate Hypothetical Datasets
-
-    dataveclen = int(sensors.shape[0]*sensors[0,3])
+    
+    # Hardcoding 4 data types is not idea, think of better way to make this dynamic
+    dataveclen = int(sensors.shape[0]*4)
     localdataz = np.zeros([local_nlpts_data*ndata,dataveclen])
     for ievent in range(0,local_nlpts_data):
         if rank == 0 and verbose == 1:
@@ -160,7 +161,7 @@ if __name__ == '__main__':
     
     if rank == 0 and verbose == 1:
         t1 = time.time() - t0
-        print("Computing Likelihood: " + str(t1), flush=True)
+        print("Computing Likelihood: " + str(t1), "Rank", rank, "comm size", size, flush=True)
             
     #prepaire to recieve the theta_space for each node
     # holder for everyone to recive there part of the theta vector
