@@ -60,33 +60,22 @@ if __name__ == '__main__':
             gp = GaussianProcessRegressor(kernel=kernel,alpha=0.0, normalize_y=True)
 
             opt = BBO(kernel, location_bounds)
-        print(opt.sample_bounds)
 
         sensor_lat_range = opt.sample_bounds[0]
         sensor_long_range = opt.sample_bounds[1]
-        print(sensor_lat_range, sensor_long_range)
 
         #Randomly selection the random trial points (right now this is going to be the same every isamp stage)
         #becuase we are intializing the psuedo random seed the same each time.
         sensor_loc_random = sample_sensors(sensor_lat_range,sensor_long_range, nopt_random,nlpts_data+nlpts_space)
         
-        print('Sampled sensors:')
-        print(sensor_loc_random, '\n')
-
         # Make sure trial points are within bounds
         valid_loc_idx = opt.check_valid(sensor_loc_random)
         valid_trial_pts = sensor_loc_random[valid_loc_idx]
-        print('Valid sensors:')
-        print(valid_trial_pts, '\n')
         it=0
         while len(valid_trial_pts) < nopt_random:
             addon_pts = sample_sensors(sensor_lat_range, sensor_long_range, nopt_random, nlpts_data+nlpts_space+it)
-            print(f'Addon pts (noptrandom) {it}:')
-            print(addon_pts, '\n')
             valid_addons_idx = opt.check_valid(addon_pts)
             valid_trial_pts = np.vstack((valid_trial_pts, addon_pts[valid_addons_idx]))
-#             print('New trial pts')
-#             print(valid_trial_pts)
             it += 1
         
         #For each trial point:
@@ -98,7 +87,7 @@ if __name__ == '__main__':
             if verbose == 1:
                 t1 = time.time() - t0
                 print(str(sensors.shape[0]+1) + ' ' + str(inc) + ' ' + str(t1), flush=True)
-                
+            
             #write temp input file
             if verbose==1:
                 fname = f'input_runner_{sensors.shape[0]+1}-{inc}.dat'
@@ -106,12 +95,12 @@ if __name__ == '__main__':
                 fname = 'input_runner.dat'
             sloc_trial = valid_trial_pts[inc,:]
 
-            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
+            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range,
+            depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file, bounds_file)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
-            print(stdout)
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
 
             eigdata[inc,:] = outputdata
@@ -123,7 +112,6 @@ if __name__ == '__main__':
 
         #Iterage
         for inc in range(nopt_random,nopt_total):
-            print(opt.sample_bounds)          
             if verbose == 1:
                 t1 = time.time() - t0
                 print(str(sensors.shape[0]+1) + ' '+ str(inc)+ " " + str(-1.0*opt.get_result().fun) + " " + str(t1), flush=True)
@@ -136,18 +124,16 @@ if __name__ == '__main__':
 
             #get the test pt
             sloc_trial = np.array(opt.ask())
-            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file)
+            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range,
+            depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file, bounds_file)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
-            print(stdout)
             outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
             eigdata_full[inc,:] = outputdata
 
             #update the optimizer
-            print(-1.*outputdata[0])
-            print(outputdata[0].shape)
             opt.tell(sloc_trial.tolist(),-1.0*outputdata[0])
 
         #now find optimial placement

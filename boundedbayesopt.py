@@ -156,7 +156,6 @@ class BoundedBayesOpt():
             addon_pts = np.random.uniform(self.sample_bounds[:,0], 
                                           self.sample_bounds[:,1], 
                                           size=(n_restarts - valid_test_pts.shape[0], dim))
-#             print(addon_pts)
             valid_addon_pts_idx = self.check_valid(addon_pts)
             valid_test_pts = np.vstack((valid_test_pts, addon_pts[valid_addon_pts_idx]))
             
@@ -168,7 +167,6 @@ class BoundedBayesOpt():
             if res.fun < min_val:
                 min_val = res.fun
                 min_x = res.x   
-        print(min_x.reshape((-1,2)))
         return min_x.reshape(-1, 2)
     
     def tell(self, X_next, Y_next):

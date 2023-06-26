@@ -36,7 +36,8 @@ def read_input_file(file):
 
 
 #Write Configuration
-def write_input_file(file, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file):
+def write_input_file(file, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial,
+sensor_params, sensors, sampling_file, boundary_file):
 
     writedata=open(file,"w+")
     writedata.write(str(int(nlpts_data)) + "\n")
@@ -49,8 +50,9 @@ def write_input_file(file, nlpts_data, nlpts_space, ndata, lat_range, long_range
     writedata.write((np.array2string(depth_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
     writedata.write((np.array2string(mag_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
 
-    #Read sampling filename
-    sampling_file = writedata.write(sampling_file)
+    #write sampling filename and boundary filename
+    writedata.write(sampling_file + '\n')
+    writedata.write(boundary_file + '\n')
 
     #rest of lines are sensors
     writedata.write((np.array2string(sensors,separator=',',max_line_width=1000)).replace('[','').replace('],','').replace(']','').replace(' ', '') + "\n")
@@ -82,11 +84,13 @@ def read_opt_file(file):
         mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
 
         mpirunstring = readdata.readline()
-        sampling_file = readdata.readline()
+        sampling_file = readdata.readline().strip('\n')
         nsensor_place = int(readdata.readline())
         
         #rest of lines are sensors
         sensorlines=readdata.readlines()
+        print('sensorslines', sensorlines)
+        print('sensorlinestype', type(sensorlines))
         numsen = len(sensorlines)
         
         #lat, long, measurement noise std, length of data vector for sensor, sensor type
@@ -95,6 +99,7 @@ def read_opt_file(file):
         sensors = np.zeros([numsen,nsensordata])
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
+            print('read sensor', sensorline)
             sensors[inc,:] = sensorline
     return nopt_random, nopt_total, sensor_lat_range, sensor_long_range, bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place
 

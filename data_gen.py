@@ -42,7 +42,6 @@ def generate_data(theta,sensors,ndata):
     
     #sample arrival times
     atimes = gen_arrival_normal(theta, sensors, ndata)
-    print(np.sum(u_mat<fullprobs))
     #get data[probs arrivaltimes]
     data = np.concatenate((atimes,u_mat<fullprobs),axis=1)
     return data
