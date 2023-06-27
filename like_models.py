@@ -122,6 +122,8 @@ def compute_corr(theta, sensors):
 
 def compute_tt(theta, sensors):
     model = TauPyModel(model="iasp91")
+#     print(f'THETA:', theta)
+#     print(f'SENSORS:', sensors)
     src_lat = theta[0]
     src_long = theta[1]
     zdepth = theta[2]
@@ -141,6 +143,7 @@ def compute_tt(theta, sensors):
         rlong = rlongs[isens]
 
         #models
+        print(f'ARRIVAL INPUT: {zdepth}, {src_lat}, {src_long}, {rlat}, {rlong}')
         arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, receiver_longitude_in_deg=rlong, phase_list=["P","p"])
         #azmthdata = geodetics.gps2dist_azimuth(src_lat, src_long, rlat, rlong)
         #record data from the first arrival. Assume always in the azimuthal plane.
@@ -148,6 +151,7 @@ def compute_tt(theta, sensors):
             # instant arrival time for sensors of that type
             ptime[isens, 0] = 0
         else:
+            print(f'ARRIVALS: {arrivals}')
             ptime[isens,0] = arrivals[0].time
         #iangle[isens] = arrivals[0].incident_angle
         #azmth[isens] = azmthdata[1]

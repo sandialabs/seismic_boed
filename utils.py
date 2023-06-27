@@ -13,13 +13,11 @@ def read_input_file(file):
         nlpts_data  = int(readdata.readline())
         nlpts_space  = int(readdata.readline())
         ndata = int(readdata.readline())
-        lat_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        long_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        event_boundary_file = readdata.readline()
         depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         
         sampling_file = readdata.readline()
-        boundary_file = readdata.readline()
         
         #rest of lines are sensors
         sensorlines=readdata.readlines()
@@ -32,33 +30,32 @@ def read_input_file(file):
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             sensors[inc,:] = sensorline
-    return nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_file, boundary_file, sensors
+    return nlpts_data, nlpts_space, ndata, event_boundary_file, depth_range, mag_range, sampling_file, sensors
 
 
 #Write Configuration
-def write_input_file(file, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sloc_trial,
-sensor_params, sensors, sampling_file, boundary_file):
+def write_input_file(file, nlpts_data, nlpts_space, ndata, event_boundary_file, depth_range, mag_range, sampling_file, sloc_trial, sensor_params, sensors):
 
     writedata=open(file,"w+")
     writedata.write(str(int(nlpts_data)) + "\n")
     writedata.write(str(int(nlpts_space)) + "\n")
     writedata.write(str(int(ndata)) + "\n")
     
+    # Boundary file for sampling events
+    writedata.write(event_boundary_file + '\n')
+    
     #,max_line_width=1000 to keep numppy from splitting the sensor description up onto multiple lines.
-    writedata.write((np.array2string(lat_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
-    writedata.write((np.array2string(long_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
     writedata.write((np.array2string(depth_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
     writedata.write((np.array2string(mag_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
 
-    #write sampling filename and boundary filename
+    #write sampling filename
     writedata.write(sampling_file + '\n')
-    writedata.write(boundary_file + '\n')
 
     #rest of lines are sensors
     writedata.write((np.array2string(sensors,separator=',',max_line_width=1000)).replace('[','').replace('],','').replace(']','').replace(' ', '') + "\n")
 
     #lat, long, measurement noise std, length of data vector for sensor, sensor type
-    #write teh new sensor
+    #write the new sensor
     writedata.write((np.array2string(sloc_trial,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "," + (np.array2string(sensor_params,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
 
     writedata.close()
@@ -69,17 +66,14 @@ def read_opt_file(file):
     with open(file, 'r') as readdata:
         nopt_random = int(readdata.readline())
         nopt_total = int(readdata.readline())
-        sensor_lat_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        sensor_long_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        bounds_file = readdata.readline().strip('\n')
+        opt_bounds_file = readdata.readline().strip('\n')
         sensor_params = np.fromstring(readdata.readline(), dtype=float, sep=',')
         opt_type = int(readdata.readline())
         
         nlpts_data  = int(readdata.readline())
         nlpts_space  = int(readdata.readline())
         ndata = np.int(readdata.readline())
-        lat_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        long_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        event_bounds_file = readdata.readline().strip('\n')
         depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
         mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
 
@@ -101,7 +95,7 @@ def read_opt_file(file):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             print('read sensor', sensorline)
             sensors[inc,:] = sensorline
-    return nopt_random, nopt_total, sensor_lat_range, sensor_long_range, bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place
+    return nopt_random, nopt_total, opt_bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, event_bounds_file, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place
 
 
 def plot_surface(data,
