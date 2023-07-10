@@ -3,9 +3,90 @@ import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 import time
+import json
 
 from sklearn.gaussian_process import GaussianProcessRegressor as GPR
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+
+
+def read_bounds(bounds_file, sensor_bounds=False):
+    """
+    Loads boundary configuration options from specified file.
+
+    Parameters
+    ----------
+    bounds_file (str)    : filepath to file containing domain information.
+    sensor_bounds (bool) : declares whether function is returning bounds for sensor placement (True)
+                           or event sampling (False).
+
+    Returns
+    -------
+    latlon_bounds (array_like) : Array containing points that define a polygon inside which valid
+                                 latitude and longitude coordinates may be chosen.
+    
+    depth_bounds (array_like)  : Array containing two points defining the range from which valid
+                                 depths may be chosen. Returned only if sensor_bounds is False.
+    mag_bounds (array_like)    : Array containing two points defining the range from which valid
+                                 magnitudes may be chosen. Returned only if sensor_bounds is False.
+    """
+    # Load file
+    with open(bounds_file, 'r') as f:
+        bounds = json.load(f)
+    
+    # Check which types of keys the dict contains
+    has_lat = 'lat_range' in bounds.keys()
+    has_lon = 'lon_range' in bounds.keys()
+    has_ranges = has_lat and has_lon
+
+    coords_keys = [f'coordinates_{i}' for i in range(1,len(bounds.keys())-1)]
+    has_coords = any([key in coords_keys for key in bounds.keys()])
+    
+    allowable_keys = ['lat_range', 
+                      'lon_range', 
+                      'depth_range', 
+                      'mag_range'] + coords_keys
+
+    # Ensure only correct combination of keys exists
+    for key in bounds.keys():
+        if key not in allowable_keys:
+            raise ValueError(f"Key {key} in bounds file is not supported. Please remove.")
+    if has_lat and not has_lon:
+        raise ValueError("Bounds file contains 'lat_range' but not 'lon_range'. Both must be specified.")
+    elif has_lon and not has_lat:
+        raise ValueError("Bounds file contains 'lon_range' but not 'lat_range'. Both must be specified.")
+    elif has_ranges and has_coords:
+        raise ValueError("Bounds file contains keys 'lat_range', 'lon_range', and 'coordinates_*'. Only one type of bound specification (ranges or coordinates) may be used.")
+    
+    if has_ranges:
+        # Use range values to create a square boundary defined by corner coordinates
+
+        # Extract ranges
+        lat_range = bounds['lat_range']
+        lon_range = bounds['lon_range']
+
+        # Define square (polygons use longitude as x coordinate)
+        latlon_bounds = np.array([[lon_range[0], lat_range[0]],
+                                  [lon_range[0], lat_range[1]],
+                                  [lon_range[1], lat_range[0]],
+                                  [lon_range[1], lat_range[1]]])
+    
+    elif has_coords:
+        # Compile all polygons into one list
+        latlon_bounds = []
+        for key in coords_keys:
+            # Store each polygon as numpy array
+            latlon_bounds.append(np.array(bounds[key]))
+    
+    if sensor_bounds:
+        # Only return lat/lon boundary when dealing with sensors
+        return latlon_bounds
+    
+    # When dealing with events return depth and mag ranges as well
+    depth_range = bounds['depth_range']
+    mag_range = bounds['mag_range']
+
+    return latlon_bounds, depth_range, mag_range
+
 
 #Load Configuration
 def read_input_file(file):
@@ -13,15 +94,14 @@ def read_input_file(file):
         nlpts_data  = int(readdata.readline())
         nlpts_space  = int(readdata.readline())
         ndata = int(readdata.readline())
-        event_boundary_file = readdata.readline()
-        depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        event_boundary_file = readdata.readline().strip('\n')
         
-        sampling_file = readdata.readline()
+        sampling_file = readdata.readline().strip('\n')
         
         #rest of lines are sensors
         sensorlines=readdata.readlines()
         numsen = len(sensorlines)
+        print(sensorlines)
         
         #lat, long, measurement noise std, length of data vector for sensor, sensor type
         nsensordata = len(np.fromstring(sensorlines[0], dtype=float, sep=','))
@@ -30,11 +110,11 @@ def read_input_file(file):
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             sensors[inc,:] = sensorline
-    return nlpts_data, nlpts_space, ndata, event_boundary_file, depth_range, mag_range, sampling_file, sensors
+    return nlpts_data, nlpts_space, ndata, event_boundary_file, sampling_file, sensors
 
 
 #Write Configuration
-def write_input_file(file, nlpts_data, nlpts_space, ndata, event_boundary_file, depth_range, mag_range, sampling_file, sloc_trial, sensor_params, sensors):
+def write_input_file(file, nlpts_data, nlpts_space, ndata, event_boundary_file, sampling_file, sloc_trial, sensor_params, sensors):
 
     writedata=open(file,"w+")
     writedata.write(str(int(nlpts_data)) + "\n")
@@ -43,10 +123,6 @@ def write_input_file(file, nlpts_data, nlpts_space, ndata, event_boundary_file, 
     
     # Boundary file for sampling events
     writedata.write(event_boundary_file + '\n')
-    
-    #,max_line_width=1000 to keep numppy from splitting the sensor description up onto multiple lines.
-    writedata.write((np.array2string(depth_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
-    writedata.write((np.array2string(mag_range,separator=',',max_line_width=1000)).replace('[','').replace(']','').replace(' ', '') + "\n")
 
     #write sampling filename
     writedata.write(sampling_file + '\n')
@@ -74,10 +150,8 @@ def read_opt_file(file):
         nlpts_space  = int(readdata.readline())
         ndata = np.int(readdata.readline())
         event_bounds_file = readdata.readline().strip('\n')
-        depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
-        mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
 
-        mpirunstring = readdata.readline()
+        mpirunstring = readdata.readline().strip('\n')
         sampling_file = readdata.readline().strip('\n')
         nsensor_place = int(readdata.readline())
         
@@ -95,7 +169,7 @@ def read_opt_file(file):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             print('read sensor', sensorline)
             sensors[inc,:] = sensorline
-    return nopt_random, nopt_total, opt_bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, event_bounds_file, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place
+    return nopt_random, nopt_total, opt_bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, event_bounds_file, sensors, mpirunstring, sampling_file, nsensor_place
 
 
 def plot_surface(data,

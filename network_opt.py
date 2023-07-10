@@ -8,7 +8,7 @@ import os
 from subprocess import Popen, PIPE
 import shlex
 
-from utils import read_opt_file, write_input_file
+from utils import read_opt_file, write_input_file, read_bounds
 from sample_gen import sample_sensors
 
 from skopt import Optimizer, expected_minimum, dump
@@ -29,12 +29,12 @@ if __name__ == '__main__':
         #                sensor type and accuracy, optimization criteria (e.g. UCB, EI)
         #Also need info for how to run mpi and how many sensors to place
 
-        nopt_random, nopt_total, opt_bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, event_bounds_file, depth_range, mag_range, sensors, mpirunstring, sampling_file, nsensor_place = read_opt_file(sys.argv[1])
+        nopt_random, nopt_total, opt_bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, event_bounds_file, sensors, mpirunstring, sampling_file, nsensor_place = read_opt_file(sys.argv[1])
 
         save_file = sys.argv[2]
         save_path = sys.argv[3]
         verbose = int(sys.argv[4])
-        location_bounds = np.load(opt_bounds_file, allow_pickle=True)
+        location_bounds = read_bounds(opt_bounds_file, sensor_bounds=True)
         os.makedirs(save_path, exist_ok=True)
 
         if verbose == 1:
@@ -61,6 +61,9 @@ if __name__ == '__main__':
 
             opt = BBO(kernel, location_bounds)
 
+        else:
+            raise ValueError('Optimization types other than 0 are not supported')
+
         sensor_lat_range = opt.sample_bounds[0]
         sensor_long_range = opt.sample_bounds[1]
 
@@ -79,7 +82,7 @@ if __name__ == '__main__':
             it += 1
         
         #For each trial point:
-        #     Write the input ifile with the sensor info under consideration
+        #     Write the input file with the sensor info under consideration
         #     run the eig calculator
         #     read and store eig val + eig std
         eigdata = np.zeros([nopt_random,3])
@@ -95,8 +98,7 @@ if __name__ == '__main__':
                 fname = 'input_runner.dat'
             sloc_trial = valid_trial_pts[inc,:]
 
-            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, event_bounds_file,
-            depth_range, mag_range, sampling_file, sloc_trial, sensor_params, sensors)
+            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, event_bounds_file, sampling_file, sloc_trial, sensor_params, sensors)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
@@ -124,8 +126,7 @@ if __name__ == '__main__':
 
             #get the test pt
             sloc_trial = np.array(opt.ask())
-            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, lat_range, long_range,
-            depth_range, mag_range, sloc_trial, sensor_params, sensors, sampling_file, bounds_file)
+            write_input_file(os.path.join(save_path, fname), nlpts_data, nlpts_space, ndata, event_bounds_file, sampling_file, sloc_trial, sensor_params, sensors)
 
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)

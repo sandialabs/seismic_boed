@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from utils import read_input_file, plot_surface
+from utils import read_input_file, read_bounds, plot_surface
 # from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from data_gen import generate_data
 from like_models import compute_loglikes
@@ -32,29 +32,39 @@ if __name__ == '__main__':
         t0 = time.time()
         
         if len(sys.argv) == 4:
-            nlpts_data, nlpts_space, ndata, location_bounds_fname, depth_range, mag_range, sampling_fname, sensors = read_input_file(sys.argv[1])
+            # Read input arguments from file
+            nlpts_data, nlpts_space, ndata, bounds_fname, sampling_fname, sensors = read_input_file(sys.argv[1])
+            # Path to save outputs
             save_file = sys.argv[2]
+            # Verbosity level
             verbose = int(sys.argv[3])
-            print('sampling name', sampling_fname)
-            sampling_file = importlib.import_module(sampling_fname[:-4])
-            generate_theta_data = sampling_file.generate_theta_data
-            sample_theta_space = sampling_file.sample_theta_space
-            eval_importance = sampling_file.eval_importance
-            eval_theta_prior = sampling_file.eval_theta_prior
-            print('locbounds fname: ', location_bounds_fname)
-            location_bounds_fname = location_bounds_fname[:-1]
-            location_bounds = np.load(location_bounds_fname, allow_pickle=True)
 
+            # Set up functions for sampling events
+            print('sampling name', sampling_fname)
+            samplingfile_name, samplingfile_ext = os.path.splitext(sampling_fname)
+            if samplingfile_ext != '.py':
+                raise ValueError(f"Sampling file must have filetype '.py', not {samplingfile_ext}")
+            # Import sampling file as module and save functions
+            sampling_module = importlib.import_module(samplingfile_name)
+            generate_theta_data = sampling_module.generate_theta_data
+            sample_theta_space = sampling_module.sample_theta_space
+            eval_importance = sampling_module.eval_importance
+            eval_theta_prior = sampling_module.eval_theta_prior
+
+            # Set up bounds for each dimension of theta
+            print('locbounds fname: ', bounds_fname)
+            # bounds_fname = bounds_fname[:-1]
+            location_bounds, depth_range, mag_range = read_bounds(bounds_fname, sensor_bounds=False)
 
             if (verbose == 1 or verbose == 2):
                 print("Configuring Run: " + str(t0), flush=True)
         
         else:
             #mpiexec --bind-to core --npernode 36 --n 576 python3 eig_calc.py inputs.dat outputs.npz 1
-            #verbose options: 0 (only output is to the screen with EIG STD and MIN_ESS), 1 full output, 2 simpel output file
+            #verbose options: 0 (only output is to the screen with EIG STD and MIN_ESS), 1 full output, 2 simple output file
             sys.exit('Usage: python3 eig_calc.py loc_file save_path verbose')
             
-        #Sample prior some how to generate events that we will use to generate data
+        #Sample prior according to provided functions to generate events that we will use to generate data
         #This is not distributed
         #Set seed to 0 here
         theta_data = generate_theta_data(location_bounds, depth_range, mag_range, nlpts_data, 0)
@@ -65,7 +75,7 @@ if __name__ == '__main__':
         data_importance_weight = data_prior_evals/data_importance_evals 
         counts = nthetadim * nlpts_data // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_data * nthetadim, nthetadim * nlpts_data // size)
-        print(f'THETA DATA (type {type(theta_data)}):', theta_data)
+
     else:
         #prepare to send variables to cores
         nlpts_data = None
@@ -80,10 +90,10 @@ if __name__ == '__main__':
         theta_data = None
         counts = None
         dspls = None
-        sampling_fname = None
-        location_bounds_fname = None
+        samplingfile_name = None
+        bounds_fname = None
     
-    #Distribute everythong to the cores
+    #Distribute everything to the cores
     nlpts_data = comm.bcast(nlpts_data, root=0)
     nlpts_space = comm.bcast(nlpts_space, root=0)
     ndata = comm.bcast(ndata, root=0)
@@ -93,14 +103,14 @@ if __name__ == '__main__':
     mag_range = comm.bcast(mag_range, root=0)
     sensors = comm.bcast(sensors, root=0)
     nthetadim = comm.bcast(nthetadim, root=0)
-    sampling_fname = comm.bcast(sampling_fname, root=0)
-    location_bounds_fname = comm.bcast(location_bounds_fname, root=0)
+    samplingfile_name = comm.bcast(samplingfile_name, root=0)
+    bounds_fname = comm.bcast(bounds_fname, root=0)
 
     if rank != 0:
-        sampling_file = importlib.import_module(sampling_fname[:-4])
-        eval_importance = sampling_file.eval_importance
-        eval_theta_prior = sampling_file.eval_theta_prior 
-        location_bounds = np.load(location_bounds_fname, allow_pickle=True)
+        sampling_module = importlib.import_module(samplingfile_name)
+        eval_importance = sampling_module.eval_importance
+        eval_theta_prior = sampling_module.eval_theta_prior 
+        location_bounds = read_bounds(bounds_fname, sensor_bounds=False)[0]
       
     if rank == 0 and verbose == 1:
         t1 = time.time() - t0
@@ -291,7 +301,7 @@ if __name__ == '__main__':
             print("Returning Results: " + str(t1), flush=True)
         
             np.savez(save_file, eig=eig, seig=seig, ig=ig, ess=ess, miness=miness, theta_data=theta_data,
-                 theta_space=theta_space, sensors=sensors, lat_range=lat_range, long_range=long_range,
+                 theta_space=theta_space, sensors=sensors, location_bounds=location_bounds,
                      depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, weight_loglike=weight_loglike, dataz=dataz, data_importance_weight=data_importance_weight)
 
             
