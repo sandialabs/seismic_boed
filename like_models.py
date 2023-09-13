@@ -171,8 +171,9 @@ def seismic_compute_corr(theta, sensors):
 
 
 def seismic_compute_tt(theta, sensors):
-#    model = TauPyModel(model="iasp91")
-    with open('cubic_reg_europe.pkl', 'rb') as inp:
+    model = TauPyModel(model="iasp91")
+    # with open('cubic_reg_europe.pkl', 'rb') as inp:
+    with open('cubic_reg.pkl', 'rb') as inp:
         reg = pickle.load(inp)
     with open('TTstd.pkl', 'rb') as inp:
         std_reg = pickle.load(inp)
@@ -187,19 +188,32 @@ def seismic_compute_tt(theta, sensors):
     #azmth = np.zeros(len(rlats))
 
     for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
+        arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, receiver_longitude_in_deg=rlong, phase_list=["P","p"])
+        #azmthdata = geodetics.gps2dist_azimuth(src_lat, src_long, rlat, rlong)
+
+        #record data from the first arrival. Assume always in the azimuthal plane.
+        ptime[isens,0] = arrivals[0].time
+        #iangle[isens] = arrivals[0].incident_angle
+        #azmth[isens] = azmthdata[1]
+
+        deltakm = geodetics.degrees2kilometers(geodetics.locations2degrees(src_lat, src_long, rlat, rlong))
+        # model_std = tt_std_cal(zdepth, deltakm)
+        # ptime[isens,1] = model_std
 
         #models
 
         dist = calc_dist(src_lat, src_long, rlat, rlong, 6371.0, 0)
         x = [zdepth, dist]
 
-        if math.isnan(reg(x)[0]):
-            print("nan")
-            print(f'SRC: {src_lat, src_long}')
-            print(f'REC: {rlat, rlong}')
-        ptime[isens,0] = reg(x)[0]
+        # if math.isnan(reg(x)[0]):
+        #     print("nan")
+        #     print(f'SRC: {src_lat, src_long, src_mag}')
+        #     print(f'REC: {rlat, rlong}')
+        #     print(f'INPUTS: {zdepth, dist}')
+        #     print('----------------------')
+        # ptime[isens,0] = reg(x)[0]
 
-        model_std = std_reg(x)[0]
+        # model_std = std_reg(x)[0]
 
         ptime[isens,1] = std_reg(x)[0]
 

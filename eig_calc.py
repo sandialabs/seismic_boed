@@ -138,7 +138,7 @@ if __name__ == '__main__':
             print(str(ievent+1) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
             
         theta = recvtheta_data[ievent,:]
-        print('RECVD THETA:', recvtheta_data)
+        # print('RECVD THETA:', recvtheta_data)
         localdataz[(ievent*ndata):((ievent+1)*ndata),:] = generate_data(theta,sensors,ndata)
 
 

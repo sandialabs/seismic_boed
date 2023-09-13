@@ -86,8 +86,8 @@ def generate_theta_data(bounds, depth_range, mag_range, nsamp, skip):
     sample_bounds = compute_sample_bounds(bounds)
     long_range = sample_bounds[0]
     lat_range = sample_bounds[1]
-    print(f'LONG RANGE: {long_range}')
-    print(f'LAT RANGE: {lat_range}')
+#    print(f'LONG RANGE: {long_range}')
+#    print(f'LAT RANGE: {lat_range}')
     
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
@@ -112,14 +112,13 @@ def generate_theta_data(bounds, depth_range, mag_range, nsamp, skip):
     sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
     sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
     
-    print(sbvals)
+#    print(sbvals)
     # Only accept points inside bounds
     valid_test_pts_idx = check_valid(bounds, sbvals[:,:2])
     valid_test_pts = sbvals[valid_test_pts_idx]
     # return sbvals    
 
     while valid_test_pts.shape[0] < nsamp:
-        print(valid_test_pts.shape[0])
         curr_len = nsamp - valid_test_pts.shape[0]
         addon_pts = np.full((curr_len, dim_num), np.nan)
         for j in range(curr_len):
@@ -151,8 +150,8 @@ def sample_theta_space(bounds, depth_range, mag_range, nsamp, skip):
     sample_bounds = compute_sample_bounds(bounds)
     long_range = sample_bounds[0]
     lat_range = sample_bounds[1]
-    print(f'LONG RANGE: {long_range}')
-    print(f'LAT RANGE: {lat_range}')
+    # print(f'LONG RANGE: {long_range}')
+    # print(f'LAT RANGE: {lat_range}')
     
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
@@ -177,7 +176,7 @@ def sample_theta_space(bounds, depth_range, mag_range, nsamp, skip):
     sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
     sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
     
-    print(sbvals)
+    # print(sbvals)
     # Only accept points inside bounds
     valid_test_pts_idx = check_valid(bounds, sbvals[:,:2])
     valid_test_pts = sbvals[valid_test_pts_idx]

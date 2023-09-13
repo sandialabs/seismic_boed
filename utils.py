@@ -110,6 +110,7 @@ def read_input_file(file):
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             sensors[inc,:] = sensorline
+    print(f'LOADED SENSORS: {sensors}')
     return nlpts_data, nlpts_space, ndata, event_boundary_file, sampling_file, sensors
 
 
