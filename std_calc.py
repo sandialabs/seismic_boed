@@ -4,10 +4,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import read_input_file, plot_surface
+from utils import old_read_input_file as read_input_file
 # from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from meas_data_gen import generate_data
-from like_models import compute_loglikes
+from old_like_models import compute_loglikes
 
 import time
 import sys
@@ -35,7 +35,7 @@ if __name__ == '__main__':
             nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_fname, sensors = read_input_file(sys.argv[1])
             save_file = sys.argv[2]
             verbose = int(sys.argv[3])
-            sampling_file = importlib.import_module(sampling_fname[:-4])
+            sampling_file = importlib.import_module(sampling_fname[:-3])
             generate_theta_data = sampling_file.generate_theta_data
             sample_theta_space = sampling_file.sample_theta_space
             eval_importance = sampling_file.eval_importance
@@ -92,9 +92,10 @@ if __name__ == '__main__':
     sampling_fname = comm.bcast(sampling_fname, root=0)
 
     if rank != 0:
-        sampling_file = importlib.import_module(sampling_fname[:-4])
-        eval_importance = sampling_file.eval_importance
-        eval_theta_prior = sampling_file.eval_theta_prior 
+        # sampling_file = importlib.import_module(sampling_fname[:-4])
+        # eval_importance = sampling_file.eval_importance
+        # eval_theta_prior = sampling_file.eval_theta_prior 
+        pass
       
     if rank == 0 and verbose == 1:
         t1 = time.time() - t0
@@ -141,14 +142,12 @@ if __name__ == '__main__':
     if rank == 0:
         dataz = np.zeros((nlpts_data*ndata,dataveclen))
         measnoise = np.zeros(nlpts_data)
-    print('made it here')
     comm.Gatherv([localdataz, scounts, MPI.DOUBLE], [dataz, rcounts, rdspls, MPI.DOUBLE], root=0)
     comm.Gatherv([localmeasnoise,mscounts,MPI.DOUBLE], [measnoise, mrcounts, mrdspls, MPI.DOUBLE],root=0)
 
     
     #Now summarize and return results
     if rank == 0:
-        print('Made it here 2')
         mean_mn = np.mean(measnoise)
         if verbose == 0:
             np.savez(save_file, std=mean_mn)

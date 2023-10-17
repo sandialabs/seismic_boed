@@ -101,7 +101,6 @@ def read_input_file(file):
         #rest of lines are sensors
         sensorlines=readdata.readlines()
         numsen = len(sensorlines)
-        print(sensorlines)
         
         #lat, long, measurement noise std, length of data vector for sensor, sensor type
         nsensordata = len(np.fromstring(sensorlines[0], dtype=float, sep=','))
@@ -110,9 +109,35 @@ def read_input_file(file):
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
             sensors[inc,:] = sensorline
-    print(f'LOADED SENSORS: {sensors}')
+
     return nlpts_data, nlpts_space, ndata, event_boundary_file, sampling_file, sensors
 
+
+def old_read_input_file(file):
+    with open(file, 'r') as readdata:
+        nlpts_data  = int(readdata.readline())
+        nlpts_space  = int(readdata.readline())
+        ndata = int(readdata.readline())
+        lat_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        long_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        depth_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        mag_range = np.fromstring(readdata.readline(), dtype=float, sep=',')
+        
+        sampling_file = readdata.readline().strip('\n')
+        
+        #rest of lines are sensors
+        sensorlines=readdata.readlines()
+        numsen = len(sensorlines)
+        
+        #lat, long, measurement noise std, length of data vector for sensor, sensor type
+        nsensordata = len(np.fromstring(sensorlines[0], dtype=float, sep=','))
+        
+        sensors = np.zeros([numsen,nsensordata])
+        for inc in range(0,numsen):
+            sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
+            sensors[inc,:] = sensorline
+
+    return nlpts_data, nlpts_space, ndata, lat_range, long_range, depth_range, mag_range, sampling_file, sensors
 
 #Write Configuration
 def write_input_file(file, nlpts_data, nlpts_space, ndata, event_boundary_file, sampling_file, sloc_trial, sensor_params, sensors):
@@ -158,8 +183,6 @@ def read_opt_file(file):
         
         #rest of lines are sensors
         sensorlines=readdata.readlines()
-        print('sensorslines', sensorlines)
-        print('sensorlinestype', type(sensorlines))
         numsen = len(sensorlines)
         
         #lat, long, measurement noise std, length of data vector for sensor, sensor type
@@ -168,7 +191,6 @@ def read_opt_file(file):
         sensors = np.zeros([numsen,nsensordata])
         for inc in range(0,numsen):
             sensorline = np.fromstring(sensorlines[inc], dtype=float, sep=',')
-            print('read sensor', sensorline)
             sensors[inc,:] = sensorline
     return nopt_random, nopt_total, opt_bounds_file, sensor_params, opt_type, nlpts_data, nlpts_space, ndata, event_bounds_file, sensors, mpirunstring, sampling_file, nsensor_place
 

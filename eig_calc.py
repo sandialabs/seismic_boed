@@ -40,10 +40,10 @@ if __name__ == '__main__':
             verbose = int(sys.argv[3])
 
             # Set up functions for sampling events
-            print('sampling name', sampling_fname)
             samplingfile_name, samplingfile_ext = os.path.splitext(sampling_fname)
             if samplingfile_ext != '.py':
                 raise ValueError(f"Sampling file must have filetype '.py', not {samplingfile_ext}")
+
             # Import sampling file as module and save functions
             sampling_module = importlib.import_module(samplingfile_name)
             generate_theta_data = sampling_module.generate_theta_data
@@ -52,8 +52,6 @@ if __name__ == '__main__':
             eval_theta_prior = sampling_module.eval_theta_prior
 
             # Set up bounds for each dimension of theta
-            print('locbounds fname: ', bounds_fname)
-            # bounds_fname = bounds_fname[:-1]
             location_bounds, depth_range, mag_range = read_bounds(bounds_fname, sensor_bounds=False)
 
             if (verbose == 1 or verbose == 2):
@@ -66,13 +64,15 @@ if __name__ == '__main__':
             
         #Sample prior according to provided functions to generate events that we will use to generate data
         #This is not distributed
-        #Set seed to 0 here
         theta_data = generate_theta_data(location_bounds, depth_range, mag_range, nlpts_data, 0)
         nthetadim = theta_data.shape[1] 
+
         #The data samples need to be importance corrected 
         data_importance_evals = eval_importance(theta_data,location_bounds,depth_range,mag_range) 
         data_prior_evals = eval_theta_prior(theta_data,location_bounds,depth_range,mag_range) 
         data_importance_weight = data_prior_evals/data_importance_evals 
+
+        #Parameters for broadcasting to cores
         counts = nthetadim * nlpts_data // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_data * nthetadim, nthetadim * nlpts_data // size)
 
@@ -97,8 +97,6 @@ if __name__ == '__main__':
     nlpts_data = comm.bcast(nlpts_data, root=0)
     nlpts_space = comm.bcast(nlpts_space, root=0)
     ndata = comm.bcast(ndata, root=0)
-#     lat_range = comm.bcast(lat_range, root=0)
-#     long_range = comm.bcast(long_range, root=0)
     depth_range = comm.bcast(depth_range, root=0)
     mag_range = comm.bcast(mag_range, root=0)
     sensors = comm.bcast(sensors, root=0)
@@ -117,19 +115,17 @@ if __name__ == '__main__':
         print("Generating Synthetic Data: " + str(t1), flush=True)
     
     local_nlpts_data = nlpts_data // size
-    #prepaire to recieve the theta_data for each node
-    # holder for everyone to recive there part of the theta vector
+    #prepare to recieve the theta_data for each node
+    #holder for everyone to recieve their part of the theta vector
     recvtheta_data = np.zeros((local_nlpts_data, nthetadim))
     
-    # get your theta values to use for computing the synthetics data
-    print('COUNTS AND DISPLS', counts, dspls)
+    #get theta values to use for computing the synthetics data
     comm.Scatterv([theta_data, counts, dspls, MPI.DOUBLE], recvtheta_data, root=0)
     
     
     #Every core generate hypohtetical dataset on their bit of theta
     #Generate Hypothetical Datasets
     
-    # Hardcoding 4 data types is not idea, think of better way to make this dynamic
     dataveclen = int(sensors.shape[0]*4)
     localdataz = np.zeros([local_nlpts_data*ndata,dataveclen])
     for ievent in range(0,local_nlpts_data):
@@ -138,7 +134,6 @@ if __name__ == '__main__':
             print(str(ievent+1) + " of " + str(local_nlpts_data) + " " + str(t1), flush=True)
             
         theta = recvtheta_data[ievent,:]
-        # print('RECVD THETA:', recvtheta_data)
         localdataz[(ievent*ndata):((ievent+1)*ndata),:] = generate_data(theta,sensors,ndata)
 
 
@@ -153,17 +148,14 @@ if __name__ == '__main__':
         
     comm.Gatherv([localdataz, scounts, MPI.DOUBLE], [dataz, rcounts, rdspls, MPI.DOUBLE], root=0)    
     
-    #Now everyone needs a copy of the full dataset now
+    #Now everyone needs a copy of the full dataset 
     dataz = comm.bcast(dataz, root=0)
          
     #Define the event space descritization
-    #We assume that these are uniformly sampled from the prior so they all have equal aprior likelihood.
-    #This may be something that we should change in the future to add a prior likleihood associated with each sample
-    #so that we dont have to consider them to be uniform.
     
     if rank == 0:
         #seed with nlpts_data so that it starts sampling after that so we dont overlap pts.
-        theta_space = sample_theta_space(location_bounds, depth_range, mag_range, nlpts_space, nlpts_data) # Could return theta space and sample weight    
+        theta_space = sample_theta_space(location_bounds, depth_range, mag_range, nlpts_space, nlpts_data) 
         counts = nthetadim * nlpts_space // size * np.ones(size, dtype=int)
         dspls = range(0, nlpts_space * nthetadim, nthetadim * nlpts_space // size)
     else:
@@ -176,12 +168,12 @@ if __name__ == '__main__':
         t1 = time.time() - t0
         print("Computing Likelihood: " + str(t1), "Rank", rank, "comm size", size, flush=True)
             
-    #prepaire to recieve the theta_space for each node
-    # holder for everyone to recive there part of the theta vector
+    #prepare to recieve the theta_space for each node
+    #holder for everyone to recieve their part of the theta vector
     local_nlpts_space = nlpts_space // size
     recvtheta_space = np.zeros((local_nlpts_space, nthetadim))
     
-    # get your theta values to use for computing likelihoods
+    #get theta values to use for computing likelihoods
     comm.Scatterv([theta_space, counts, dspls, MPI.DOUBLE], recvtheta_space, root=0)    
     
     
@@ -219,7 +211,7 @@ if __name__ == '__main__':
     comm.Gatherv([local_loglikes, scounts, MPI.DOUBLE], [loglikes, rcounts, rdspls, MPI.DOUBLE], root=0)
     comm.Gatherv([local_weight_loglikes, scounts, MPI.DOUBLE], [weight_loglikes, rcounts, rdspls, MPI.DOUBLE], root=0)   
 
-    #I really want transpose of loglike for everything
+    #We really want transpose of loglike for everything
     if rank==0:
         loglikes = loglikes.transpose().copy()
         weight_loglikes = weight_loglikes.transpose().copy()
@@ -242,12 +234,12 @@ if __name__ == '__main__':
         dspls = None
     
             
-    #prepaire to recieve the loglikes for each separed data at the node
-    # holder for everyone to recive there part of the loglikes we need
+    #prepare to recieve the loglikes for each separated data at the node
+    # holder for everyone to recieve their part of the loglikes we need
     recloglikes = np.zeros((local_ndataz, nlpts_space))
     recweight_loglikes = np.zeros((local_ndataz, nlpts_space))
     
-    # get your theta values to use for computing likelihoods
+    # get theta values to use for computing likelihoods
     comm.Scatterv([loglikes, counts, dspls, MPI.DOUBLE], recloglikes, root=0)  
     comm.Scatterv([weight_loglikes, counts, dspls, MPI.DOUBLE], recweight_loglikes, root=0)     
     
@@ -263,7 +255,6 @@ if __name__ == '__main__':
         weight_loglike = recweight_loglikes[idata,:]
 
         probs = np.exp(weight_loglike - np.max(weight_loglike))/np.sum(np.exp(weight_loglike - np.max(weight_loglike)))
-        #logprobs = (loglike - np.max(weight_loglike)) - np.log(np.sum(np.exp(weight_loglike - np.max(weight_loglike))))
 
         local_ig[idata] = np.sum(probs*(loglike)) - np.log(np.mean(np.exp(weight_loglike - np.max(weight_loglike)))) - np.max(weight_loglike)
         
@@ -305,6 +296,4 @@ if __name__ == '__main__':
                  theta_space=theta_space, sensors=sensors, location_bounds=location_bounds,
                      depth_range=depth_range, mag_range=mag_range, loglikes=loglikes, weight_loglike=weight_loglike, dataz=dataz, data_importance_weight=data_importance_weight)
 
-            
-        #Probs should retrun some uncertainty on this...
         print(str(eig) + " " + str(seig) + " " + str(miness), flush=True)

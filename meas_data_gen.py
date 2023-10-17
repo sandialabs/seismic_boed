@@ -1,5 +1,5 @@
 import numpy as np
-import like_models as lm
+import old_like_models as lm
 
 def gen_arrival_normal(theta, sensors, ndata):
     # Variance is combination of arrival time and general sensor variance

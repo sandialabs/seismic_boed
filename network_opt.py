@@ -23,9 +23,9 @@ if __name__ == '__main__':
     t0 = time.time()
     if len(sys.argv) == 5:
         #Load optimization parameters + parameters that will be needed to bulid the input file to the eig code
-        #Needed for input files: nlpts, ndata, lat_range, long_range, depth_range, sensors
+        #Needed for input files: nlpts, ndata, name of file defining event boundaries, depth_range, sensors
         #Assume we are doing sequential greedy sensor placement
-        #Opt parameters: sensor_lat_range, sensor_long_range, #random initial trial points, #total number of trials
+        #Opt parameters: #random initial trial points, #total number of trials, name of file defining opt boundaries
         #                sensor type and accuracy, optimization criteria (e.g. UCB, EI)
         #Also need info for how to run mpi and how many sensors to place
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             t1 = time.time()-t0
             print("Configuring Optimizer: Nsensor " + str(nsensor_place) + " Ntrials "+ str(nopt_total)+ " " +str(t1), flush=True)
     else:
-        #python3 network_opt.py inputs_opt.dat sensor_opt.npz 1
+        #python3 network_opt.py inputs_opt.dat sensor_opt.npz /opt_outputs 1
         #verbose options: 0 (only output is the final sensor network), 1 full output
         sys.exit('Usage: python3 network_opt.py loc_file save_file save_path verbose')
     
@@ -52,7 +52,7 @@ if __name__ == '__main__':
             print("Starting optimization of sensor "+ str(sensors.shape[0]+1) + " " + str(t1), flush=True)
         
 
-        #Initialize the optimizer not it minimizes
+        #Initialize the optimizer it minimizes
         #0 -> EI    
         if opt_type == 0:
             # Specify appropriate length scale
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         sensor_lat_range = opt.sample_bounds[0]
         sensor_long_range = opt.sample_bounds[1]
 
-        #Randomly selection the random trial points (right now this is going to be the same every isamp stage)
+        #Randomly select the trial points (right now this is going to be the same every isamp stage)
         #becuase we are intializing the psuedo random seed the same each time.
         sensor_loc_random = sample_sensors(sensor_lat_range,sensor_long_range, nopt_random,nlpts_data+nlpts_space)
         
@@ -145,7 +145,7 @@ if __name__ == '__main__':
         sensorvec[0:2] = newsensor
         sensorvec[2:] = sensor_params
         sensors = np.vstack((sensors,sensorvec))
-        #save the optimization results for fun
+        #save the optimization results 
         if verbose == 1:
             # Filenames for outputs
             opt_obj_str = f'opt_obj{sensors.shape[0]+1}.pkl'

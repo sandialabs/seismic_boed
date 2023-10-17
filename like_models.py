@@ -197,8 +197,8 @@ def seismic_compute_tt(theta, sensors):
         #azmth[isens] = azmthdata[1]
 
         deltakm = geodetics.degrees2kilometers(geodetics.locations2degrees(src_lat, src_long, rlat, rlong))
-        # model_std = tt_std_cal(zdepth, deltakm)
-        # ptime[isens,1] = model_std
+        model_std = seismic_tt_std_cal(zdepth, deltakm)
+        ptime[isens,1] = model_std
 
         #models
 
@@ -215,7 +215,7 @@ def seismic_compute_tt(theta, sensors):
 
         # model_std = std_reg(x)[0]
 
-        ptime[isens,1] = std_reg(x)[0]
+        # ptime[isens,1] = std_reg(x)[0]
 
         measure_std = seismic_meas_std_cal(dist, src_mag, fidelity)
         

@@ -159,7 +159,6 @@ class BoundedBayesOpt():
             valid_addon_pts_idx = self.check_valid(addon_pts)
             valid_test_pts = np.vstack((valid_test_pts, addon_pts[valid_addon_pts_idx]))
             
-#         print(valid_test_pts)
         # Find the best optimum by starting from n_restart different random points.
         for x0 in valid_test_pts:
 
@@ -296,21 +295,3 @@ class BoundedBayesOpt():
         """
         res = self.get_result()
         return res.x, res.fun
-
-#         def func(x):
-#             reg = res.models[-1]
-#             return reg.predict(x)[0]
-
-#         xs = [res.x]
-
-#         best_x = None
-#         best_fun = np.inf
-
-#         for x0 in xs:
-#             r = minimize(func, x0=x0, bounds=res.space.bounds)
-
-#             if r.fun < best_fun:
-#                 best_x = r.x
-#                 best_fun = r.fun
-
-#         return [v for v in best_x], best_fun
