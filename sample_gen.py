@@ -2,92 +2,212 @@ import numpy as np
 import sobol_seq as sq
 from scipy import stats
 
+
+def check_valid(bounds, points):
+    masks = []
+    if not isinstance(bounds, np.ndarray):
+        bounds = np.array(bounds)
+    if len(bounds.shape) == 2:
+        bounds = bounds.reshape((1,*bounds.shape))
+
+    for polygon in bounds:
+        valid_region = mpltPath.Path(polygon)
+        valid_pts_idx = valid_region.contains_points(points)
+        masks.append(valid_pts_idx)
+    point_is_valid = np.any(masks, axis=0)
+
+    return point_is_valid
+
+
+def compute_sample_bounds(input_bounds):
+    if not isinstance(input_bounds, np.ndarray):
+        input_bounds = np.array(input_bounds)
+    if len(input_bounds.shape) == 2:
+        input_bounds = input_bounds.reshape((1,*input_bounds.shape))
+
+    bounds = []
+    
+    for i in range(len(input_bounds)):
+        bounds.append(input_bounds[i].copy())
+
+    min_x = bounds[0][:,0].min()
+    min_y = bounds[0][:,1].min()
+    max_x = bounds[0][:,0].max()
+    max_y = bounds[0][:,1].max()
+
+    for i in range(1,len(bounds)):
+        curr_minx = bounds[i][:,0].min()
+        curr_miny = bounds[i][:,1].min()
+        curr_maxx = bounds[i][:,0].max()
+        curr_maxy = bounds[i][:,1].max()
+
+        if curr_minx < min_x:
+            min_x = curr_minx
+        if curr_miny < min_y:
+            min_y = curr_miny
+        if curr_maxx > max_x:
+            max_x = curr_maxx
+        if curr_maxy > max_y:
+            max_y = curr_maxy
+
+    sample_bounds = np.array([[min_x, max_x], 
+                              [min_y, max_y]])
+    
+    return sample_bounds
+
+def calc_area(bounds, nsamp=1000, skip=0):
+    sample_bounds = compute_sample_bounds(bounds)
+    long_range = sample_bounds[0]
+    lat_range = sample_bounds[1]
+    
+    dim_num = 2
+    
+    count = 0
+    sbvals = np.full((nsamp, dim_num), np.nan)
+    for j in range(nsamp):
+        sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
+    
+    count += (j+1)
+
+    sbvals[:,0] = sbvals[:,0]*(long_range[1] - long_range[0])+long_range[0]
+    sbvals[:,1] = sbvals[:,1]*(lat_range[1] - lat_range[0])+lat_range[0]
+    
+    valid_idx = check_valid(bounds, sbvals)
+    return sum(valid_idx)/nsamp
+    
+    
+    
 #Sample prior some how to generate events that we will use to generate data
-def generate_theta_data(lat_range,long_range, depth_range, mag_range, nsamp, skip):
+def generate_theta_data(bounds, depth_range, mag_range, nsamp, skip):
+    """ 
+    Rejection sample uniformly for location, exponentially for mag, uniformly for depth
+    """
+    sample_bounds = compute_sample_bounds(bounds)
+    long_range = sample_bounds[0]
+    lat_range = sample_bounds[1]
+#    print(f'LONG RANGE: {long_range}')
+#    print(f'LAT RANGE: {lat_range}')
     
     #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
     #Change so seed can be set
     dim_num = 4
+    
+    count = 0
     sbvals = np.full((nsamp, dim_num), np.nan)
     for j in range(nsamp):
         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
+    
+    count += (j+1)
 
     # Calculate min and max value for magnitutde range
     max_mag = 1 - 10**(-mag_range[1])
     min_mag = 1 - 10**(-mag_range[0])
+    
+    # Modify depth bound for shallow events ~5km(1km?)
 
-    sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
-    sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
+    sbvals[:,0] = sbvals[:,0]*(long_range[1] - long_range[0])+long_range[0]
+    sbvals[:,1] = sbvals[:,1]*(lat_range[1] - lat_range[0])+lat_range[0]
     sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
     sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
     sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
     
-    return sbvals
+#    print(sbvals)
+    # Only accept points inside bounds
+    valid_test_pts_idx = check_valid(bounds, sbvals[:,:2])
+    valid_test_pts = sbvals[valid_test_pts_idx]
+    # return sbvals    
+
+    while valid_test_pts.shape[0] < nsamp:
+        # print(valid_test_pts.shape[0])
+        for j in range(nsamp - valid_test_pts.shape[0]):
+            addon_pts[j, :], _ = sq.i4_sobol(dim_num, seed=count+1+skip+j)
+        
+        count += (j+1)
+
+        # Calculate min and max value for magnitutde range
+        max_mag = 1 - 10**(-mag_range[1])
+        min_mag = 1 - 10**(-mag_range[0])
+
+        addon_pts[:,0] = addon_pts[:,0]*(long_range[1] - long_range[0])+long_range[0]
+        addon_pts[:,1] = addon_pts[:,1]*(lat_range[1] - lat_range[0])+lat_range[0]
+        addon_pts[:,2] = addon_pts[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
+        addon_pts[:,3] = addon_pts[:,3]*(max_mag - min_mag) + min_mag
+        addon_pts[:, 3] = -np.log(1 - addon_pts[:,3]) / np.log(10)
+
+        valid_addon_pts_idx = check_valid(bounds, addon_pts[:,:2])
+        valid_test_pts = np.vstack((valid_test_pts, addon_pts[valid_addon_pts_idx]))
+
+    return valid_test_pts[:,[1,0,2,3]].copy()
 
 
 #Define the event space descritization
-#We assume that these are uniformly sampled from the prior so they all have equal aprior likelihood.
-#This may be something that we should change in the future to add a prior likleihood associated with each sample
-#so that we dont have to consider them to be uniform.
-
-def sample_theta_space(lat_range, long_range, depth_range, mag_range, nsamp, skip):
-    # sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-    # Change so seed can be set
+def sample_theta_space(bounds, depth_range, mag_range, nsamp, skip):
+    """ 
+    Rejection sample uniformly for location, exponentially for mag, uniformly for depth
+    """
+    sample_bounds = compute_sample_bounds(bounds)
+    long_range = sample_bounds[0]
+    lat_range = sample_bounds[1]
+    # print(f'LONG RANGE: {long_range}')
+    # print(f'LAT RANGE: {lat_range}')
+    
+    #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
+    #Change so seed can be set
     dim_num = 4
+    
+    count = 0
     sbvals = np.full((nsamp, dim_num), np.nan)
     for j in range(nsamp):
         sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
+    
+    count += (j+1)
 
     # Calculate min and max value for magnitutde range
     max_mag = 1 - 10**(-mag_range[1])
     min_mag = 1 - 10**(-mag_range[0])
+    
+    # Modify depth bound for shallow events ~5km(1km?)
 
-    sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
-    sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
+    sbvals[:,0] = sbvals[:,0]*(long_range[1] - long_range[0])+long_range[0]
+    sbvals[:,1] = sbvals[:,1]*(lat_range[1] - lat_range[0])+lat_range[0]
     sbvals[:,2] = sbvals[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
     sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag
     sbvals[:, 3] = -np.log(1 - sbvals[:,3]) / np.log(10)
     
-    return sbvals
-    # width = .5
-    # lat_interval = np.abs(lat_range[1]-lat_range[0])
-    # long_interval = np.abs(long_range[1] - long_range[0])
-    # depth_interval = np.abs(depth_range[1] - depth_range[0])
-    # mag_interval = np.abs(mag_range[1] - mag_range[0])
-
-    # lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=width)
-    # long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=width)
-    # depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=width)
-    # mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=width)
+    # print(sbvals)
+    # Only accept points inside bounds
+    valid_test_pts_idx = check_valid(bounds, sbvals[:,:2])
+    valid_test_pts = sbvals[valid_test_pts_idx]
     
-    # min_lat = lat_norm.cdf(lat_range[0])
-    # max_lat = lat_norm.cdf(lat_range[1])
-    # min_long = long_norm.cdf(long_range[0])
-    # max_long = long_norm.cdf(long_range[1])
-    # min_depth = depth_norm.cdf(depth_range[0])
-    # max_depth = depth_norm.cdf(depth_range[1])
-    # min_mag = mag_norm.cdf(mag_range[0])
-    # max_mag = mag_norm.cdf(mag_range[1])
-    
-    # dim_num = 4
-    # sbvals = np.full((nsamp, dim_num), np.nan)
-    
-    # for j in range(nsamp):
-    #     sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)
+    while valid_test_pts.shape[0] < nsamp:
+        curr_len = nsamp - valid_test_pts.shape[0]
+        addon_pts = np.full((curr_len, dim_num), np.nan)
+        for j in range(curr_len):
+            addon_pts[j, :], _ = sq.i4_sobol(dim_num, seed=count+1+skip+j)
         
-    # sbvals[:,0] = sbvals[:,0]*(max_lat - min_lat) + min_lat 
-    # sbvals[:,1] = sbvals[:,1]*(max_long - min_long) + min_long
-    # sbvals[:,2] = sbvals[:,2]*(max_depth - min_depth) + min_depth
-    # sbvals[:,3] = sbvals[:,3]*(max_mag - min_mag) + min_mag 
-    
-    # sbvals[:,0] = lat_norm.ppf(sbvals[:,0])
-    # sbvals[:,1] = long_norm.ppf(sbvals[:,1])
-    # sbvals[:,2] = depth_norm.ppf(sbvals[:,2])
-    # sbvals[:,3] = mag_norm.ppf(sbvals[:,3])
-    
-    # return sbvals
+        count += (j+1)
 
-def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
+        # Calculate min and max value for magnitutde range
+        max_mag = 1 - 10**(-mag_range[1])
+        min_mag = 1 - 10**(-mag_range[0])
+
+        addon_pts[:,0] = addon_pts[:,0]*(long_range[1] - long_range[0])+long_range[0]
+        addon_pts[:,1] = addon_pts[:,1]*(lat_range[1] - lat_range[0])+lat_range[0]
+        addon_pts[:,2] = addon_pts[:,2]*(depth_range[1] - depth_range[0])+depth_range[0]
+        addon_pts[:,3] = addon_pts[:,3]*(max_mag - min_mag) + min_mag
+        addon_pts[:, 3] = -np.log(1 - addon_pts[:,3]) / np.log(10)
+
+        valid_addon_pts_idx = check_valid(bounds, addon_pts[:,:2])
+        valid_test_pts = np.vstack((valid_test_pts, addon_pts[valid_addon_pts_idx]))
+        
+    return valid_test_pts[:,[1,0,2,3]].copy()
+ 
+ 
+def eval_theta_prior(thetas, bounds, depth_range, mag_range):
+    sample_bounds = compute_sample_bounds(bounds)
+    long_range = sample_bounds[0]
+    lat_range = sample_bounds[1]
+
     def loc_pdf(x, lat_range,long_range):
         # Mixture weights
         unif_pi = .02
@@ -154,28 +274,17 @@ def eval_theta_prior(thetas, lat_range, long_range, depth_range, mag_range):
 
 
 
-def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
+def eval_importance(thetas, bounds, depth_range, mag_range):
+    if len(thetas.shape) == 1:
+        thetas = thetas.reshape((1,-1))
+
+    sample_bounds = compute_sample_bounds(bounds)
+    lat_range = sample_bounds[0]
+    long_range = sample_bounds[1]
+    
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
     
-    # lat_interval = np.abs(lat_range[1]-lat_range[0])
-    # long_interval = np.abs(long_range[1] - long_range[0])
-    # depth_interval = np.abs(depth_range[1] - depth_range[0])
-    # mag_interval = np.abs(mag_range[1] - mag_range[0])
-
-    # width = .5
-    
-    # lat_norm = stats.norm(loc=lat_range[0] + lat_interval/2, scale=width)
-    # long_norm = stats.norm(loc=long_range[0]+ long_interval/2, scale=width)
-    # depth_norm = stats.norm(loc=depth_range[0] + depth_interval/2, scale=width)
-    # mag_norm = stats.norm(loc=mag_range[0] + mag_interval/2, scale=width)
-
-    # lat_prob = lat_norm.pdf(thetas[:,0])/(lat_norm.cdf(lat_range[1]) - lat_norm.cdf(lat_range[0]))
-    # long_prob = long_norm.pdf(thetas[:,1])/(long_norm.cdf(long_range[1]) - long_norm.cdf(long_range[0]))
-    # depth_prob = depth_norm.pdf(thetas[:,2])/(depth_norm.cdf(depth_range[1]) - depth_norm.cdf(depth_range[0]))
-    # mag_prob = mag_norm.pdf(thetas[:,3])/(mag_norm.cdf(mag_range[1]) - mag_norm.cdf(mag_range[0]))
-
-    # return lat_prob * long_prob * depth_prob * mag_prob
     if len(thetas.shape) == 1:
         thetas = thetas.reshape((1,-1))
 
@@ -184,7 +293,10 @@ def eval_importance(thetas, lat_range, long_range, depth_range, mag_range):
     depth_prob = 1/np.abs(depth_range[1] - depth_range[0])
     mag_prob = (np.log(10)/10**thetas[:,3]) / ((1 - 10**(-mag_range[1])) - (1 - 10**(-mag_range[0])))
 
-    return lat_prob*long_prob*depth_prob*mag_prob 
+    # area = calc_area(bounds)
+    area = 1 # Only sampling a square domain for now
+    
+    return lat_prob*long_prob*depth_prob*mag_prob/area 
 
 
 #Generate psuedo random sensor distribution for initial OED
