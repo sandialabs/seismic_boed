@@ -8,8 +8,8 @@ import os
 from subprocess import Popen, PIPE
 import shlex
 
-from utils import read_opt_file, write_input_file, read_bounds
-from sample_gen import sample_sensors
+from utils import read_opt_file, write_input_file
+from data_gen import sample_sensors
 
 from skopt import Optimizer, expected_minimum, dump
 from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
@@ -34,7 +34,6 @@ if __name__ == '__main__':
         save_file = sys.argv[2]
         save_path = sys.argv[3]
         verbose = int(sys.argv[4])
-        location_bounds = read_bounds(opt_bounds_file, sensor_bounds=True)
         os.makedirs(save_path, exist_ok=True)
 
         if verbose == 1:
@@ -59,7 +58,7 @@ if __name__ == '__main__':
             kernel = 1.0 * RBF(length_scale=[1.0, 1.0,], length_scale_bounds=(0.2, 1)) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-2, 5e-1))
             gp = GaussianProcessRegressor(kernel=kernel,alpha=0.0, normalize_y=True)
 
-            opt = BBO(kernel, location_bounds)
+            opt = BBO(kernel, opt_bounds_file)
 
         else:
             raise ValueError('Optimization types other than 0 are not supported')

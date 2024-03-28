@@ -9,6 +9,7 @@ import signal
 import joblib
 import pickle
 import geographiclib
+import sobol_seq as sq
 
 import numpy as np
 
@@ -369,4 +370,19 @@ def generate_data(theta, sensors, ndata):
 #     total_data[:,3*num_sensors + array_idx] = array_incdnts
 
     return total_data
+
+    #Generate psuedo random sensor distribution for initial OED
+def sample_sensors(lat_range,long_range, nsamp,skip):
+    #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
+    #Change so seed can be set
+    dim_num = 2
+    sbvals = np.full((nsamp, dim_num), np.nan)
+    for j in range(nsamp):
+        sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)    
+    
+    sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
+    sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
+    
+    return sbvals
+
 

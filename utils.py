@@ -174,7 +174,7 @@ def read_opt_file(file):
         
         nlpts_data  = int(readdata.readline())
         nlpts_space  = int(readdata.readline())
-        ndata = np.int(readdata.readline())
+        ndata = int(readdata.readline())
         event_bounds_file = readdata.readline().strip('\n')
 
         mpirunstring = readdata.readline().strip('\n')

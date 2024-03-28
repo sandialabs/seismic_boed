@@ -10,9 +10,13 @@ from scipy.optimize import minimize, OptimizeResult
 import matplotlib.path as mpltPath
 import copy
 import inspect
+from sklearn.neighbors import BallTree
+from utils import read_bounds
+# from GE_Beamforming_Utils import convert_coords_to_utm
+import os
 
 class BoundedBayesOpt():
-    def __init__(self, kernel, bounds, init_X=None, init_Y=None, target_fun=None, noise=.1, acq_func=None, max_model_queue_size=30):
+    def __init__(self, kernel, bounds_file, init_X=None, init_Y=None, target_fun=None, noise=.1, acq_func=None, max_model_queue_size=30):
         self.specs = {"args": copy.copy(inspect.currentframe().f_locals),
               "function": "Optimizer"}
         # Initialize arrays for storing samples from target function
@@ -22,8 +26,19 @@ class BoundedBayesOpt():
         # Initialize surrogate function
         self.gpr = GaussianProcessRegressor(kernel=kernel, alpha=noise**2)
         
-        # Initialize boundaries for sampling valid points
-        self.__handle_bounds(bounds)
+        # Use bounds file to get boundaries for sampling valid points
+        # Get file extension of bounds file
+        bounds_name, bounds_ext = os.path.splitext(bounds_file)
+        # If JSON file provided, initialize boundaries
+        if bounds_ext == '.json':
+            self.__handle_bounds(bounds_file)
+        # If KML file provided, intialize coordinates
+        elif bounds_ext == '.kml':
+            self.__get_kml_coords(bounds_file)
+        # Only two filetypes suprported
+        else:
+            raise ValueError(f"bounds filename must have extension '.json' or '.kml', not '{bounds_ext}")
+
         
         # Initialize target function if provided
         self.target_fun = target_fun
@@ -31,7 +46,9 @@ class BoundedBayesOpt():
         self.models = []
         self.max_model_queue_size = max_model_queue_size
             
-    def __handle_bounds(self, bounds):
+    def __handle_bounds(self, bounds_file):
+        bounds = read_bounds(bounds_file, sensor_bounds=True)
+
         if not isinstance(bounds, np.ndarray):
             bounds = np.array(bounds)
             
@@ -66,14 +83,140 @@ class BoundedBayesOpt():
 
         self.sample_bounds = np.array([[min_x, max_x], 
                                   [min_y, max_y]])
+        
+        self.json = True
+        
+    def __get_kml_coords(self, filename):
+        """
+        Pulls lat/lon coordinates of roads from KML file
+        and initializes a KD tree that can be used for finding
+        the shortest distance between a given point and a road.
+
+        Inputs
+        ------
+        filename (str) : path to .kml file containing coordinates
+
+        Returns
+        -------
+        None, stores the following object attributes:
+        
+        kml (np.ndarray) : Array of coordinates describing roads, with latitude 
+                           in the first column and longitude in the second
+        max_kml_dist (float) : maximum distance a point may be from a road to
+                               be considered a valid position for sensor
+                               placement (currently hardcoded)
+        """
+        # Import inside function to avoid requiring PyKML for those who won't use it
+        from pykml import parser
+        output_mat = []
+
+        with open(filename) as f:
+            contents = parser.parse(f)
+
+        sup_fold_string  = contents.getroot().Document.Folder
+
+        for e in sup_fold_string.Folder:
+            for f in e.S_Roads_IISSSSSSSSD:
+
+                if hasattr(f, "MultiGeometry") is False:
+
+                    coord_string = f.LineString.coordinates
+
+                    tmp_string = str(coord_string)
+                    coord_string = tmp_string.split(" ")
+
+                    for idx, mystr in enumerate(coord_string):
+                        coord_string[idx] = mystr.strip()
+
+                    # Last one appears to be junk
+                    coord_string = coord_string[:-1]
+
+                    output = np.zeros((len(coord_string), 3))
+
+                    for idx, mystr in enumerate(coord_string):
+                        output[idx, 0] = float(mystr.split(",")[0])
+                        output[idx, 1] = float(mystr.split(",")[1])
+                        output[idx, 2] = float(mystr.split(",")[2])
+
+                    output_mat.append(output)
+
+                if hasattr(f, "MultiGeometry") is True:
+
+                    for g in f.MultiGeometry:
+
+                        coord_string = g.LineString.coordinates
+
+                        tmp_string = str(coord_string)
+                        coord_string = tmp_string.split(" ")
+
+                        for idx, mystr in enumerate(coord_string):
+                            coord_string[idx] = mystr.strip()
+
+                        # Last one appears to be junk
+                        coord_string = coord_string[:-1]
+
+                        output = np.zeros((len(coord_string), 3))
+
+                        for idx, mystr in enumerate(coord_string):
+                            output[idx, 0] = float(mystr.split(",")[0])
+                            output[idx, 1] = float(mystr.split(",")[1])
+                            output[idx, 2] = float(mystr.split(",")[2])
+
+                        output_mat.append(output)
+
+        latlon_out = np.asarray(output_mat, dtype='object')
+
+        x_utm = []
+        y_utm = []
+        z_utm = []
+
+        lats = []
+        lons = []
+
+
+        for latlon_coords in latlon_out:
             
+            # temp = convert_coords_to_utm(latlon_coords, demean=False)
+            
+            # x_utm += temp[0].flatten().tolist()
+            # y_utm += temp[1].flatten().tolist()
+            
+            lons += latlon_coords[:,0].tolist()
+            lats += latlon_coords[:,1].tolist()
+            
+        z_utm = np.ones(len(x_utm)).tolist()
+
+        self.kml_latloncoords = np.vstack((lats,lons)).T
+        # self.kml_utmcoords = np.vstack((x_utm, y_utm, z_utm)).T
+
+        self.kml_tree = BallTree(np.deg2rad(self.kml_latloncoords), metric='haversine')
+        self.json = False
+        self.max_kml_dist = .5
+        
+        min_x = np.min(lats)
+        max_x = np.max(lats)
+        min_y = np.min(lons)
+        max_y = np.max(lons)
+
+        self.sample_bounds = np.array([[min_x, max_x], 
+                                       [min_y, max_y]])       
+
     def check_valid(self, points):
-        masks = []
-        for polygon in self.bounds:
-            valid_region = mpltPath.Path(polygon)
-            valid_pts_idx = valid_region.contains_points(points)
-            masks.append(valid_pts_idx)
-        point_is_valid = np.any(masks, axis=0)
+        if self.json:
+            masks = []
+            for polygon in self.bounds:
+                valid_region = mpltPath.Path(polygon)
+                valid_pts_idx = valid_region.contains_points(points)
+                masks.append(valid_pts_idx)
+            point_is_valid = np.any(masks, axis=0)
+
+        else:
+            # Get unit distances from points to nearest road
+            dists = self.kml_tree.query(np.deg2rad(points))[0]
+            # Convert distances to kilometers by multiplying by radius of earth
+            dists = dists * 6371
+            # Check where distances are smaller than max allowed
+            point_is_valid = np.where(dists < self.max_kml_dist)[0]
 
         return point_is_valid
         
@@ -181,7 +324,13 @@ class BoundedBayesOpt():
         if self.Y_sample is None:
             self.Y_sample = Y_next
         else:
-            self.Y_sample = np.vstack((self.Y_sample, Y_next))
+            try:
+                self.Y_sample = np.vstack((self.Y_sample, Y_next))
+            except:
+                print(self.Y_sample)
+                print(Y_next)
+                raise ValueError('found error')
+
         
         # Update surrogate function
         self.gpr.fit(self.X_sample, self.Y_sample)
