@@ -1,12 +1,12 @@
 1
 2
-utah_domain.json
+ta_array_domain.json
 2,2,0
 0
 256
 512
 1
-utah_domain.json
+ta_array_domain.json
 mpiexec --bind-to core --npernode 36 --n 128 
 uniform_prior.py
 5
