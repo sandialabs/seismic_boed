@@ -1,16 +1,13 @@
 8
 24
-40.0,42.0
--112.0,-108.38
-0.1,2,0
+uinta_coords.json
 0
 8064
 8064
 1
-40.0,42.0
--112.0,-108.38
-0.0,40.0
+utah_domain.json
 mpiexec --bind-to core --npernode 36 --n 504
+uniform_prior.py
 5
 40.0,-111.5,0.1,2,0
 41.0,-111.9,0.1,2,0

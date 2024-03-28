@@ -243,19 +243,3 @@ def eval_importance(thetas, bounds, depth_range, mag_range):
     area = calc_area(bounds)
     
     return lat_prob*long_prob*depth_prob*mag_prob/area 
-
-
-
-#Generate psuedo random sensor distribution for initial OED
-def sample_sensors(lat_range,long_range, nsamp,skip):
-    #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-    #Change so seed can be set
-    dim_num = 2
-    sbvals = np.full((nsamp, dim_num), np.nan)
-    for j in range(nsamp):
-        sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1+skip+j)    
-    
-    sbvals[:,0] = sbvals[:,0]*(lat_range[1] - lat_range[0])+lat_range[0]
-    sbvals[:,1] = sbvals[:,1]*(long_range[1] - long_range[0])+long_range[0]
-    
-    return sbvals

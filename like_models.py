@@ -383,12 +383,12 @@ def sigmoid_params(lower, upper):
 def sigmoid(x, a, b):
     return 1.0 / (1.0 + np.exp(-a*(x-b)))
     
-# LANL and AFTAC models for calculating peak pressure
+# LANL and alt models for calculating peak pressure
 def calc_P_lanl(yieldkt,deltakm):
     P=3.37 + 0.68*np.log10(yieldkt)-1.36*np.log10(deltakm)
     return P
 
-def calc_P_aftac(yieldkt,deltadeg):
+def calc_P_alt(yieldkt,deltadeg):
     P=0.92+0.5*np.log10(yieldkt)-1.47*np.log10(deltadeg)
     return P
 
@@ -423,14 +423,14 @@ def infrasound_detection_probability(theta, sensors):
             delta_km = degrees2kilometers(delta_deg)
 
             lanl_peak = log_P_to_Pa(calc_P_lanl(syield, delta_km))
-            aftac_peak = log_P_to_Pa(calc_P_aftac(syield, delta_deg))
+            alt_peak = log_P_to_Pa(calc_P_alt(syield, delta_deg))
 
-            if lanl_peak > aftac_peak:
+            if lanl_peak > alt_peak:
                 pressure_high = lanl_peak
-                pressure_low = aftac_peak
+                pressure_low = alt_peak
 
             else:
-                pressure_high = aftac_peak
+                pressure_high = alt_peak
                 pressure_low = lanl_peak
 
             prob = np.mean(sigmoid(np.linspace(pressure_low, pressure_high), a, b))
@@ -473,13 +473,13 @@ def infrasound_snr_cal(dist, mag, snroffset, upper_detection_threshold=1.5435585
     dist = delta_deg
     
     lanl_peakvel = calc_P_lanl(syield, delta_km)
-    aftac_peakvel = calc_P_aftac(syield, delta_deg)
+    alt_peakvel = calc_P_alt(syield, delta_deg)
 
     lanl_peak = log_P_to_Pa(lanl_peakvel)
-    aftac_peak = log_P_to_Pa(aftac_peakvel)
+    alt_peak = log_P_to_Pa(alt_peakvel)
     
-    if lanl_peak > aftac_peak:
-        pressure_low = aftac_peak
+    if lanl_peak > alt_peak:
+        pressure_low = alt_peak
     else:
         pressure_low = lanl_peak
         
