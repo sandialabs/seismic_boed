@@ -1090,7 +1090,7 @@ def arrival_likelihood_gaussian(theta, sensors, data, stype):
 # Incident angle likelihoods
 #---------------------------
 def compute_incident(theta,sensors,stype):
-    if stype in ['infrasound', 'arrival']:
+    if stype in ['infrasound', 'array']:
         src_lat, src_long, zdepth, src_mag = theta
         # sensors
         rlats, rlongs, sensor_fidelity, *_ = sensors.T
