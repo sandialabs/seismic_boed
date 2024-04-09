@@ -321,7 +321,7 @@ def gen_azimuth_vonmises(theta, sensors, ndata, stype):
 
 def generate_sensor_data(theta,sensors,ndata,stype):
     #compute detection probablity
-    probs = lm.seismic_detection_probability(theta,sensors)
+    probs = lm.detection_probability(theta, sensors, stype)
     
     #make probs bigger
     fullprobs = np.outer(np.ones(ndata),probs)
