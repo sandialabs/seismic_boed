@@ -1111,7 +1111,7 @@ def compute_incident(theta,sensors,stype):
             angle[isens,1] = compute_kappa(N, snr)
 
     else:
-        raise ValueError('Incident angle could not be computed for sensor type: {stype}')
+        raise ValueError(f'Incident angle could not be computed for sensor type: {stype}')
     
     return angle
 
