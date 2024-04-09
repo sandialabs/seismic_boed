@@ -272,7 +272,7 @@ def gen_arrival_normal(theta, sensors, ndata, stype):
 
 def gen_incident_vonmises(theta, sensors, ndata,stype):
     if stype in ['infrasound', 'array']:
-        angle_data = lm.compute_incident(theta, sensors)
+        angle_data = lm.compute_incident(theta, sensors, stype)
         mean_angle = angle_data[:,0]
         kappa_angle = angle_data[:,1]
 
