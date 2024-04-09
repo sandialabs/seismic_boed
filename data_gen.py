@@ -345,7 +345,7 @@ Generate data
 ------------------------------
 ------------------------------
 """
-def generate_data(theta, sensors, ndata):
+def generate_data(theta, sensors, ndata,stype):
     def split_data(data):
         # splits data into arrival times, detections, azimuths, and incidents
 
@@ -379,13 +379,13 @@ def generate_data(theta, sensors, ndata):
     
     # Generate data from each sensor type
     if seismic_exists:
-        seismic_data = generate_seismic_data(theta, seismic_sensors, ndata)
+        seismic_data = generate_sensor_data(theta, seismic_sensors, ndata, stype='seismic')
     if instant_exists:
-        instant_data = generate_instant_data(theta, instant_sensors, ndata)
+        instant_data = generate_sensor_data(theta, instant_sensors, ndata, stype='instant')
     if infra_exists:
-        infra_data = generate_infrasound_data(theta, infrasound_sensors, ndata)
+        infra_data = generate_sensor_data(theta, infrasound_sensors, ndata, stype='infrasound')
     if array_exists:
-        array_data = generate_array_data(theta, array_sensors, ndata)
+        array_data = generate_sensor_data(theta, array_sensors, ndata, stype='array')
 
     # Split each sensor type's data into detections, arrivals, azimuths, incident angles
     # in order to recombine into a single dataset
