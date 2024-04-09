@@ -345,7 +345,7 @@ Generate data
 ------------------------------
 ------------------------------
 """
-def generate_data(theta, sensors, ndata,stype):
+def generate_data(theta, sensors, ndata):
     def split_data(data):
         # splits data into arrival times, detections, azimuths, and incidents
 
