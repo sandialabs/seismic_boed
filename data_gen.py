@@ -33,41 +33,41 @@ Seismic sensors
 ------------------------------
 ------------------------------
 """
-def seismic_gen_arrival_normal(theta, sensors, ndata):
-    # Variance is combination of arrival time and general sensor variance
-    #compute tt mean, model std, measruement std
-    tt_data = lm.seismic_compute_tt(theta, sensors)
+# def seismic_gen_arrival_normal(theta, sensors, ndata):
+#     # Variance is combination of arrival time and general sensor variance
+#     #compute tt mean, model std, measruement std
+#     tt_data = lm.seismic_compute_tt(theta, sensors)
 
-    mean_tt = tt_data[:,0]
-    stdmodel = tt_data[:,1]
-    measurenoise = tt_data[:,2]
+#     mean_tt = tt_data[:,0]
+#     stdmodel = tt_data[:,1]
+#     measurenoise = tt_data[:,2]
 
 
-    #compute corr matrix
-    corr = lm.seismic_compute_corr(theta, sensors)
-    cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-#     min_eig = np.min(np.real(np.linalg.eigvals(cov)))
+#     #compute corr matrix
+#     corr = lm.seismic_compute_corr(theta, sensors)
+#     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
+# #     min_eig = np.min(np.real(np.linalg.eigvals(cov)))
 
-    return np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
+#     return np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
 
-def generate_seismic_data(theta,sensors,ndata):
-    #compute detection probablity
-    probs = lm.seismic_detection_probability(theta,sensors)
+# def generate_seismic_data(theta,sensors,ndata):
+#     #compute detection probablity
+#     probs = lm.seismic_detection_probability(theta,sensors)
     
-    #make probs bigger
-    fullprobs = np.outer(np.ones(ndata),probs)
-    u_mat = np.random.uniform(size = fullprobs.shape)
+#     #make probs bigger
+#     fullprobs = np.outer(np.ones(ndata),probs)
+#     u_mat = np.random.uniform(size = fullprobs.shape)
     
-    #sample arrival times
-    atimes = seismic_gen_arrival_normal(theta, sensors, ndata)
+#     #sample arrival times
+#     atimes = seismic_gen_arrival_normal(theta, sensors, ndata)
 
-    #create dummy data to match shapes with other sensor types
-    dummy_data = np.empty((ndata, 2*sensors.shape[0]))
-    dummy_data.fill(np.nan)
+#     #create dummy data to match shapes with other sensor types
+#     dummy_data = np.empty((ndata, 2*sensors.shape[0]))
+#     dummy_data.fill(np.nan)
 
-    #get data[probs arrivaltimes]
-    data = np.concatenate((atimes,u_mat<fullprobs, dummy_data),axis=1)
-    return data
+#     #get data[probs arrivaltimes]
+#     data = np.concatenate((atimes,u_mat<fullprobs, dummy_data),axis=1)
+#     return data
 
 
 """
@@ -75,21 +75,21 @@ Instant arrival sensors
 ------------------------------
 ------------------------------
 """
-def instant_gen_arrival_normal(theta, sensors, ndata):
-    # Variance is combination of arrival time and general sensor variance
-    #compute tt mean, model std, measruement std
-    tt_data = lm.instant_compute_tt(theta, sensors)
-    mean_tt = tt_data[:,0]
-    stdmodel = tt_data[:,1]
-    measurenoise = tt_data[:,2]
+# def instant_gen_arrival_normal(theta, sensors, ndata):
+#     # Variance is combination of arrival time and general sensor variance
+#     #compute tt mean, model std, measruement std
+#     tt_data = lm.instant_compute_tt(theta, sensors)
+#     mean_tt = tt_data[:,0]
+#     stdmodel = tt_data[:,1]
+#     measurenoise = tt_data[:,2]
 
 
-    #compute corr matrix
-    corr = lm.seismic_compute_corr(theta, sensors)
-    cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-#     min_eig = np.min(np.real(np.linalg.eigvals(cov)))
+#     #compute corr matrix
+#     corr = lm.seismic_compute_corr(theta, sensors)
+#     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
+# #     min_eig = np.min(np.real(np.linalg.eigvals(cov)))
 
-    return np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
+#     return np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
 
 def generate_instant_data(theta,sensors,ndata):
     #compute detection probablity
@@ -116,38 +116,38 @@ Infrasound sensors
 ------------------------------
 ------------------------------
 """
-def infrasound_gen_arrival_normal(theta, sensors, ndata):
-    # Variance is combination of arrival time and general sensor variance
-    #compute tt mean, model std, measruement std
-    tt_data = lm.infrasound_compute_tt(theta, sensors)
-    mean_tt = tt_data[:,0]
-    stdmodel = tt_data[:,1]
-    measurenoise = tt_data[:,2]
+# def infrasound_gen_arrival_normal(theta, sensors, ndata):
+#     # Variance is combination of arrival time and general sensor variance
+#     #compute tt mean, model std, measruement std
+#     tt_data = lm.infrasound_compute_tt(theta, sensors)
+#     mean_tt = tt_data[:,0]
+#     stdmodel = tt_data[:,1]
+#     measurenoise = tt_data[:,2]
 
 
-    #compute corr matrix
-    corr = np.eye(measurenoise.shape[0])
-    cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
+#     #compute corr matrix
+#     corr = np.eye(measurenoise.shape[0])
+#     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
 
-    return np.random.multivariate_normal(mean_tt, cov, ndata)
+#     return np.random.multivariate_normal(mean_tt, cov, ndata)
 
-def infrasound_gen_incident_vonmises(theta, sensors, ndata):
-    angle_data = lm.infrasound_compute_incident(theta, sensors)
-    mean_angle = angle_data[:,0]
-    kappa_angle = angle_data[:,1]
+# def infrasound_gen_incident_vonmises(theta, sensors, ndata):
+#     angle_data = lm.infrasound_compute_incident(theta, sensors)
+#     mean_angle = angle_data[:,0]
+#     kappa_angle = angle_data[:,1]
 
-    incidents = np.zeros((len(sensors),ndata))
-    for i in range(len(sensors)):
-        vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
-        u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
-        val = vmf.ppf(u)
+#     incidents = np.zeros((len(sensors),ndata))
+#     for i in range(len(sensors)):
+#         vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
+#         u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
+#         val = vmf.ppf(u)
 
-        if np.any(np.isnan(val)):
-            print('NAN encountered incident')
-            return u, vmf
-        incidents[i] = val
+#         if np.any(np.isnan(val)):
+#             print('NAN encountered incident')
+#             return u, vmf
+#         incidents[i] = val
 
-    return incidents.T
+#     return incidents.T
         
 def infrasound_gen_azimuth_vonmises(theta, sensors, ndata):
     azmth_data = lm.infrasound_compute_azimuth(theta, sensors)
@@ -166,25 +166,25 @@ def infrasound_gen_azimuth_vonmises(theta, sensors, ndata):
     
     return azimuths.T    
     
-def generate_infrasound_data(theta,sensors,ndata):
-    #compute detection probablity
-    probs = lm.infrasound_detection_probability(theta,sensors)
+# def generate_infrasound_data(theta,sensors,ndata):
+    # #compute detection probablity
+    # probs = lm.infrasound_detection_probability(theta,sensors)
     
-    #make probs bigger
-    fullprobs = np.outer(np.ones(ndata),probs)
-    u_mat = np.random.uniform(size = fullprobs.shape)
+    # #make probs bigger
+    # fullprobs = np.outer(np.ones(ndata),probs)
+    # u_mat = np.random.uniform(size = fullprobs.shape)
     
-    #sample arrival times
-    atimes = infrasound_gen_arrival_normal(theta, sensors, ndata)
+    # #sample arrival times
+    # atimes = infrasound_gen_arrival_normal(theta, sensors, ndata)
     
-    #sample incident angles
-    incidents = infrasound_gen_incident_vonmises(theta, sensors, ndata)
+    # #sample incident angles
+    # incidents = infrasound_gen_incident_vonmises(theta, sensors, ndata)
     
-    azimuths = infrasound_gen_azimuth_vonmises(theta, sensors, ndata)
+    # azimuths = infrasound_gen_azimuth_vonmises(theta, sensors, ndata)
     
-    #get data[probs arrivaltimes]
-    data = np.concatenate((atimes, u_mat<fullprobs, azimuths, incidents),axis=1)
-    return data
+    # #get data[probs arrivaltimes]
+    # data = np.concatenate((atimes, u_mat<fullprobs, azimuths, incidents),axis=1)
+    # return data
 
 
 """
@@ -192,46 +192,46 @@ Seismic arrays
 ------------------------------
 ------------------------------
 """
-def array_gen_incident_vonmises(theta, sensors, ndata):
-    angle_data = lm.array_compute_incident(theta, sensors)
-    mean_angle = angle_data[:,0]
-    kappa_angle = angle_data[:,1]
+# def array_gen_incident_vonmises(theta, sensors, ndata):
+#     angle_data = lm.array_compute_incident(theta, sensors)
+#     mean_angle = angle_data[:,0]
+#     kappa_angle = angle_data[:,1]
     
-    incidents = np.zeros((len(sensors),ndata))
-    for i in range(len(sensors)): 
-        vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
-        try:
-            u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
-        except:
-            print(f'failed vals: {vmf.cdf(0), vmf.cdf(np.pi)}')   
-            print(f'data gen failed at kappa {kappa_angle[i]}, mean {mean_angle[i]}')
-            u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
-            print('retook u')
-        val = vmf.ppf(u)
+#     incidents = np.zeros((len(sensors),ndata))
+#     for i in range(len(sensors)): 
+#         vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
+#         try:
+#             u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
+#         except:
+#             print(f'failed vals: {vmf.cdf(0), vmf.cdf(np.pi)}')   
+#             print(f'data gen failed at kappa {kappa_angle[i]}, mean {mean_angle[i]}')
+#             u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
+#             print('retook u')
+#         val = vmf.ppf(u)
        
-        if np.any(np.isnan(val)):
-            print('NAN encountered')
-            return u, vmf
-        incidents[i] = val
+#         if np.any(np.isnan(val)):
+#             print('NAN encountered')
+#             return u, vmf
+#         incidents[i] = val
     
-    return incidents.T
+#     return incidents.T
                    
-def array_gen_azimuth_vonmises(theta, sensors, ndata):
-    azmth_data = lm.array_compute_azimuth(theta, sensors)
-    mean_azmth = azmth_data[:,0]
-    kappa_azmth = azmth_data[:,1]
+# def array_gen_azimuth_vonmises(theta, sensors, ndata):
+#     azmth_data = lm.array_compute_azimuth(theta, sensors)
+#     mean_azmth = azmth_data[:,0]
+#     kappa_azmth = azmth_data[:,1]
     
-    azimuths = np.zeros((len(sensors),ndata))
-    for i in range(len(sensors)): 
-        vmf = stats.vonmises_line(kappa_azmth[i], loc=mean_azmth[i])
-        val = vmf.rvs(size=ndata)
+#     azimuths = np.zeros((len(sensors),ndata))
+#     for i in range(len(sensors)): 
+#         vmf = stats.vonmises_line(kappa_azmth[i], loc=mean_azmth[i])
+#         val = vmf.rvs(size=ndata)
        
-        if np.any(np.isnan(val)):
-            print('NAN encountered')
-            return u, vmf
-        azimuths[i] = val
+#         if np.any(np.isnan(val)):
+#             print('NAN encountered')
+#             return u, vmf
+#         azimuths[i] = val
     
-    return azimuths.T    
+#     return azimuths.T    
     
 def generate_array_data(theta,sensors,ndata):
     #compute detection probablity
@@ -252,6 +252,93 @@ def generate_array_data(theta,sensors,ndata):
     #get data[probs arrivaltimes]
     data = np.concatenate((atimes, u_mat<fullprobs, azimuths, incidents),axis=1)
     return data
+
+
+def gen_arrival_normal(theta, sensors, ndata, stype):
+    # Variance is combination of arrival time and general sensor variance
+    #compute tt mean, model std, measruement std
+    tt_data = lm.compute_tt(theta, sensors,stype)
+
+    mean_tt = tt_data[:,0]
+    stdmodel = tt_data[:,1]
+    measurenoise = tt_data[:,2]
+
+
+    #compute corr matrix
+    corr = lm.compute_corr(theta, sensors,stype)
+    cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
+
+    return np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
+
+def gen_incident_vonmises(theta, sensors, ndata,stype):
+    if stype in ['infrasound', 'array']:
+        angle_data = lm.compute_incident(theta, sensors)
+        mean_angle = angle_data[:,0]
+        kappa_angle = angle_data[:,1]
+
+        incidents = np.zeros((len(sensors),ndata))
+        for i in range(len(sensors)):
+            vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
+            u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
+            val = vmf.ppf(u)
+
+            if np.any(np.isnan(val)):
+                print('NAN encountered incident')
+                return u, vmf
+            incidents[i] = val
+
+        incidents = incidents.T
+
+    elif stype in ['seismic', 'instant']:
+        incidents = np.empty((ndata, sensors.shape[0]))
+        incidents.fill(np.nan)
+
+    return incidents
+
+def gen_azimuth_vonmises(theta, sensors, ndata, stype):
+    if stype in ['infrasound', 'array']:
+        azmth_data = lm.compute_azimuth(theta, sensors, stype)
+        mean_azmth = azmth_data[:,0]
+        kappa_azmth = azmth_data[:,1]
+        
+        azimuths = np.zeros((len(sensors),ndata))
+        for i in range(len(sensors)): 
+            vmf = stats.vonmises_line(kappa_azmth[i], loc=mean_azmth[i])
+            val = vmf.rvs(size=ndata)
+        
+            if np.any(np.isnan(val)):
+                print('NAN encountered azimuth')
+                return vmf
+            azimuths[i] = val
+
+        azimuths = azimuths.T
+    
+    else:
+        azimuths = np.empty((ndata, sensors.shape[0]))
+        azimuths.fill(np.nan)
+
+    return azimuths
+
+def generate_sensor_data(theta,sensors,ndata,stype):
+    #compute detection probablity
+    probs = lm.seismic_detection_probability(theta,sensors)
+    
+    #make probs bigger
+    fullprobs = np.outer(np.ones(ndata),probs)
+    u_mat = np.random.uniform(size = fullprobs.shape)
+    
+    #sample arrival times
+    atimes = gen_arrival_normal(theta, sensors, ndata, stype)
+    
+    #sample incident angles
+    incidents = gen_incident_vonmises(theta, sensors, ndata, stype)
+    
+    azimuths = gen_azimuth_vonmises(theta, sensors, ndata, stype)
+    
+    #get data[probs arrivaltimes]
+    data = np.concatenate((atimes, u_mat<fullprobs, azimuths, incidents),axis=1)
+    return data
+
 
 """
 Generate data

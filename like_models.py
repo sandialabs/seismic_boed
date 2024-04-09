@@ -594,23 +594,23 @@ def infrasound_meas_std_cal(dist, mag, snroffset):
 #     return loglike
 
 
-# def compute_kappa(N, snr, delta=2):
-#     return 1
-#     if N == 1:
-#         kappa_0  = 1 # Control for single sensors...update this to be actually principled
+def compute_kappa(N, snr, delta=2):
+    return 1
+    if N == 1:
+        kappa_0  = 1 # Control for single sensors...update this to be actually principled
 
-#     F = N * snr + 1
-#     kappa_0 = 2 * (N - 1)/N * (F - 1)
+    F = N * snr + 1
+    kappa_0 = 2 * (N - 1)/N * (F - 1)
     
-#     cos_phihalf = 1 - np.log(2)/kappa_0
-#     if cos_phihalf < -1:
-#         cos_phihalf = 1
-#     if cos_phihalf > 1:
-#         cos_phihalf = 1
-#     sin_phihalf = np.sqrt(1 - cos_phihalf**2)
+    cos_phihalf = 1 - np.log(2)/kappa_0
+    if cos_phihalf < -1:
+        cos_phihalf = 1
+    if cos_phihalf > 1:
+        cos_phihalf = 1
+    sin_phihalf = np.sqrt(1 - cos_phihalf**2)
     
-#     kappa = np.log(2) / (1 - cos_phihalf*np.cos(delta) + sin_phihalf*np.sin(delta))
-#     return kappa
+    kappa = np.log(2) / (1 - cos_phihalf*np.cos(delta) + sin_phihalf*np.sin(delta))
+    return kappa
 
 
 # def infrasound_compute_incident(theta, sensors):
@@ -1090,18 +1090,29 @@ def arrival_likelihood_gaussian(theta, sensors, data, stype):
 # Incident angle likelihoods
 #---------------------------
 def compute_incident(theta,sensors,stype):
-    for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-        arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, 
-                                       source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, 
-                                       receiver_longitude_in_deg=rlong, phase_list=["P","p"])
-        
-        angle[isens,0] = arrivals[0].incident_angle *np.pi/180
-        
-        delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
-        snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
+    if stype in ['infrasound', 'arrival']:
+        src_lat, src_long, zdepth, src_mag = theta
+        # sensors
+        rlats, rlongs, sensor_fidelity, *_ = sensors.T
+        model = TauPyModel(model="iasp91")
+        angle = np.zeros((len(rlats) ,2))
+        N = sensors.shape[0]
 
-        angle[isens,1] = compute_kappa(N, snr)
+        for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
+            arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, 
+                                        source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, 
+                                        receiver_longitude_in_deg=rlong, phase_list=["P","p"])
+            
+            angle[isens,0] = arrivals[0].incident_angle *np.pi/180
+            
+            delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
+            snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
 
+            angle[isens,1] = compute_kappa(N, snr)
+
+    else:
+        raise ValueError('Incident angle could not be computed for sensor type: {stype}')
+    
     return angle
 
 
@@ -1144,52 +1155,63 @@ def incident_likelihood(theta, sensors, data, stype):
 # Azimuth angle likelihoods
 #--------------------------
 def compute_azimuth(theta, sensors,stype):
-    src_lat, src_long, zdepth, src_mag = theta
-    # sensors
-    rlats, rlongs, sensor_fidelity, *_ = sensors.T
-    azmth = np.zeros((len(rlats) ,2))
+    if stype in ['infrasound', 'array']:
+        src_lat, src_long, zdepth, src_mag = theta
+        # sensors
+        rlats, rlongs, sensor_fidelity, *_ = sensors.T
+        azmth = np.zeros((len(rlats) ,2))
 
-    N = sensors.shape[0]
+        N = sensors.shape[0]
 
-    for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-        curr_azmth = gps2dist_azimuth(rlat, rlong, src_lat, src_long)[1]
-        
-        azmth[isens,0] = curr_azmth * np.pi/180
-        
-        delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
-#         logsnr = seismic_snr_cal(delta_deg, src_mag, fidelity)
-        snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
-#         azmth[isens,1] = compute_kappa(N, np.exp(logsnr))
-        azmth[isens,1] = compute_kappa(N, snr)
-        
+        for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
+            curr_azmth = gps2dist_azimuth(rlat, rlong, src_lat, src_long)[1]
+            
+            azmth[isens,0] = curr_azmth * np.pi/180
+            
+            delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
+    #         logsnr = seismic_snr_cal(delta_deg, src_mag, fidelity)
+            snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
+    #         azmth[isens,1] = compute_kappa(N, np.exp(logsnr))
+            azmth[isens,1] = compute_kappa(N, snr)
+    
+    else:
+        raise ValueError(f'Azimuth cannot be computed for sensor type: {stype}')
+
     return azmth
 
 
 def azimuth_likelihood(theta,sensors,data,stype):
-    azmth_data = array_compute_azimuth(theta, sensors,stype)
-    [ndata, ndpt] = data.shape
-    nsens = int(ndpt/4)
+    if stype in ['seismic', 'instant']:
+        loglike = 0
 
-    loglike = np.zeros(ndata)
-    
-    for idata, mask in enumerate(data[:,nsens:2*nsens]):
-        maskidx = np.nonzero(mask)[0]
+    if stype in ['infrasound', ]:
+        azmth_data = compute_azimuth(theta, sensors,stype)
+        [ndata, ndpt] = data.shape
+        nsens = int(ndpt/4)
+
+        loglike = np.zeros(ndata)
         
-        if len(maskidx) == 0:
-            continue
+        for idata, mask in enumerate(data[:,nsens:2*nsens]):
+            maskidx = np.nonzero(mask)[0]
             
-        detected_azmthdata = azmth_data[maskidx]
-        means = detected_azmthdata[:,0]
-        kappas = detected_azmthdata[:,1]
+            if len(maskidx) == 0:
+                continue
+                
+            detected_azmthdata = azmth_data[maskidx]
+            means = detected_azmthdata[:,0]
+            kappas = detected_azmthdata[:,1]
 
-        local_likes = []
-        detected_data = data[idata, 2*nsens:3*nsens][maskidx]
-        for imask in range(len(detected_data)):
-            dist = stats.vonmises(kappas[imask], loc=means[imask])
-            tmp = dist.logpdf(detected_data[imask])
-            local_likes.append(tmp)
-        loglike[idata] = sum(local_likes)
-        
+            local_likes = []
+            detected_data = data[idata, 2*nsens:3*nsens][maskidx]
+            for imask in range(len(detected_data)):
+                dist = stats.vonmises(kappas[imask], loc=means[imask])
+                tmp = dist.logpdf(detected_data[imask])
+                local_likes.append(tmp)
+            loglike[idata] = sum(local_likes)
+
+    else:
+        loglike = 0
+
     return loglike
 
 
