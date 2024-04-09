@@ -1037,7 +1037,7 @@ def compute_tt(theta, sensors, stype):
             vel = 1/vel_model.sample()[0]
             ptime[isens,0] = vel/delta_km
 
-            model_std = tt_std_cal(zdepth, deltakm, stype)
+            model_std = tt_std_cal(0,0,stype)
             ptime[isens,1] = model_std
 
             measure_std = infrasound_meas_std_cal(delta_deg, src_mag, fidelity)
