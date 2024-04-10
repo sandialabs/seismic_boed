@@ -1,13 +1,8 @@
-import time
-import math
-import joblib
 import pickle
-import geographiclib
 
 import numpy as np
 
 from scipy import stats
-from scipy import interpolate as itp
 
 from obspy import geodetics
 from obspy.taup import TauPyModel
@@ -17,16 +12,12 @@ from obspy.geodetics.base import degrees2kilometers
 
 from sklearn.mixture import GaussianMixture
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics.pairwise import haversine_distances
 
 import warnings
 warnings.filterwarnings("ignore")
 
-"""
-Models for sesmic sensors
--------------------------------------------------
--------------------------------------------------
-"""
+# Helper functions for seismic sensor models
+# ------------------------------------------
 def haversine(lat1, lon1, lat2, lon2):
     """
     Calculate the great-circle distance (in km) between two points 
@@ -52,308 +43,17 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)) 
     return r * c
 
-# def seismic_detection_probability(theta,sensors):
-#     slat = theta[0]
-#     slong = theta[1]
-#     sdepth = theta[2]
-#     smag = theta[3]
-
-#     model = LogisticRegression()
-#     model.classes_ = np.asarray([0, 1])
-#     # Params for Utah model
-# #     model.coef_ = np.asarray([[-0.0297509 , -2.81876856,  1.14055126]])
-# #     model.intercept_ = np.asarray(1.95254635)
-
-#     # Params for Europe model
-#     model.coef_ = np.array([[ -0.0297509,   -0.606856,    1.14055126]])
-#     model.intercept_ = np.array(1.55254635)
-    
-#     probs = np.ones(sensors.shape[0])
-    
-#     for isens in range(0,sensors.shape[0]):  
-#         delta = geodetics.locations2degrees(slat, slong, sensors[isens][0], sensors[isens][1])
-#         x = np.asarray([sdepth, delta, smag]).reshape(1, -1)
-#         probs[isens] = model.predict_proba(x)[0][1]
-
-#     probs[np.where(probs == 1)[0]] = .99999
-#     return probs
-
-
-#Improved TT STD Model
-# def seismic_tt_std_cal(depth, dist):
-#     params = np.array([ -2.56472101e+02,   1.74085841e+01,  -1.19406851e-03,
-#         -1.66597693e-04,   9.91187799e-08,   1.17056345e+01,
-#         -8.13371656e-01,   8.42272315e-04,   2.80802067e-06,
-#          3.60764706e-09,   1.21624463e-01,  -8.63214584e-03,
-#         -7.45214280e-06,   1.25905904e-07,  -1.21859595e-10,
-#         -1.19443389e-02,   8.67089566e-04,  -1.11453054e-06,
-#         -1.11651169e-09,  -7.07702285e-12,   1.39921004e-04,
-#         -1.03707528e-05,   1.97886651e-08,  -2.93026404e-11,
-#          1.57527073e-13,   1.23554461e-03,   1.84229583e-02,
-#         -2.18347658e-04,   9.53900469e-07,  -1.26729653e-09,
-#          3.64225546e-02,  -3.39939908e-03,   3.16659333e-05,
-#         -1.02362420e-07,   1.11272994e-10,  -3.75764388e-03,
-#          2.73743286e-04,  -2.10488918e-06,   5.69748506e-09,
-#         -5.17365299e-12,   1.49883472e-04,  -9.66468438e-06,
-#          6.99133567e-08,  -1.79611764e-10,   1.56300210e-13,
-#         -1.98606449e-06,   1.21461076e-07,  -8.71278276e-10,
-#          2.26330123e-12,  -2.03871471e-15,  -3.61047221e+01,
-#          1.75671838e+01])
-    
-#     ndim = 5
-#     poly0 = np.reshape(params[0:(ndim**2)],(ndim,ndim))
-#     poly1 = np.reshape(params[(ndim**2):(2*ndim**2)],(ndim,ndim))
-#     g = -1.0*np.abs(params[2*ndim**2])
-#     h = np.abs(params[2*ndim**2+1])
-    
-#     boolg = 1.0/(1.0+np.exp(-h*(depth+g)))
-#     std0 = np.polynomial.polynomial.polyval2d(depth,dist,poly0)
-#     std1 = np.polynomial.polynomial.polyval2d(depth,dist,poly1)
-#     std = std0*boolg + std1*(1.0-boolg)
-#     return std
-
 def seismic_snr_cal(dist, mag, snroffset):
-    #fit from TA Arrray Data nominally, snroffset = 0
+    """Compute SNR from model fit to TA Array Data"""
     a = 0.90593911
     b = 0.92684044
     c = 5.54237317
     return a*mag + c - b*np.log(dist+10**-10) + snroffset
 
-#magnitude dependeint measurment error
-def seismic_meas_std_cal(dist, mag, snroffset):  
-    #add nugget for numerical stablity
-    logsnr = seismic_snr_cal(dist, mag, snroffset)
-    
-    #Uncertainty in Phase Arrival Time Picks for Regional Seismic Events: An Experimental Design
-    # Velasco et al 2001 (SAND Report)
-    #Simple IDC SNR only model
-    
-    #Nomial values from "Improving Regional Seismic Event Location in China"
-    #Steck et al 2001
-    
-    sig0 = 10.0
-    gamma = 0.01
-    tl = 5
-    tu = 50
-    
-    if logsnr < np.log(tl):
-        sig = sig0
-    else:
-        if logsnr > np.log(tu):
-                sig = gamma*sig0
-        else:
-                sig = sig0 - (1.0-gamma)*sig0/(np.log(tu)-np.log(tl)) * (logsnr - np.log(tl))
-    return sig
-
-# def seismic_compute_corr(theta, sensors):
-#     rlats = sensors[:,0]
-#     rlongs = sensors[:,1]
-#     corr = np.eye(len(rlats))
-    
-#     lscal = 147.5
-    
-#     for isens in range(0,len(rlats)):
-#         for jsens in range(isens,len(rlats)):
-#             #147.5 was fit from the 1D profiles
-# #             if sensors[isens, 4] == 1:
-# #                 # Make instant arrival sensors uncorrelated with all others
-# #                 if isens == jsens:
-# #                     corr[isens, jsens] = 1
-# #                 else:
-# #                     corr[isens, jsens] = 0
-# #                     corr[jsens, isens] = 0
-
-#             azmthdata = geodetics.gps2dist_azimuth(rlats[isens], rlongs[isens], rlats[jsens], rlongs[jsens])
-#             corr[isens,jsens] = np.exp(-1.0/(lscal**2) * (azmthdata[0]/1000.0)**2)
-#             corr[jsens,isens] = np.exp(-1.0/(lscal**2) * (azmthdata[0]/1000.0)**2)
-            
-#     return corr
-
-
-# def seismic_compute_tt(theta, sensors):
-#     model = TauPyModel(model="iasp91")
-#     # with open('cubic_reg_europe.pkl', 'rb') as inp:
-#     with open('cubic_reg.pkl', 'rb') as inp:
-#         reg = pickle.load(inp)
-#     with open('TTstd.pkl', 'rb') as inp:
-#         std_reg = pickle.load(inp)
-#     # event
-#     src_lat, src_long, zdepth, src_mag = theta
-#     # sensors
-#     rlats, rlongs, sensor_fidelity, *_ = sensors.T
-    
-#     #mean and model std and measurment std
-#     ptime = np.zeros((len(rlats),3))
-#     #iangle = np.zeros(len(rlats))
-#     #azmth = np.zeros(len(rlats))
-
-#     for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-#         arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, receiver_longitude_in_deg=rlong, phase_list=["P","p"])
-#         #azmthdata = geodetics.gps2dist_azimuth(src_lat, src_long, rlat, rlong)
-
-#         #record data from the first arrival. Assume always in the azimuthal plane.
-#         ptime[isens,0] = arrivals[0].time
-#         #iangle[isens] = arrivals[0].incident_angle
-#         #azmth[isens] = azmthdata[1]
-
-#         deltakm = geodetics.degrees2kilometers(geodetics.locations2degrees(src_lat, src_long, rlat, rlong))
-#         model_std = seismic_tt_std_cal(zdepth, deltakm)
-#         ptime[isens,1] = model_std
-
-#         #models
-
-#         dist = calc_dist(src_lat, src_long, rlat, rlong, 6371.0, 0)
-#         x = [zdepth, dist]
-
-#         measure_std = seismic_meas_std_cal(dist, src_mag, fidelity)
-        
-#         ptime[isens,2] = measure_std
-
-#     return ptime
-
-
-
-# #Compute likelhood of each event given dataset
-
-
-# def seismic_arrival_likelihood_gaussian(theta, sensors, data):
-#     #compute mean
-#     tt_data = seismic_compute_tt(theta, sensors)
-
-#     mean_tt = tt_data[:,0]
-#     stdmodel = tt_data[:,1]
-#     measurenoise = tt_data[:,2]
-    
-#     #compute corr matrix
-#     corr = seismic_compute_corr(theta, sensors)
-#     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-    
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-    
-#     loglike = np.zeros(ndata)
-    
-#     for idata in range(0,ndata):
-#         mask = data[idata,nsens:2*nsens]
-#         maskidx = np.nonzero(mask)[0]
-        
-#         #I could decompose this into an iterative operation where I sequentally condition on each sensor? That would maybe be computationally more tractable becuase I could apply to all as update the distributions?
-        
-#         if len(maskidx) > 0:
-#             #only extracts detections
-#             means = mean_tt[maskidx]
-#             dataval = data[idata,maskidx]
-#             covmat = cov[maskidx[:, None], maskidx]
-            
-#             res = dataval - means
-#             onevec = np.ones(means.shape)
-#             a = np.sum(np.linalg.solve(covmat,res))
-#             b = np.sum(np.linalg.solve(covmat,onevec))
-        
-        
-#             #THESE LINES ARE Maybe wrong BECAUSE THE DISTRIBUTION IS IMPROPER
-#             logdets = np.linalg.slogdet(covmat)[1]
-#             loglike[idata] = -0.5*np.sum(np.multiply(res, np.linalg.solve(covmat,res))) + (1.0 - len(maskidx))/2.0*np.log(2*np.pi) - 0.5*logdets - 0.5*np.log(b) + np.divide(a**2, 2.0*b)
-#     return loglike
-
-# def seismic_detection_likelihood(theta, sensors, data):
-#     probs = seismic_detection_probability(theta,sensors)
-    
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-    
-#     loglike = np.zeros(ndata)
-    
-#     for idata in range(0,ndata):
-#         mask = data[idata,nsens:2*nsens]
-#         loglike[idata] = np.sum(mask*np.log(probs) + (1.0 - mask) * np.log(1.0 - probs))
-#     return loglike
-
-"""
-Models for instant arrival arrays
--------------------------------------------------
--------------------------------------------------
-"""
-
-# def instant_detection_probability(theta,sensors):
-#     # if sensor type is instant arrival, assume detection
-#     probs = np.ones(sensors.shape[0]) * 1-1e-15
-#     return probs
-
-
-# def instant_compute_tt(theta, sensors):
-#     # give instant arrival sensors negligible error
-#     ptime = np.zeros((sensors.shape[0],3))
-#     ptime[:,0] = 0
-#     ptime[:,1] = .001
-#     ptime[:,2] = .001
-    
-#     return ptime
-
-
-# #Compute likelhood of each event given dataset
-# def instant_arrival_likelihood_gaussian(theta, sensors, data):
-#     #compute mean
-#     tt_data = instant_compute_tt(theta, sensors)
-
-#     mean_tt = tt_data[:,0]
-#     stdmodel = tt_data[:,1]
-#     measurenoise = tt_data[:,2]
-    
-#     #compute corr matrix
-#     corr = seismic_compute_corr(theta, sensors) # FIX THIS (IT WORKS BUT ITS UGLY)
-#     corr = np.eye(corr.shape[0])
-#     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-    
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-    
-#     loglike = np.zeros(ndata)
-    
-#     for idata in range(0,ndata):
-#         mask = data[idata,nsens:2*nsens]
-#         maskidx = np.nonzero(mask)[0]
-        
-#         #I could decompose this into an iterative operation where I sequentally condition on each sensor? That would maybe be computationally more tractable becuase I could apply to all as update the distributions?
-        
-#         if len(maskidx) > 0:
-#             #only extracts detections
-#             means = mean_tt[maskidx]
-#             dataval = data[idata,maskidx]
-#             covmat = cov[maskidx[:, None], maskidx]
-            
-#             res = dataval - means
-#             onevec = np.ones(means.shape)
-#             a = np.sum(np.linalg.solve(covmat,res))
-#             b = np.sum(np.linalg.solve(covmat,onevec))
-        
-        
-#             #THESE LINES ARE Maybe wrong BECAUSE THE DISTRIBUTION IS IMPROPER
-#             logdets = np.linalg.slogdet(covmat)[1]
-#             loglike[idata] = -0.5*np.sum(np.multiply(res, np.linalg.solve(covmat,res))) + (1.0 - len(maskidx))/2.0*np.log(2*np.pi) - 0.5*logdets - 0.5*np.log(b) + np.divide(a**2, 2.0*b)
-#     return loglike
-
-
-# def instant_detection_likelihood(theta, sensors, data):
-#     probs = instant_detection_probability(theta,sensors)
-    
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-    
-#     loglike = np.zeros(ndata)
-
-#     for idata in range(0,ndata):
-#         mask = data[idata,nsens:2*nsens]
-#         loglike[idata] = np.sum(mask*np.log(probs) + (1.0 - mask) * np.log(1.0 - probs))
-#     return loglike
-
-
-"""
-Models for Infrasound arrays
--------------------------------------------------
--------------------------------------------------
-"""
+# Helper functions for infrasound models
+# --------------------------------------
 def mag_to_kt(mag):
+    """ Convert local magnitude to kilotons"""
     # values fit for local mag
     d, f = [3.909197277671451, 2.998020624687433]
     energy_J = 10**(d*mag + f)
@@ -363,97 +63,48 @@ def mag_to_kt(mag):
     return energy_kT
 
 def sigmoid_params(lower, upper):
+    """
+    Compute parameters that define sigmoid function with 'lower' value evaluating
+    to .05 and 'uppper' value evaluating to .95.
+    """
     a = np.log((.95/.05)**2) / (upper - lower)
     b = np.log(.95/.05) / a + lower
     
     return a, b
 
 def sigmoid(x, a, b):
+    """
+    Sigmoid function for evaluating detection likelihoods
+    """
     return 1.0 / (1.0 + np.exp(-a*(x-b)))
     
 # LANL and alt models for calculating peak pressure
 def calc_P_lanl(yieldkt,deltakm):
+    """
+    Computes peak pressure according to LANL model, see 
+    'Infrasonic Monitoring' by Whitaker, 1995, in Proceedings of the 17th Annual 
+    Seismic Research Symposium 
+    """
     P=3.37 + 0.68*np.log10(yieldkt)-1.36*np.log10(deltakm)
     return P
 
 def calc_P_alt(yieldkt,deltadeg):
+    """
+    Computes peak pressure according to alternative model, see 
+    'Capability Estimation of Infrasound Networks"' by Clauter and Brandford,
+    1995, AFTAC Report  
+    """
     P=0.92+0.5*np.log10(yieldkt)-1.47*np.log10(deltadeg)
     return P
 
 def log_P_to_Pa(P):
+    "Convert log peak pressure to peak pressure"
     Pa=10**P
     return Pa
 
-# def infrasound_detection_probability(theta, sensors):
-#     # values from notebook
-#     lower_detection_threshold = 0.36432363
-#     upper_detection_threshold = 1.54355851
-    
-#     # Set lower threshold val at %5 detection prob and upper threshold val at 95%
-#     a,b = sigmoid_params(lower_detection_threshold, 
-#                          upper_detection_threshold)
-    
-#     slat = theta[0]
-#     slong = theta[1]
-#     sdepth = theta[2]
-#     smag = theta[3]
-#     syield = mag_to_kt(smag)
-    
-#     probs = np.ones(sensors.shape[0])
-
-#     for isens in range(0,sensors.shape[0]):
-#         if sensors[isens, 4] == 1:
-#             # if sensor type is instant arrival, assume detection
-#             probs[isens] = 1 - 1e-15 
-            
-#         else:
-#             delta_deg = geodetics.locations2degrees(slat, slong, sensors[isens, 0], sensors[isens, 1])
-#             delta_km = degrees2kilometers(delta_deg)
-
-#             lanl_peak = log_P_to_Pa(calc_P_lanl(syield, delta_km))
-#             alt_peak = log_P_to_Pa(calc_P_alt(syield, delta_deg))
-
-#             if lanl_peak > alt_peak:
-#                 pressure_high = lanl_peak
-#                 pressure_low = alt_peak
-
-#             else:
-#                 pressure_high = alt_peak
-#                 pressure_low = lanl_peak
-
-#             prob = np.mean(sigmoid(np.linspace(pressure_low, pressure_high), a, b))
-            
-#             probs[isens] = prob
-    
-#     probs[np.where(probs >= 1)[0]] = .99999
-#     return probs
-
-
-# def infrasound_detection_likelihood(theta, sensors, data):
-#     probs = infrasound_detection_probability(theta,sensors)
-    
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-    
-#     loglike = np.zeros(ndata)
-    
-#     for idata in range(0,ndata):
-#         mask = data[idata,nsens:2*nsens]
-#         loglike[idata] = np.sum(mask*np.log(probs) + (1.0 - mask) * np.log(1.0 - probs))
-#     return loglike
-
-#Infrasound TT STD Model
-# def infrasound_tt_std_cal():
-#     weights = np.array([.054, .090, .856])
-#     means = np.array([1.0/0.327, 1.0/0.293, 1.0/0.260])
-#     stds = np.array([0.066, 0.080, 0.330])
-    
-#     gmm_var = np.sum(weights * stds**2) + np.sum(weights * means**2) - np.sum(weights*means)**2
-    
-#     return gmm_var
-
-
 def infrasound_snr_cal(dist, mag, snroffset, upper_detection_threshold=1.54355851):
+    """Compute SNR for infrasound models as ratio between minimum of LANL signal
+    model signal and alt model signal and maximum noise"""
     syield = mag_to_kt(mag)
     
     delta_deg = dist
@@ -474,28 +125,22 @@ def infrasound_snr_cal(dist, mag, snroffset, upper_detection_threshold=1.5435585
     snr = pressure_low / upper_detection_threshold
     logsnr = np.log(snr) + snroffset
     
-    return np.exp(logsnr)
+    return logsnr
 
 
-def infrasound_meas_std_cal(dist, mag, snroffset):
-    #fit from TA Arrray Data nominally, snroffset = 0
-    a = 0.90593911
-    b = 0.92684044
-    c = 5.54237317
-        
-    # Take minimum signal vs maximum noise, ratio between the two is the SNR
-    logsnr = np.log(infrasound_snr_cal(dist, mag, snroffset))
+def meas_std_cal(dist, mag, snroffset, stype):
+    """
+    Compute uncertainty in phase arrival picks, model from
+    Uncertainty in Phase Arrival Time Picks for Regional Seismic Events: 
+    An Experimental Design by Velasco et al 2001 (Sand Report)
 
-    # SNR model from velasco paper:
-    # (add nugget for numerical stablity)
-    # logsnr = a*mag + c - b*np.log(delta_deg+10**-10) + snroffset
-
-    #Uncertainty in Phase Arrival Time Picks for Regional Seismic Events: An Experimental Design
-    # Velasco et al 2001 (SAND Report)
-    #Simple IDC SNR only model
-
-    #Nomial values from "Improving Regional Seismic Event Location in China"
-    #Steck et al 2001
+    Nominal values from "Improving Regional Seismic Event Location in China by
+    Steck et al 2001
+    """
+    if stype == 'infrasound':
+        logsnr = infrasound_snr_cal(dist, mag, snroffset)
+    elif stype == 'seismic':
+        logsnr =  seismic_snr_cal(dist, mag, snroffset)
 
     sig0 = 10.0
     gamma = 0.01
@@ -512,90 +157,10 @@ def infrasound_meas_std_cal(dist, mag, snroffset):
 
     return sig
 
-
-# def infrasound_compute_tt(theta, sensors):
-#     # event
-#     src_lat, src_long, zdepth, src_mag = theta
-#     # sensors
-#     rlats, rlongs, sensor_fidelity, *_ = sensors.T
-    
-#     # travel time model
-#     vel_model = GaussianMixture(n_components=3, covariance_type='spherical')
-#     weights = np.array([.054, .090, .856])
-#     means = np.array([1.0/0.327, 1.0/0.293, 1.0/0.260]).reshape((-1,1))
-#     stds = np.array([0.066, 0.080, 0.330])
-
-#     vel_model.weights_ = weights
-#     vel_model.means_ = means
-#     vel_model.covariances_ = stds
-#     vel_model.n_features = 1
-    
-#     #mean and model std and measurment std
-#     ptime = np.zeros((len(rlats),3))
-
-#     for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-#         delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
-#         delta_km = degrees2kilometers(delta_deg)
-#         # Model is defined in s/km, take reciprocal for km/s
-#         vel = 1/vel_model.sample()[0]
-#         ptime[isens,0] = vel/delta_km
-
-#         model_std = infrasound_tt_std_cal()
-#         ptime[isens,1] = model_std
-
-#         measure_std = infrasound_meas_std_cal(delta_deg, src_mag, fidelity)
-        
-#         ptime[isens,2] = measure_std
-
-#     return ptime
-
-
-# #Compute likelhood of each event given dataset
-
-
-# def infrasound_arrival_likelihood_gaussian(theta, sensors, data):
-#     #compute mean
-#     tt_data = infrasound_compute_tt(theta, sensors)
-
-#     mean_tt = tt_data[:,0]
-#     stdmodel = tt_data[:,1]
-#     measurenoise = tt_data[:,2]
-    
-#     #compute corr matrix -- assume independence on infrasound for now
-#     corr = np.eye(measurenoise.shape[0])
-#     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-    
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-    
-#     loglike = np.zeros(ndata)
-    
-#     for idata in range(0,ndata):
-#         mask = data[idata,nsens:2*nsens]
-#         maskidx = np.nonzero(mask)[0]
-        
-#         #I could decompose this into an iterative operation where I sequentally condition on each sensor? That would maybe be computationally more tractable becuase I could apply to all as update the distributions?
-        
-#         if len(maskidx) > 0:
-#             #only extracts detections
-#             means = mean_tt[maskidx]
-#             dataval = data[idata,maskidx]
-#             covmat = cov[maskidx[:, None], maskidx]
-            
-#             res = dataval - means
-#             onevec = np.ones(means.shape)
-#             a = np.sum(np.linalg.solve(covmat,res))
-#             b = np.sum(np.linalg.solve(covmat,onevec))
-        
-        
-#             #THESE LINES ARE Maybe wrong BECAUSE THE DISTRIBUTION IS IMPROPER
-#             logdets = np.linalg.slogdet(covmat)[1]
-#             loglike[idata] = -0.5*np.sum(np.multiply(res, np.linalg.solve(covmat,res))) + (1.0 - len(maskidx))/2.0*np.log(2*np.pi) - 0.5*logdets - 0.5*np.log(b) + np.divide(a**2, 2.0*b)
-#     return loglike
-
-
 def compute_kappa(N, snr, delta=2):
-    return 1
+    """Compute concentration kappa for von Mises distributions based on model
+    from 'Improved Bayesian Infrasonic Source Localization for regional 
+    infrasound' by Blom et al., 2015"""
     if N == 1:
         kappa_0  = 1 # Control for single sensors...update this to be actually principled
 
@@ -611,234 +176,26 @@ def compute_kappa(N, snr, delta=2):
     
     kappa = np.log(2) / (1 - cos_phihalf*np.cos(delta) + sin_phihalf*np.sin(delta))
     return kappa
-
-
-# def infrasound_compute_incident(theta, sensors):
-#     src_lat, src_long, zdepth, src_mag = theta
-#     # sensors
-#     rlats, rlongs, sensor_fidelity, *_ = sensors.T
-#     model = TauPyModel(model="iasp91")
-#     angle = np.zeros((len(rlats) ,2))
-#     N = sensors.shape[0]
-
-#     for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-#         arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, 
-#                                        source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, 
-#                                        receiver_longitude_in_deg=rlong, phase_list=["P","p"])
-        
-#         angle[isens,0] = arrivals[0].incident_angle *np.pi/180
-        
-#         delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
-#         snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
-        
-#         angle[isens,1] = compute_kappa(N, snr)
-#     return angle
-
-
-# def infrasound_incident_likelihood(theta,sensors,data):
-#     angle_data = infrasound_compute_incident(theta, sensors)
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-
-#     loglike = np.zeros(ndata)
-    
-#     for idata, mask in enumerate(data[:,nsens:2*nsens]):
-#         maskidx = np.nonzero(mask)[0]
-        
-#         if len(maskidx) == 0:
-#             continue
-            
-#         detected_angledata = angle_data[maskidx]
-#         means = detected_angledata[:,0]
-#         kappas = detected_angledata[:,1]
-
-#         local_likes = []
-#         detected_data = data[idata, 3*nsens:][maskidx]
-
-#         for imask in range(len(detected_data)):
-#             dist = stats.vonmises(kappas[imask], loc=means[imask])
-#             const = dist.cdf(np.pi) - dist.cdf(0)
-#             tmp = dist.logpdf(detected_data[imask]) - np.log(const)
-#             if np.isnan(tmp):
-#                 print(f'NAN in infrasound (inc) likelihood, kappa {kappas[imask]}, mean {means[imask]}, val {detected_data[imask]}')
-
-#             local_likes.append(tmp)
-        
-#         loglike[idata] = sum(local_likes)
-    
-#     return loglike
-
-
-# def infrasound_compute_azimuth(theta, sensors):
-#     src_lat, src_long, zdepth, src_mag = theta
-#     # sensors
-#     rlats, rlongs, sensor_fidelity, *_ = sensors.T
-#     azmth = np.zeros((len(rlats) ,2))
-
-#     N = sensors.shape[0]
-
-#     for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-#         curr_azmth = gps2dist_azimuth(rlat, rlong, src_lat, src_long)[1]
-        
-#         azmth[isens,0] = curr_azmth * np.pi/180
-        
-#         delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
-#         snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
-        
-#         azmth[isens,1] = compute_kappa(N, snr)
-        
-#     return azmth
-
-
-# def infrasound_azimuth_likelihood(theta,sensors,data):
-#     azmth_data = infrasound_compute_azimuth(theta, sensors)
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-#     loglike = np.zeros(ndata)
-    
-#     for idata, mask in enumerate(data[:,nsens:2*nsens]):
-#         maskidx = np.nonzero(mask)[0]
-        
-#         if len(maskidx) == 0:
-#             continue
-            
-#         detected_azmthdata = azmth_data[maskidx]
-#         means = detected_azmthdata[:,0]
-#         kappas = detected_azmthdata[:,1]
-
-#         local_likes = []
-#         detected_data = data[idata, 2*nsens:3*nsens][maskidx]
-
-#         for imask in range(len(detected_data)):
-#             dist = stats.vonmises(kappas[imask], loc=means[imask])
-#             tmp = dist.logpdf(detected_data[imask])
-#             local_likes.append(tmp)
-#             if np.isinf(tmp):
-#                 print(f'INF in infrasound likelihood, kappa {kappas[imask]}, mean {means[imask]}, val {detected_data[imask]}')
-    
-#         loglike[idata] = sum(local_likes)
-        
-#     return loglike
-
-
-# """
-# Models for Seismic Arrays
-# -------------------------------------------------
-# -------------------------------------------------
-# """
-# def array_compute_incident(theta, sensors):
-#     src_lat, src_long, zdepth, src_mag = theta
-#     # sensors
-#     rlats, rlongs, sensor_fidelity, *_ = sensors.T
-#     model = TauPyModel(model="iasp91")
-#     angle = np.zeros((len(rlats) ,2))
-#     N = sensors.shape[0]
-
-#     for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-#         arrivals = model.get_travel_times_geo(source_depth_in_km=zdepth, source_latitude_in_deg=src_lat, 
-#                                        source_longitude_in_deg=src_long, receiver_latitude_in_deg=rlat, 
-#                                        receiver_longitude_in_deg=rlong, phase_list=["P","p"])
-        
-#         angle[isens,0] = arrivals[0].incident_angle *np.pi/180
-        
-#         delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
-#         snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
-
-#         angle[isens,1] = compute_kappa(N, snr)
-#     return angle
-
-
-# def array_incident_likelihood(theta,sensors,data):
-#     angle_data = array_compute_incident(theta, sensors)
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-
-#     loglike = np.zeros(ndata)
-    
-#     for idata, mask in enumerate(data[:,nsens:2*nsens]):
-#         maskidx = np.nonzero(mask)[0]
-        
-#         if len(maskidx) == 0:
-#             continue
-            
-#         detected_angledata = angle_data[maskidx]
-#         means = detected_angledata[:,0]
-#         kappas = detected_angledata[:,1]
-
-#         local_likes = []
-#         detected_data = data[idata, 3*nsens:][maskidx]
-
-#         for imask in range(len(detected_data)):
-#             dist = stats.vonmises(kappas[imask], loc=means[imask])
-#             const = dist.cdf(np.pi) - dist.cdf(0)
-#             tmp = dist.logpdf(detected_data[imask]) - np.log(const)
-#             if np.isinf(tmp):
-#                 print(f'INF in array (inc) likelihood, kappa {kappas[imask]}, mean {means[imask]}, val {detected_data[imask]}')
-#             local_likes.append(tmp)
-        
-#         loglike[idata] = sum(local_likes)
-    
-#     return loglike
-
-
-# def array_compute_azimuth(theta, sensors):
-#     src_lat, src_long, zdepth, src_mag = theta
-#     # sensors
-#     rlats, rlongs, sensor_fidelity, *_ = sensors.T
-#     azmth = np.zeros((len(rlats) ,2))
-
-#     N = sensors.shape[0]
-
-#     for isens, (rlat, rlong, fidelity) in enumerate(zip(rlats, rlongs, sensor_fidelity)):
-#         curr_azmth = gps2dist_azimuth(rlat, rlong, src_lat, src_long)[1]
-        
-#         azmth[isens,0] = curr_azmth * np.pi/180
-        
-#         delta_deg = geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
-# #         logsnr = seismic_snr_cal(delta_deg, src_mag, fidelity)
-#         snr = infrasound_snr_cal(delta_deg, src_mag, fidelity)
-# #         azmth[isens,1] = compute_kappa(N, np.exp(logsnr))
-#         azmth[isens,1] = compute_kappa(N, snr)
-        
-#     return azmth
-
-
-# def array_azimuth_likelihood(theta,sensors,data):
-#     azmth_data = array_compute_azimuth(theta, sensors)
-#     [ndata, ndpt] = data.shape
-#     nsens = int(ndpt/4)
-
-#     loglike = np.zeros(ndata)
-    
-#     for idata, mask in enumerate(data[:,nsens:2*nsens]):
-#         maskidx = np.nonzero(mask)[0]
-        
-#         if len(maskidx) == 0:
-#             continue
-            
-#         detected_azmthdata = azmth_data[maskidx]
-#         means = detected_azmthdata[:,0]
-#         kappas = detected_azmthdata[:,1]
-
-#         local_likes = []
-#         detected_data = data[idata, 2*nsens:3*nsens][maskidx]
-#         for imask in range(len(detected_data)):
-#             dist = stats.vonmises(kappas[imask], loc=means[imask])
-#             tmp = dist.logpdf(detected_data[imask])
-#             local_likes.append(tmp)
-#             if np.isinf(tmp):
-#                 (f'INF in array likelihood, kappa {kappas[imask]}, mean {means[imask]}, val {detected_data[imask]}')
-#         loglike[idata] = sum(local_likes)
-        
-#     return loglike
-
-
-
  
 # Detection likelihoods
 #-------------------------
-def detection_probability(theta, sensors, data, stype='seismic'):
-    if (stype == 'seismic') or (stype == 'array'):
+def detection_probability(theta, sensors, stype='seismic'):
+    """
+    Compute probability of detections at each sensor given theta
+    
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    probs (np.array) : (n x m) array containing the probability of a sensor (row)
+                       detecting a given seismic event (column).
+    """
+    if stype in ['seismic', 'array']:
         slat = theta[0]
         slong = theta[1]
         sdepth = theta[2]
@@ -903,11 +260,31 @@ def detection_probability(theta, sensors, data, stype='seismic'):
                 
                 probs[isens] = prob
         
+    else:
+        raise ValueError(f'Cannot compute detection probabilities for sensor type {stype}')
     
     probs[np.where(probs >= 1)[0]] = .99999    
     return probs
 
 def detection_likelihood(theta, sensors, data, stype):
+    """
+    Compute the loglikelihood of the given data being generated by the sensors 
+    under the given seismic event
+
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    data (np.array) : (m*ndata x n) array containing the data generated by each sensor 
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    loglike (np.array) : (m*ndata x n) array containing the loglikelihood of the
+                         data being generated by the sensor under the given
+                         seismic event
+    """
     probs = detection_probability(theta, sensors, stype)
     
     [ndata, ndpt] = data.shape
@@ -923,7 +300,10 @@ def detection_likelihood(theta, sensors, data, stype):
 
 # Arrival likelihoods
 #--------------------
-def compute_corr(theta, sensors, stype):
+def compute_corr(sensors, stype):
+    """
+    Compute correlations between sensors
+    """
     rlats = sensors[:,0]
     rlongs = sensors[:,1]
     corr = np.eye(len(rlats))
@@ -941,6 +321,25 @@ def compute_corr(theta, sensors, stype):
     return corr
 
 def tt_std_cal(depth, dist, stype):
+    """
+    Compute standard deviation of travel times using 5th degree polynomial
+    model fit to US Transportable Array data for seismic/instant/array sensors
+    or GMM model from 'Evaluation of a pair-based, joint-likelihood association 
+    approach for regional infrasound event identification' by Blom et al.
+    for infrasound sensors
+    
+    Inputs
+    ------
+    depth (float) : event depth
+    dist (float) : source-receiver distance
+    stype (str) : sensor model to use. Options are 'sesmic', 'instant',
+                  'infrasound', 'array'.
+
+    Returns
+    -------
+    std (float) : standard deviation of travel times for given depth/distance
+                  pair
+    """
     if stype in ['seismic', 'instant', 'array']:
         params = np.array([ -2.56472101e+02,   1.74085841e+01,  -1.19406851e-03,
             -1.66597693e-04,   9.91187799e-08,   1.17056345e+01,
@@ -982,6 +381,26 @@ def tt_std_cal(depth, dist, stype):
     return std
 
 def compute_tt(theta, sensors, stype):
+    """
+    Compute travel time between given theta and all sensors in network using 
+    obspy's TauPy model for seismic/instant/arrival sensors and using the GMM
+    model from 'Evaluation of a pair-based, joint-likelihood association 
+    approach for regional infrasound event identification' by Blom et al.
+    for infrasound sensors.
+
+    Inputs
+    ------
+    theta (np.array) : (1 x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    ptime (np.array) : (n x 3) array whose columns are predicted travel time,
+                       prediected model error (computed in tt_std_cal),
+                       and predicted measurement error (computed in meas_std_cal).
+    """
     # event
     src_lat, src_long, zdepth, src_mag = theta
     # sensors
@@ -1011,7 +430,7 @@ def compute_tt(theta, sensors, stype):
             dist = calc_dist(src_lat, src_long, rlat, rlong, 6371.0, 0)
             x = [zdepth, dist]
 
-            measure_std = seismic_meas_std_cal(dist, src_mag, fidelity)
+            measure_std = meas_std_cal(dist, src_mag, fidelity)
             
             ptime[isens,2] = measure_std
 
@@ -1040,7 +459,7 @@ def compute_tt(theta, sensors, stype):
             model_std = tt_std_cal(0,0,stype)
             ptime[isens,1] = model_std
 
-            measure_std = infrasound_meas_std_cal(delta_deg, src_mag, fidelity)
+            measure_std = meas_std_cal(delta_deg, src_mag, fidelity)
             
             ptime[isens,2] = measure_std
 
@@ -1048,6 +467,24 @@ def compute_tt(theta, sensors, stype):
 
 
 def arrival_likelihood_gaussian(theta, sensors, data, stype):
+    """
+    Generate samples from normal distribution with mean defined by predicted
+    arrival time and model + measurement error (all of which are computed in
+    compute_tt function)
+
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    data (np.array) : (m*ndata x n) array containing generated realizations of data
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    loglike (np.array) : (ndata x 1) array containing loglikelihood of each
+                         data realization
+    """
     #compute mean
     tt_data = compute_tt(theta, sensors, stype)
 
@@ -1055,7 +492,7 @@ def arrival_likelihood_gaussian(theta, sensors, data, stype):
     stdmodel = tt_data[:,1]
     measurenoise = tt_data[:,2]
 
-    corr = compute_corr(theta, sensors, stype)
+    corr = compute_corr(sensors, stype)
     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
 
     [ndata, ndpt] = data.shape
@@ -1090,6 +527,22 @@ def arrival_likelihood_gaussian(theta, sensors, data, stype):
 # Incident angle likelihoods
 #---------------------------
 def compute_incident(theta,sensors,stype):
+    """
+    Compute incident angle between given theta and all sensors in network using 
+    obspy's TauPy model.
+
+    Inputs
+    ------
+    theta (np.array) : (1 x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    angle (np.array) : (n x 2) array whose columns are predicted incident angle
+                       and prediected concentration (computed in compute_kappa).
+    """
     if stype in ['infrasound', 'array']:
         src_lat, src_long, zdepth, src_mag = theta
         # sensors
@@ -1117,6 +570,24 @@ def compute_incident(theta,sensors,stype):
 
 
 def incident_likelihood(theta, sensors, data, stype):
+    """
+    Generate samples from von Mises distribution with mean defined by predicted
+    incident angle and concentration (both of which are computed in
+    compute_incident function)
+
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    data (np.array) : (m*ndata x n) array containing generated realizations of data
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    loglike (np.array) : (ndata x 1) array containing loglikelihood of each
+                         data realization
+    """
     if stype in ['infrasound', 'array']:
         angle_data = compute_incident(theta, sensors,stype)
         [ndata, ndpt] = data.shape
@@ -1155,6 +626,21 @@ def incident_likelihood(theta, sensors, data, stype):
 # Azimuth angle likelihoods
 #--------------------------
 def compute_azimuth(theta, sensors,stype):
+    """
+    Compute incident angle between given theta and all sensors in network.
+
+    Inputs
+    ------
+    theta (np.array) : (1 x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    azmth (np.array) : (n x 2) array whose columns are predicted incident angle
+                       and prediected concentration (computed in compute_kappa).
+    """
     if stype in ['infrasound', 'array']:
         src_lat, src_long, zdepth, src_mag = theta
         # sensors
@@ -1181,6 +667,24 @@ def compute_azimuth(theta, sensors,stype):
 
 
 def azimuth_likelihood(theta,sensors,data,stype):
+    """
+    Generate samples from von Mises distribution with mean defined by predicted
+    azimuth angle and concentration (both of which are computed in
+    compute_incident function)
+
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    data (np.array) : (m*ndata x n) array containing generated realizations of data
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    loglike (np.array) : (ndata x 1) array containing loglikelihood of each
+                         data realization
+    """
     if stype in ['seismic', 'instant']:
         loglike = 0
 
@@ -1251,50 +755,6 @@ def extract_sensor_data(sensor_idx, total_data):
     sensor_data[:, 3*nsens:] = total_data[:, 3*ntotal_sens + sensor_idx]
     
     return sensor_data
-    
-
-# def compute_seismic_loglikes(theta,sensors,data):
-#     detect_loglikes = seismic_detection_likelihood(theta,sensors,data)
-#     arrival_loglikes = seismic_arrival_likelihood_gaussian(theta, sensors, data)
-
-#     loglikes = detect_loglikes + arrival_loglikes
-    
-# #     return loglikes
-#     return loglikes
-
-
-# def compute_instant_loglikes(theta,sensors,data):
-#     detect_loglikes = instant_detection_likelihood(theta,sensors,data)
-#     arrival_loglikes = instant_arrival_likelihood_gaussian(theta, sensors, data)
-    
-#     loglikes = detect_loglikes + arrival_loglikes
-    
-# #     return loglikes
-#     return loglikes
-
-
-# def compute_infrasound_loglikes(theta,sensors,data):
-#     detect_loglikes = infrasound_detection_likelihood(theta,sensors,data)
-#     arrival_loglikes = infrasound_arrival_likelihood_gaussian(theta, sensors, data)
-#     incident_loglikes = infrasound_incident_likelihood(theta, sensors, data)
-#     azimuth_loglikes = infrasound_azimuth_likelihood(theta, sensors, data)
-    
-#     loglikes = detect_loglikes + arrival_loglikes + incident_loglikes + azimuth_loglikes
-    
-# #     return loglikes
-#     return loglikes
-
-
-# def compute_array_loglikes(theta,sensors,data):
-#     detect_loglikes = seismic_detection_likelihood(theta,sensors,data)
-#     arrival_loglikes = seismic_arrival_likelihood_gaussian(theta, sensors, data)
-#     incident_loglikes = array_incident_likelihood(theta, sensors, data)
-#     azimuth_loglikes = array_azimuth_likelihood(theta, sensors, data)
-
-#     loglikes = detect_loglikes + arrival_loglikes + incident_loglikes + azimuth_loglikes
-    
-# #     return loglikes
-#     return loglikes
 
 def compute_sensor_loglikes(theta, sensors, data, stype='seismic'):
     detect_loglikes = detection_likelihood(theta, sensors, data, stype=stype)
@@ -1304,35 +764,6 @@ def compute_sensor_loglikes(theta, sensors, data, stype='seismic'):
     
     loglikes = detect_loglikes + arrival_loglikes + incident_loglikes + azimuth_loglikes
     return loglikes
-
-# def compute_loglikes(theta,sensors,data):
-#     # split out sensor types into their own arrays and call relevant functions
-#     # This assumes independent sensor types
-#     seismic_idx = np.where(sensors[:,4]==0)[0]
-#     instant_idx = np.where(sensors[:,4]==1)[0]
-#     infrasound_idx = np.where(sensors[:,4]==2)[0]
-#     array_idx = np.where(sensors[:,4]==3)[0]
-    
-#     seismic_sensors = sensors[seismic_idx] # Seismic arrival sensors and data
-#     seismic_data = extract_sensor_data(seismic_idx, data)
-    
-#     instant_sensors = sensors[instant_idx] # Instant arrival sensors and data
-#     instant_data = extract_sensor_data(instant_idx, data)
-    
-#     infrasound_sensors = sensors[infrasound_idx] # Infrasound sensors and data
-#     infrasound_data = extract_sensor_data(infrasound_idx, data)
-    
-#     array_sensors = sensors[array_idx] # Seismic arrays and data
-#     array_data = extract_sensor_data(array_idx, data)
-    
-#     seismic_loglikes = compute_seismic_loglikes(theta, seismic_sensors, seismic_data)
-#     instant_loglikes = compute_instant_loglikes(theta, instant_sensors, instant_data)
-#     infrasound_loglikes = compute_infrasound_loglikes(theta, infrasound_sensors, infrasound_data)
-#     array_loglikes = compute_array_loglikes(theta, array_sensors, array_data)
-    
-#     loglikes = seismic_loglikes + instant_loglikes + infrasound_loglikes + array_loglikes
-    
-#     return loglikes
 
 def compute_loglikes(theta, sensors, data):
     """
