@@ -1,42 +1,29 @@
 import numpy as np
-import like_models as lm
-import time
-import warnings
-warnings.filterwarnings('error')
-import sys
-import os
-import signal
-import joblib
-import pickle
-import geographiclib
-import sobol_seq as sq
-
-import numpy as np
-
 from scipy import stats
-from scipy import interpolate as itp
-
-from obspy import geodetics
-from obspy.taup import TauPyModel
-from obspy.taup.taup_geo import calc_dist
-from obspy.geodetics.base import gps2dist_azimuth
-from obspy.geodetics.base import degrees2kilometers
-
-from sklearn.mixture import GaussianMixture
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics.pairwise import haversine_distances
-
+import like_models as lm
 import warnings
 warnings.filterwarnings('ignore')
-"""
-Seismic sensors
-------------------------------
-------------------------------
-"""
-def seismic_gen_arrival_normal(theta, sensors, ndata):
+
+def gen_arrival_normal(theta, sensors, ndata, stype):
+    """
+    Simulates arrival data by drawing from a normal distribution with mean and 
+    variance defined by sensor models
+
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    ndata (int) : number of realizations of data to generate
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    arrivals (np.array) : (ndata*m x n) array containing sampled arrival data.
+    """
     # Variance is combination of arrival time and general sensor variance
     #compute tt mean, model std, measruement std
-    tt_data = lm.seismic_compute_tt(theta, sensors)
+    tt_data = lm.compute_tt(theta, sensors, stype)
 
     mean_tt = tt_data[:,0]
     stdmodel = tt_data[:,1]
@@ -44,221 +31,146 @@ def seismic_gen_arrival_normal(theta, sensors, ndata):
 
 
     #compute corr matrix
-    corr = lm.seismic_compute_corr(theta, sensors)
-    cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-#     min_eig = np.min(np.real(np.linalg.eigvals(cov)))
-
-    return np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
-
-def generate_seismic_data(theta,sensors,ndata):
-    #compute detection probablity
-    probs = lm.seismic_detection_probability(theta,sensors)
-    
-    #make probs bigger
-    fullprobs = np.outer(np.ones(ndata),probs)
-    u_mat = np.random.uniform(size = fullprobs.shape)
-    
-    #sample arrival times
-    atimes = seismic_gen_arrival_normal(theta, sensors, ndata)
-
-    #create dummy data to match shapes with other sensor types
-    dummy_data = np.empty((ndata, 2*sensors.shape[0]))
-    dummy_data.fill(np.nan)
-
-    #get data[probs arrivaltimes]
-    data = np.concatenate((atimes,u_mat<fullprobs, dummy_data),axis=1)
-    return data
-
-
-"""
-Instant arrival sensors
-------------------------------
-------------------------------
-"""
-def instant_gen_arrival_normal(theta, sensors, ndata):
-    # Variance is combination of arrival time and general sensor variance
-    #compute tt mean, model std, measruement std
-    tt_data = lm.instant_compute_tt(theta, sensors)
-    mean_tt = tt_data[:,0]
-    stdmodel = tt_data[:,1]
-    measurenoise = tt_data[:,2]
-
-
-    #compute corr matrix
-    corr = lm.seismic_compute_corr(theta, sensors)
-    cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
-#     min_eig = np.min(np.real(np.linalg.eigvals(cov)))
-
-    return np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
-
-def generate_instant_data(theta,sensors,ndata):
-    #compute detection probablity
-    probs = lm.instant_detection_probability(theta,sensors)
-
-    #make probs bigger
-    fullprobs = np.outer(np.ones(ndata),probs)
-    u_mat = np.random.uniform(size = fullprobs.shape)
-
-    #sample arrival times
-    atimes = instant_gen_arrival_normal(theta, sensors, ndata)
-
-    #create dummy data to match shapes with other sensor types
-    dummy_data = np.empty((ndata, 2*sensors.shape[0]))
-    dummy_data.fill(np.nan)
-
-    #get data[probs arrivaltimes]
-    data = np.concatenate((atimes,u_mat<fullprobs, dummy_data), axis=1)
-    return data
-
-
-"""
-Infrasound sensors
-------------------------------
-------------------------------
-"""
-def infrasound_gen_arrival_normal(theta, sensors, ndata):
-    # Variance is combination of arrival time and general sensor variance
-    #compute tt mean, model std, measruement std
-    tt_data = lm.infrasound_compute_tt(theta, sensors)
-    mean_tt = tt_data[:,0]
-    stdmodel = tt_data[:,1]
-    measurenoise = tt_data[:,2]
-
-
-    #compute corr matrix
-    corr = np.eye(measurenoise.shape[0])
+    corr = lm.compute_corr(theta, sensors,stype)
     cov = np.multiply(np.outer(stdmodel,stdmodel),corr) + np.diag(measurenoise**2.0)
 
-    return np.random.multivariate_normal(mean_tt, cov, ndata)
+    arrivals = np.random.multivariate_normal(mean_tt, cov, ndata, tol=1e-5)
+    return arrivals
 
-def infrasound_gen_incident_vonmises(theta, sensors, ndata):
-    angle_data = lm.infrasound_compute_incident(theta, sensors)
-    mean_angle = angle_data[:,0]
-    kappa_angle = angle_data[:,1]
+def gen_incident_vonmises(theta, sensors, ndata,stype):
+    """
+    Simulates incident angle data by drawing from a von Mises distribution with 
+    mean and concentration (kappa) defined by sensor models. Data only simulated 
+    for sensors of type 'infrasound' and 'array'.
 
-    incidents = np.zeros((len(sensors),ndata))
-    for i in range(len(sensors)):
-        vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
-        u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
-        val = vmf.ppf(u)
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    ndata (int) : number of realizations of data to generate
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
 
-        if np.any(np.isnan(val)):
-            print('NAN encountered incident')
-            return u, vmf
-        incidents[i] = val
+    Returns
+    -------
+    incidents (np.array) : (ndata*m x n) array containing sampled incident angle data.
+    """
+    if stype in ['infrasound', 'array']:
+        angle_data = lm.compute_incident(theta, sensors, stype)
+        mean_angle = angle_data[:,0]
+        kappa_angle = angle_data[:,1]
 
-    return incidents.T
+        incidents = np.zeros((len(sensors),ndata))
+        for i in range(len(sensors)):
+            vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
+            u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
+            val = vmf.ppf(u)
+
+            if np.any(np.isnan(val)):
+                print('NAN encountered incident')
+                return u, vmf
+            incidents[i] = val
+
+        incidents = incidents.T
+
+    elif stype in ['seismic', 'instant']:
+        incidents = np.empty((ndata, sensors.shape[0]))
+        incidents.fill(np.nan)
+
+    return incidents
+
+def gen_azimuth_vonmises(theta, sensors, ndata, stype):
+    """
+    Simulates azimuth angle data by drawing from a von Mises distribution with 
+    mean and concentration (kappa) defined by sensor models. Data only simulated 
+    for sensors of type 'infrasound' and 'array'.
+
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    ndata (int) : number of realizations of data to generate
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    azimuths (np.array) : (ndata*m x n) array containing sampled arrival data.
+    """
+    if stype in ['infrasound', 'array']:
+        azmth_data = lm.compute_azimuth(theta, sensors, stype)
+        mean_azmth = azmth_data[:,0]
+        kappa_azmth = azmth_data[:,1]
         
-def infrasound_gen_azimuth_vonmises(theta, sensors, ndata):
-    azmth_data = lm.infrasound_compute_azimuth(theta, sensors)
-    mean_azmth = azmth_data[:,0]
-    kappa_azmth = azmth_data[:,1]
+        azimuths = np.zeros((len(sensors),ndata))
+        for i in range(len(sensors)): 
+            vmf = stats.vonmises_line(kappa_azmth[i], loc=mean_azmth[i])
+            val = vmf.rvs(size=ndata)
+        
+            if np.any(np.isnan(val)):
+                print('NAN encountered azimuth')
+                return vmf
+            azimuths[i] = val
+
+        azimuths = azimuths.T
     
-    azimuths = np.zeros((len(sensors),ndata))
-    for i in range(len(sensors)): 
-        vmf = stats.vonmises_line(kappa_azmth[i], loc=mean_azmth[i])
-        val = vmf.rvs(size=ndata)
-       
-        if np.any(np.isnan(val)):
-            print('NAN encountered azimuth')
-            return u, vmf
-        azimuths[i] = val
+    else:
+        azimuths = np.empty((ndata, sensors.shape[0]))
+        azimuths.fill(np.nan)
+
+    return azimuths
+
+def generate_sensor_data(theta,sensors,ndata,stype):
+    """
+    Generates all types of data for a given set of sensors and corresponding
+    sensor type.
     
-    return azimuths.T    
-    
-def generate_infrasound_data(theta,sensors,ndata):
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    ndata (int) : number of realizations of data to generate
+    stype (str) : type of sensor model to use. One of 'seismic', 'instant',
+                  'infrasound', or 'array'.
+
+    Returns
+    -------
+    data (np.array) : (ndata*m x n*4) array containing sampled data.
+    """
     #compute detection probablity
-    probs = lm.infrasound_detection_probability(theta,sensors)
+    probs = lm.detection_probability(theta, sensors, stype)
     
     #make probs bigger
     fullprobs = np.outer(np.ones(ndata),probs)
     u_mat = np.random.uniform(size = fullprobs.shape)
     
     #sample arrival times
-    atimes = infrasound_gen_arrival_normal(theta, sensors, ndata)
+    atimes = gen_arrival_normal(theta, sensors, ndata, stype)
     
     #sample incident angles
-    incidents = infrasound_gen_incident_vonmises(theta, sensors, ndata)
+    incidents = gen_incident_vonmises(theta, sensors, ndata, stype)
     
-    azimuths = infrasound_gen_azimuth_vonmises(theta, sensors, ndata)
+    azimuths = gen_azimuth_vonmises(theta, sensors, ndata, stype)
     
     #get data[probs arrivaltimes]
     data = np.concatenate((atimes, u_mat<fullprobs, azimuths, incidents),axis=1)
     return data
 
 
-"""
-Seismic arrays
-------------------------------
-------------------------------
-"""
-def array_gen_incident_vonmises(theta, sensors, ndata):
-    angle_data = lm.array_compute_incident(theta, sensors)
-    mean_angle = angle_data[:,0]
-    kappa_angle = angle_data[:,1]
-    
-    incidents = np.zeros((len(sensors),ndata))
-    for i in range(len(sensors)): 
-        vmf = stats.vonmises_line(kappa_angle[i], loc=mean_angle[i])
-        try:
-            u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
-        except:
-            print(f'failed vals: {vmf.cdf(0), vmf.cdf(np.pi)}')   
-            print(f'data gen failed at kappa {kappa_angle[i]}, mean {mean_angle[i]}')
-            u = np.random.uniform(vmf.cdf(0), vmf.cdf(np.pi), size=ndata)
-            print('retook u')
-        val = vmf.ppf(u)
-       
-        if np.any(np.isnan(val)):
-            print('NAN encountered')
-            return u, vmf
-        incidents[i] = val
-    
-    return incidents.T
-                   
-def array_gen_azimuth_vonmises(theta, sensors, ndata):
-    azmth_data = lm.array_compute_azimuth(theta, sensors)
-    mean_azmth = azmth_data[:,0]
-    kappa_azmth = azmth_data[:,1]
-    
-    azimuths = np.zeros((len(sensors),ndata))
-    for i in range(len(sensors)): 
-        vmf = stats.vonmises_line(kappa_azmth[i], loc=mean_azmth[i])
-        val = vmf.rvs(size=ndata)
-       
-        if np.any(np.isnan(val)):
-            print('NAN encountered')
-            return u, vmf
-        azimuths[i] = val
-    
-    return azimuths.T    
-    
-def generate_array_data(theta,sensors,ndata):
-    #compute detection probablity
-    probs = lm.seismic_detection_probability(theta,sensors)
-    
-    #make probs bigger
-    fullprobs = np.outer(np.ones(ndata),probs)
-    u_mat = np.random.uniform(size = fullprobs.shape)
-    
-    #sample arrival times
-    atimes = seismic_gen_arrival_normal(theta, sensors, ndata)
-    
-    #sample incident angles
-    incidents = array_gen_incident_vonmises(theta, sensors, ndata)
-    
-    azimuths = array_gen_azimuth_vonmises(theta, sensors, ndata)
-    
-    #get data[probs arrivaltimes]
-    data = np.concatenate((atimes, u_mat<fullprobs, azimuths, incidents),axis=1)
-    return data
-
-"""
-Generate data
-------------------------------
-------------------------------
-"""
 def generate_data(theta, sensors, ndata):
+    """
+    Generates all types of data for all sensors.
+    
+    Inputs
+    ------
+    theta (np.array) : (m x 4) array containing parameters for each seismic event
+    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
+    ndata (int) : number of realizations of data to generate
+
+    Returns
+    -------
+    data (np.array) : (ndata*m x n*4) array containing sampled data.
+    """
     def split_data(data):
         # splits data into arrival times, detections, azimuths, and incidents
 
@@ -292,13 +204,13 @@ def generate_data(theta, sensors, ndata):
     
     # Generate data from each sensor type
     if seismic_exists:
-        seismic_data = generate_seismic_data(theta, seismic_sensors, ndata)
+        seismic_data = generate_sensor_data(theta, seismic_sensors, ndata, stype='seismic')
     if instant_exists:
-        instant_data = generate_instant_data(theta, instant_sensors, ndata)
+        instant_data = generate_sensor_data(theta, instant_sensors, ndata, stype='instant')
     if infra_exists:
-        infra_data = generate_infrasound_data(theta, infrasound_sensors, ndata)
+        infra_data = generate_sensor_data(theta, infrasound_sensors, ndata, stype='infrasound')
     if array_exists:
-        array_data = generate_array_data(theta, array_sensors, ndata)
+        array_data = generate_sensor_data(theta, array_sensors, ndata, stype='array')
 
     # Split each sensor type's data into detections, arrivals, azimuths, incident angles
     # in order to recombine into a single dataset
@@ -344,37 +256,12 @@ def generate_data(theta, sensors, ndata):
         total_data[:,num_sensors + array_idx] =  array_detects
         total_data[:,2*num_sensors + array_idx] = array_azmths
         total_data[:,3*num_sensors + array_idx] = array_incdnts
-        
-#     # Arrival times
-#     total_data[:,seismic_idx] = seis_atimes
-#     total_data[:,instant_idx] = inst_atimes
-#     total_data[:,infra_idx] = infra_atimes
-#     total_data[:,array_idx] = array_atimes
-
-#     # Detections
-#     total_data[:,num_sensors + seismic_idx] = seis_detects
-#     total_data[:,num_sensors + instant_idx] = inst_detects
-#     total_data[:,num_sensors + infra_idx] = infra_detects
-#     total_data[:,num_sensors + array_idx] =  array_detects
-
-#     # Azimuths
-#     total_data[:,2*num_sensors + seismic_idx] = seis_azmths
-#     total_data[:,2*num_sensors + instant_idx] = inst_azmths
-#     total_data[:,2*num_sensors + infra_idx] = infra_azmths
-#     total_data[:,2*num_sensors + array_idx] = array_azmths
-
-#     # Incident angles
-#     total_data[:,3*num_sensors + seismic_idx] = seis_incdnts
-#     total_data[:,3*num_sensors + instant_idx] = inst_incdnts
-#     total_data[:,3*num_sensors + infra_idx] = infra_incdnts
-#     total_data[:,3*num_sensors + array_idx] = array_incdnts
 
     return total_data
 
-    #Generate psuedo random sensor distribution for initial OED
 def sample_sensors(lat_range,long_range, nsamp,skip):
-    #sbvals = sq.i4_sobol_generate(4, 1*nsamp)
-    #Change so seed can be set
+    #Generate psuedo random sensor distribution for initial OED
+
     dim_num = 2
     sbvals = np.full((nsamp, dim_num), np.nan)
     for j in range(nsamp):
