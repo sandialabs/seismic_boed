@@ -3,8 +3,11 @@ import warnings
 
 import numpy as np
 from obspy import geodetics
-from obspy.geodetics.base import (degrees2kilometers, gps2dist_azimuth,
-                                  kilometers2degrees)
+from obspy.geodetics.base import (
+    degrees2kilometers,
+    gps2dist_azimuth,
+    kilometers2degrees,
+)
 from obspy.taup import TauPyModel
 from obspy.taup.taup_geo import calc_dist
 from scipy import stats
@@ -82,13 +85,13 @@ def sigmoid(x, a, b):
 
 
 # LANL and alt models for calculating peak pressure
-def calc_P_lanl(yieldkt, deltakm):
+def calc_P_lanl(yieldkt, delta_km):
     """
     Computes peak pressure according to LANL model, see
     'Infrasonic Monitoring' by Whitaker, 1995, in Proceedings of the 17th Annual
     Seismic Research Symposium
     """
-    P = 3.37 + 0.68 * np.log10(yieldkt) - 1.36 * np.log10(deltakm)
+    P = 3.37 + 0.68 * np.log10(yieldkt) - 1.36 * np.log10(delta_km)
     return P
 
 
@@ -108,12 +111,12 @@ def log_P_to_Pa(P):
     return Pa
 
 
-def infrasound_snr_cal(deltakm, mag, snroffset, upper_detection_threshold=1.54355851):
+def infrasound_snr_cal(delta_km, mag, snroffset, upper_detection_threshold=1.54355851):
     """Compute SNR for infrasound models as ratio between minimum of LANL signal
     model signal and alt model signal and maximum noise"""
     syield = mag_to_kt(mag)
 
-    delta_deg = kilometers2degrees(deltakm)
+    delta_deg = kilometers2degrees(delta_km)
 
     lanl_peakvel = calc_P_lanl(syield, delta_km)
     alt_peakvel = calc_P_alt(syield, delta_deg)
@@ -132,7 +135,7 @@ def infrasound_snr_cal(deltakm, mag, snroffset, upper_detection_threshold=1.5435
     return logsnr
 
 
-def meas_std_cal(deltakm, mag, snroffset, stype):
+def meas_std_cal(delta_km, mag, snroffset, stype):
     """
     Compute uncertainty in phase arrival picks, model from
     Uncertainty in Phase Arrival Time Picks for Regional Seismic Events:
@@ -142,9 +145,9 @@ def meas_std_cal(deltakm, mag, snroffset, stype):
     Steck et al 2001
     """
     if stype == "infrasound":
-        logsnr = infrasound_snr_cal(deltakm, mag, snroffset)
+        logsnr = infrasound_snr_cal(delta_km, mag, snroffset)
     elif stype == "seismic":
-        logsnr = seismic_snr_cal(deltakm, mag, snroffset)
+        logsnr = seismic_snr_cal(delta_km, mag, snroffset)
 
     sig0 = 10.0
     gamma = 0.01
@@ -499,17 +502,17 @@ def compute_tt(theta, sensors, stype):
             # record data from the first arrival. Assume always in the azimuthal plane.
             ptime[isens, 0] = arrivals[0].time
 
-            deltakm = geodetics.degrees2kilometers(
+            delta_km = geodetics.degrees2kilometers(
                 geodetics.locations2degrees(src_lat, src_long, rlat, rlong)
             )
-            model_std = tt_std_cal(zdepth, deltakm, stype)
+            model_std = tt_std_cal(zdepth, delta_km, stype)
             ptime[isens, 1] = model_std
 
             # models
             dist = calc_dist(src_lat, src_long, rlat, rlong, 6371.0, 0)
             x = [zdepth, dist]
 
-            measure_std = meas_std_cal(deltakm, src_mag, fidelity, stype)
+            measure_std = meas_std_cal(delta_km, src_mag, fidelity, stype)
 
             ptime[isens, 2] = measure_std
 
@@ -540,7 +543,7 @@ def compute_tt(theta, sensors, stype):
             model_std = tt_std_cal(0, 0, stype)
             ptime[isens, 1] = model_std
 
-            measure_std = meas_std_cal(delta_deg, src_mag, fidelity)
+            measure_std = meas_std_cal(delta_deg, src_mag, fidelity, stype)
 
             ptime[isens, 2] = measure_std
 
@@ -864,7 +867,9 @@ def compute_sensor_loglikes(theta, sensors, data, stype="seismic"):
     incident_loglikes = incident_likelihood(theta, sensors, data, stype=stype)
     azimuth_loglikes = azimuth_likelihood(theta, sensors, data, stype=stype)
 
-    loglikes = detect_loglikes + arrival_loglikes # + incident_loglikes + azimuth_loglikes
+    loglikes = (
+        detect_loglikes + arrival_loglikes
+    )  # + incident_loglikes + azimuth_loglikes
     return loglikes
 
 
