@@ -8,8 +8,6 @@ The analysis code estimates the Expected Information Gain (EIG) of a given seism
 
 The optimization code is a wrapper around the analysis code. Given an initial network configuration of sensors, the code will add a desired number of sensors to the network. The goal of the optimization is to maximized the EIG of the new sensor network. This is done with a sequential (greedy) optimization that adds sensors one at a time to the initial network. Each optimization is done using a Bayesian optimization method that construct a Gaussian process (GP) surrogate model of the EIG optimization surface. This is done by evaluating many potential new sensor locations and measuring the EIG using the analysis code. This data is then used to construct the surrogate and inform new trial points to query the EIG function. The code then returns the new sensor network after the optimal sensors have been added.
 
-[//] # (More details on the theory and application can be found in [Catanach_SeisAcousticOED_final.pdf](Catanach_SeisAcousticOED_final.pdf).)
-
 ## Contents <a name="Contents"></a>
 
 1. [Seismic Optimal Experimental Design (OED)](#SOED)
