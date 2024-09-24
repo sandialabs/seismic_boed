@@ -13,7 +13,7 @@ the domain of candidate events. The code is designed to use MPI so that
 it can run on HPC resources because OED is computationally expensive.
 
 See [**Installation**](./sboed/installation.md) and the first tutorial,
-[**Getting Started**](./tutorials/basics.ipynb) to begin using
+[**Getting Started**](./tutorials/basics_analysis.ipynb) to begin using
 this code. More details on the theory and application can be found in [the
 accompanying paper](nonexistent_arxiv_link.com).
 
