@@ -1,0 +1,1078 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Getting Started: Network Analysis</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'source/tutorials/basics_analysis';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Getting Started: Network Optimization" href="basics_opt.html" />
+    <link rel="prev" title="What’s New" href="../sboed/changelog.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/sboed_logo.png" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/sboed_logo.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    Seismic Bayesian Optimal Experiment Design in Python
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Seismic Bayesian OED</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../sboed/installation.html">Package Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sboed/literature.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sboed/changelog.html">What’s New</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Getting Started: Network Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basics_opt.html">Getting Started: Network Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bounded.html">Performing bounded optimization</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="inputs.html">Writing input files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="priors.html">Customizing the event prior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_gen.html">Sampling synthetic data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="likelihood.html">Constructing likelihood models</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html"><code class="docutils literal notranslate"><span class="pre">seismic-boed</span></code></a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed/issues/new?title=Issue%20on%20page%20%2Fsource/tutorials/basics_analysis.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/source/tutorials/basics_analysis.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Getting Started: Network Analysis</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-code">Running the code</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-locally">Running locally</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-using-hpc-interactively">Running using HPC interactively</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-on-hpc-with-script">Running on HPC with script</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-outputs">Code outputs</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis-with-uniform-prior">Analysis with uniform prior</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#input-file">Input file</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#executing-the-example">Executing the example</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-outputs">Visualizing outputs</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis-with-nonuniform-prior">Analysis with nonuniform prior</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs">Inputs</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Executing the example</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-results">Visualizing the results</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="getting-started-network-analysis">
+<h1>Getting Started: Network Analysis<a class="headerlink" href="#getting-started-network-analysis" title="Link to this heading">#</a></h1>
+<p>The network analysis code estimates the Expected Information Gain (EIG) of a given seismic monitoring networks for a given prior distribution of potential events. The code samples these candidate events and then generates synthetic datasets that could plausibly be seen by the sensors. For each of the datasets, the code constructs the posterior distribution and computes the information gain (IG) according to the KL-divergence. This information gain is averaged overall synthetic datasets to compute the EIG. The code can also return a list of the IG for different hypothetical events which can be used to generate a map of sensitivities of the network to different event locations, depths, and magnitudes.</p>
+<p>The network analysis code is contained in the python script <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code>. This script takes three arguments: a configuration file, an output file location, and a verbosity control. An example configuration file, which we call <code class="docutils literal notranslate"><span class="pre">inputs.dat</span></code>, might look like this:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>128  
+256  
+2  
+ta_array_domain.json  
+uniform_prior.py  
+40.0, -111.5,0.1,2,0  
+41.0, -111.9,0.1,2,0  
+42.0, -109.0,0.1,2,0  
+</pre></div>
+</div>
+<p>The first line specifies how many events will be used to generate the synthetic data that will be used to compute <span class="math notranslate nohighlight">\(KL\left[p(\theta | D) || p(\theta)\right].\)</span>
+The second line specifies how many events will be used to discretize the event domain when computing
+<span class="math notranslate nohighlight">\(KL[p(\theta | D) p(\theta)].\)</span>
+Line 3 specifies how many realizations of data to generate for each event. Line 4 is the path to the file containing the bounds on the events to be generated, and Line 5 is the path to the file containing the functions for sampling events. For more information on input files, For more information on input files, see <a class="reference internal" href="inputs.html"><span class="std std-doc">Writing input files</span></a>.</p>
+<section id="running-the-code">
+<span id="run-the-code"></span><h2>Running the code<a class="headerlink" href="#running-the-code" title="Link to this heading">#</a></h2>
+<p>The code can be run interactively, either locally or on an HPC system, or it can be run through a HPC scheduler. This tutorial assumes the HPC system uses <a class="reference external" href="https://slurm.schedmd.com/documentation.html">Slurm</a>.</p>
+<p>The code for analyzing hte network is contained in the Python file <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code>, which is executed with the with the following arguments:</p>
+<ul class="simple">
+<li><p>Input file: path to the input file (see <a class="reference internal" href="inputs.html"><span class="std std-doc">Writing input files</span></a> for more details)</p></li>
+<li><p>Output Numpy file: Path to the location and filename where the
+outputs will be saved. File must be in <code class="docutils literal notranslate"><span class="pre">.npz</span></code> format.</p></li>
+<li><p>Verbosity: One of 3 verbosity levels may be specified: <code class="docutils literal notranslate"><span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">1</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">2</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code> has no output other than the final EIG estimate, EIG
+Standard Deviation, and Statistic of EIG effective sample size.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code> is the most verbose with printed statements throughout the
+code describing what is going on and all the different
+calculated quantities are stored in the output file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">2</span></code> is a more limited version of 1 with less IO and quantities
+stored in the output file. See <a class="reference internal" href="#code-outputs"><span class="std std-ref">Code outputs</span></a> for a list of which quantities are
+stored in the output file for each verbosity level.</p></li>
+</ul>
+</li>
+</ul>
+<section id="running-locally">
+<h3>Running locally<a class="headerlink" href="#running-locally" title="Link to this heading">#</a></h3>
+<p>To run the code on a local machine, execute it with <code class="docutils literal notranslate"><span class="pre">mpi</span></code> like so:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>python3<span class="w"> </span>eig_calc.py<span class="w"> </span>inputs.dat<span class="w"> </span>outputs.npz<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+<p>The flag <code class="docutils literal notranslate"><span class="pre">-n</span></code> specifies how many cores <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> should use to execute <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code>.</p>
+</section>
+<section id="running-using-hpc-interactively">
+<h3>Running using HPC interactively<a class="headerlink" href="#running-using-hpc-interactively" title="Link to this heading">#</a></h3>
+<p>To submit an interactive job, use the <code class="docutils literal notranslate"><span class="pre">salloc</span></code> command. The command
+<code class="docutils literal notranslate"><span class="pre">salloc</span></code> requests a slurm allocation, and has several flags that are
+used to specify the details of the allocation. This varies by system,
+but typically the number of nodes and the allocation time are required:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-nodes</span></code>: The number of nodes to request.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--time</span></code>: The time the nodes will be allocated to your account</p></li>
+</ul>
+<p>An example job allocation request looks like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>salloc<span class="w"> </span>--nodes<span class="o">=</span><span class="m">2</span><span class="w"> </span>--time<span class="o">=</span><span class="m">2</span>:00:00
+</pre></div>
+</div>
+<p>This command is requesting 2
+nodes for a length of 2 hours. For more details on <code class="docutils literal notranslate"><span class="pre">salloc</span></code>, see the
+Slurm documentation: <a class="reference external" href="https://slurm.schedmd.com/documentation.html">https://slurm.schedmd.com/documentation.html</a>.</p>
+<p>Once you have an allocation, you can now submit the job. This is done
+with the <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code> command which requires the following arguments:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--bind-to-core</span></code> : Binds each process to a physical core</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--npernode</span></code> : Specifies the number of cores per node</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--n</span></code> : Specifies the total number of available cores</p></li>
+<li><p>Executable to be run with mpi along with all the arguments to the
+executable.</p></li>
+</ul>
+<p>In our case, the executable is <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code> with its subsequent arguments as defined above.</p>
+<p>For example, to run a job on a machine that has 16 cores per node, we
+could use the following:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>--bind-to<span class="w"> </span>core<span class="w"> </span>--npernode<span class="w"> </span><span class="m">16</span><span class="w"> </span>--n<span class="w"> </span><span class="m">32</span><span class="w"> </span>python3<span class="w"> </span>eig_calc.py<span class="w"> </span>inputs.dat<span class="w"> </span>outputs.npz<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+<p>which submits a job using 2 nodes (16 cores per node times 2 nodes gives
+32 total cores), reads the input data from <code class="docutils literal notranslate"><span class="pre">inputs.dat</span></code>, saves the
+output data to <code class="docutils literal notranslate"><span class="pre">outputs.npz</span></code>, and uses verbose setting 1.</p>
+</section>
+<section id="running-on-hpc-with-script">
+<h3>Running on HPC with script<a class="headerlink" href="#running-on-hpc-with-script" title="Link to this heading">#</a></h3>
+<p>A bash script can be written that will submit a job to the HPC job
+queue. This does not require the user to specifically allocate nodes to
+use for the job; nodes will be allocated and the job will begin
+automatically once the number of nodes specified in the bash script are
+available.
+An example script might look like</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>#!/bin/bash
+## Do not put any commands or blank lines before the #SBATCH lines
+#SBATCH --nodes=16                   # Number of nodes - all cores 
+                                     #per node are allocated to the job
+#SBATCH --time=04:00:00              # Wall clock time (HH:MM:SS) - 
+                                     # once the job exceeds this time, the job will be terminated (default is 5 minutes)
+#SBATCH --job-name=seis_eig          # Name of job
+#SBATCH --export=ALL                 # export environment variables from the submission env
+                                     # (modules, bashrc etc)
+
+nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of 
+                                     # nodes you have requested (for a 
+                                     # list of SLURM environment 
+                                     # variables see &quot;man sbatch&quot;)
+cores=16                             # Number MPI processes to run 
+                                     # on each node (a.k.a. PPN)
+                                   
+
+mpiexec --bind-to core --npernode $cores --n $(($cores*$nodes)) python3 -u eig_calc.py inputs.dat outputs.npz 0
+</pre></div>
+</div>
+<p>This script can then be submitted
+using the <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>sbatch<span class="w"> </span>eig_batch_submission_script.bash
+</pre></div>
+</div>
+<p>For a comprehensive
+list of available options, see the Slurm documentation
+(<a class="reference external" href="https://slurm.schedmd.com/documentation.html">https://slurm.schedmd.com/documentation.html</a>), and in particular the
+Slurm command/option summary, found
+<a class="reference external" href="https://slurm.schedmd.com/documentation.html">here</a>.</p>
+</section>
+<section id="code-outputs">
+<span id="id1"></span><h3>Code outputs<a class="headerlink" href="#code-outputs" title="Link to this heading">#</a></h3>
+<p>At the end of running <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code>, the code will print to screen the
+following results:</p>
+<ul class="simple">
+<li><p>Expected information gain (EIG) of the sensor network</p></li>
+<li><p>Standard deviation (STD) of the expected information gain</p></li>
+<li><p>Minimum effective sample size (ESS) for all realizations of
+synthetic data of the weighted samples that make up the posterior
+distribution estimate</p></li>
+</ul>
+<p>In some sense, the STD and ESS numbers relate to the variance and bias
+of the EIG estimator. Additionally, an output Numpy file (e.g.
+<code class="docutils literal notranslate"><span class="pre">outputs.npz</span></code>) is created. The variables stored in this file depend on
+the verbose flag. The table below provides a full description of the output.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Variable Name</p></th>
+<th class="head text-left"><p>Description</p></th>
+<th class="head text-left"><p>Verbose Levels</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">eig</span></code></p></td>
+<td class="text-left"><p>Estimated expected information gain (EIG) over all experiments</p></td>
+<td class="text-left"><p>0, 1, 2</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">seig</span></code></p></td>
+<td class="text-left"><p>Standard deviation of EIG over all experiments</p></td>
+<td class="text-left"><p>0, 1, 2</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">ig</span></code></p></td>
+<td class="text-left"><p>Information gain assessed for each experiment</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">ess</span></code></p></td>
+<td class="text-left"><p>Effective sample size (ESS) of weighted posterior samples for each experiment</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">miness</span></code></p></td>
+<td class="text-left"><p>Minimum ESS over all experiments</p></td>
+<td class="text-left"><p>1,2</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">theta_data</span></code></p></td>
+<td class="text-left"><p>Parameters (latitude, longitude, depth, magnitude) of synthetic events</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">theta_space</span></code></p></td>
+<td class="text-left"><p>Parameters (latitude, longitude, depth, magnitude) that define the posterior event space</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">sensors</span></code></p></td>
+<td class="text-left"><p>Sensor network configuration as defined in the input file</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">lat_range</span></code></p></td>
+<td class="text-left"><p>Latitude range of events as defined in the input file</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">lon_range</span></code></p></td>
+<td class="text-left"><p>Longitude range of events as defined in the input file</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">depth_range</span></code></p></td>
+<td class="text-left"><p>Depth range of events as defined in the input file</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">mag_range</span></code></p></td>
+<td class="text-left"><p>Magnitude range of events as defined in the input file</p></td>
+<td class="text-left"><p>1, 2</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">loglikes</span></code></p></td>
+<td class="text-left"><p>Log-likelihood of candidate event for every synthetic experiment</p></td>
+<td class="text-left"><p>1</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">dataz</span></code></p></td>
+<td class="text-left"><p>Data used in each synthetic experiment</p></td>
+<td class="text-left"><p>1</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<p>The prior distribution encodes the experimenter’s <em>a priori</em> belief about the quantities of interest <span class="math notranslate nohighlight">\(\theta\)</span> before observing any data. In this case, the quantities of interest describe a seismic source:
+$<span class="math notranslate nohighlight">\(\theta = [\verb|latitude, longitude, depth, magnitude|]\)</span>$.</p>
+<p>We assume that each variable is independent, so the prior is</p>
+<div class="math notranslate nohighlight">
+\[
+p(\theta) = p(\verb|latitude|)p(\verb|longitude|)p(\verb|depth|)p(\verb|magnitude|).
+\]</div>
+<p>In both cases, we analyze a simple
+network that looks like this:</p>
+<figure class="align-default" id="id3">
+<span id="example-sensor-domain"></span><a class="reference internal image-reference" href="../../_images/sensor_network.png"><img alt="../../_images/sensor_network.png" src="../../_images/sensor_network.png" style="width: 80%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Example sensor domain</span><a class="headerlink" href="#id3" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p>In each example, we will use 4096 events in a space that’s discretized
+by 16,384 events. We’ll create 32 realizations of data for each sensor,
+and we’ll work in a lat/lon domain as shown in the
+<a class="reference internal" href="#example-sensor-domain"><span class="std std-ref">example sensor domain figure</span></a>, a
+depth domain of [0,40] and a magnitude domain of [.5,9.5].</p>
+<section id="analysis-with-uniform-prior">
+<h3>Analysis with uniform prior<a class="headerlink" href="#analysis-with-uniform-prior" title="Link to this heading">#</a></h3>
+<p>In this example, we assume a uniform distribution on latitude, longitude, and depth, and assume magnitude follows an exponential distribution:</p>
+<div class="math notranslate nohighlight">
+\[
+\verb|magnitude| \sim \text{Exp}(10).
+\]</div>
+<p>The functions that perform the sampling operations for <span class="math notranslate nohighlight">\(\theta\)</span> can be found in the file <a class="reference external" href="https://github.com/sandialabs/seismic_boed/blob/master/examples/sampling_files/uniform_prior.py"><code class="docutils literal notranslate"><span class="pre">uniform_prior.py</span></code></a>.
+For more information on how to write a sampling file, see #TODO.</p>
+<p>These sensors are all of type <code class="docutils literal notranslate"><span class="pre">0</span></code>, meaning they produce data based on
+seismic waves, and they have a uniform SNR offset value of 0. We first
+need to write an input file according to the guidelines in Section
+<a class="reference internal" href="#subsec:input_file"><span class="xref myst">[subsec:input_file]</span></a>{reference-type=”ref”
+reference=”subsec:input_file”}. This input file can be the exact same no
+matter what prior we use, with the only change being in Line 8 where the
+sampling file is specified. Once this line has been specified correctly,
+all other steps will be the same.</p>
+<section id="input-file">
+<h4>Input file<a class="headerlink" href="#input-file" title="Link to this heading">#</a></h4>
+<p>The input file we will use looks like this:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>4096
+16384
+32
+uniform_prior.py
+40.5,-109,0,2.,0.
+40.5,-110,0,2.,0.
+40.5,-111,0,2.,0.
+41,-109,0,2.,0.
+41,-110,0,2.,0.
+41,-111,0,2.,0.
+41.5,-109,0,2.,0.
+41.5,-110,0,2.,0.
+41.5,-111,0,2.,0.
+</pre></div>
+</div>
+<p>Notice that we’ve specified our choice of prior in line 4, where we’ve provided the path to the file containing our sampling functions, and lines 5 and onward specify the sensor locations. For more information on how the input file is constructed, see <a class="reference internal" href="inputs.html"><span class="std std-doc">Writing input files</span></a>.</p>
+</section>
+<section id="executing-the-example">
+<h4>Executing the example<a class="headerlink" href="#executing-the-example" title="Link to this heading">#</a></h4>
+<p>Once we’ve written an input file, the code can be run using any of the methods described in <a class="reference internal" href="basics_opt.html#run-the-code"><span class="std std-ref">Running the code</span></a>. For example, to run interactively on a system with 16 cores per node, we could request 16 nodes:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>salloc<span class="w"> </span>--nodes<span class="o">=</span><span class="m">32</span><span class="w"> </span>--time<span class="o">=</span><span class="m">8</span>:00:00
+</pre></div>
+</div>
+<p>and then run the <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code> script:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>--bind-to<span class="w"> </span>core<span class="w"> </span>--npernode<span class="w"> </span><span class="m">16</span><span class="w"> </span>-n<span class="w"> </span><span class="m">512</span><span class="w"> </span>python3<span class="w"> </span>eig_calc.py<span class="w"> </span>uniform_inputs.dat<span class="w"> </span>uniform_outputs.npz<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+<section id="visualizing-outputs">
+<h4>Visualizing outputs<a class="headerlink" href="#visualizing-outputs" title="Link to this heading">#</a></h4>
+<p>This code will produce outputs according to Section 3.3, and those outputs can be visualized in a variety of ways.
+For example, we could visualize the Expected Information Gain that the network would provide for all events in the domain. When using verbosity level <code class="docutils literal notranslate"><span class="pre">1</span></code>, the analysis code saves the KL divergence for all <code class="docutils literal notranslate"><span class="pre">4096</span> <span class="pre">*</span> <span class="pre">32</span></code> sampled datasets. We can load these data and then average across data realizations to compute the Information Gain for each sampled event. We can also load the latitude and longitude domain inside which the events were sampled and the sensor network that we analyzed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1"># Load outputs</span>
+<span class="n">output_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;uniform_outputs.npz&#39;</span><span class="p">)</span>
+
+<span class="c1"># Get events</span>
+<span class="n">thetas</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;theta_data&#39;</span><span class="p">]</span>
+
+<span class="c1"># Get ig values for each event</span>
+<span class="n">kls</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;ig&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">4096</span><span class="p">,</span> <span class="mi">32</span><span class="p">))</span>
+<span class="n">igs</span> <span class="o">=</span> <span class="n">kls</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Get theta domain</span>
+<span class="n">lat_range</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;lat_range&#39;</span><span class="p">]</span>
+<span class="n">lon_range</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;lon_range&#39;</span><span class="p">]</span>
+
+<span class="c1"># Get sensors, only store latitude and longitude</span>
+<span class="n">sensors</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;sensors&#39;</span><span class="p">][:,:</span><span class="mi">2</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Then, we can fit a surrogate to the Information Gain values and predict the values at all the non-sampled points</p>
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Visualization helper functions</span>
+<span class="k">def</span> <span class="nf">select_training_samples</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> 
+                            <span class="n">targets</span><span class="p">,</span> 
+                            <span class="n">depth_slice</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> 
+                            <span class="n">mag_slice</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> 
+                            <span class="n">depth_tol</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                            <span class="n">mag_tol</span><span class="o">=</span><span class="mf">.75</span><span class="p">,</span>
+                            <span class="n">method</span><span class="o">=</span><span class="s1">&#39;tol&#39;</span><span class="p">,</span>
+                            <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span>
+                           <span class="p">):</span>
+    <span class="k">if</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;tol&#39;</span><span class="p">:</span>
+        <span class="n">depth_low</span> <span class="o">=</span> <span class="n">depth_slice</span> <span class="o">-</span> <span class="n">depth_tol</span>
+        <span class="n">depth_high</span> <span class="o">=</span> <span class="n">depth_slice</span> <span class="o">+</span> <span class="n">depth_tol</span>
+
+        <span class="n">mag_low</span> <span class="o">=</span> <span class="n">mag_slice</span> <span class="o">-</span> <span class="n">mag_tol</span>
+        <span class="n">mag_high</span> <span class="o">=</span> <span class="n">mag_slice</span> <span class="o">+</span> <span class="n">mag_tol</span>
+
+        <span class="c1"># Mask that selects samples whose magnitude and depth are in the desired range</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">[((</span><span class="n">samples</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">&lt;=</span><span class="n">depth_high</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">samples</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">&gt;=</span><span class="n">depth_low</span><span class="p">))</span> <span class="o">&amp;</span> 
+                <span class="p">((</span><span class="n">samples</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span><span class="o">&lt;=</span><span class="n">mag_high</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">samples</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span><span class="o">&gt;=</span><span class="n">mag_low</span><span class="p">))]</span>
+
+        <span class="n">training_inputs</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">mask</span><span class="p">)]</span>
+        <span class="n">training_targets</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">mask</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Selected </span><span class="si">{</span><span class="n">training_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> samples to train with&#39;</span><span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s1">&#39;random&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)),</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="n">training_inputs</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">training_targets</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">training_inputs</span><span class="p">,</span> <span class="n">training_targets</span>
+
+<span class="k">def</span> <span class="nf">plot_ig_surface</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> 
+                 <span class="n">lat_range</span><span class="p">,</span> 
+                 <span class="n">lon_range</span><span class="p">,</span>
+                 <span class="n">depth_slice</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                 <span class="n">mag_slice</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                 <span class="n">gridsize</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                 <span class="n">plot_title</span><span class="o">=</span><span class="s2">&quot;EIG plot&quot;</span>
+                <span class="p">):</span>
+    <span class="c1"># Create domain points to predict on</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lat_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lat_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">gridsize</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">long_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">long_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">gridsize</span><span class="p">)</span>
+    <span class="n">xv</span><span class="p">,</span> <span class="n">yv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">xv</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">yv</span><span class="o">.</span><span class="n">ravel</span><span class="p">()))</span><span class="o">.</span><span class="n">T</span>
+    
+    <span class="c1"># Give each lat/lon domain point a depth and magnitude</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">xy</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="n">domain</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">xy</span>
+    <span class="n">domain</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">depth_slice</span>
+    <span class="n">domain</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">mag_slice</span>
+    
+    <span class="c1"># Predict IG value at each domain point</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+    
+    <span class="c1"># Plot predictions with longitude for x and latitude for y</span>
+    <span class="c1"># Note that this is opposite of how the code processes them</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">yv</span><span class="p">,</span> 
+                        <span class="n">xv</span><span class="p">,</span> 
+                        <span class="n">preds</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">gridsize</span><span class="p">,</span> <span class="n">gridsize</span><span class="p">)),</span>
+                        <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+                        <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;jet&quot;</span>
+                       <span class="p">)</span>
+    <span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span><span class="n">preds</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="c1"># Standardize colorbar limits</span>
+    
+    <span class="c1"># Plot sensor network on map</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">net</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span><span class="n">net</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span><span class="n">c</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;sensors&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Plot decorations</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">plot_title</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Longitude&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Latitude&quot;</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.gaussian_process</span> <span class="kn">import</span> <span class="n">GaussianProcessRegressor</span> <span class="k">as</span> <span class="n">GPR</span>
+<span class="kn">from</span> <span class="nn">skopt.learning.gaussian_process.kernels</span> <span class="kn">import</span> <span class="n">RBF</span><span class="p">,</span> <span class="n">WhiteKernel</span>
+
+<span class="c1"># Downsample training data since a GP will take a long time to train with 4096 points</span>
+<span class="n">training_samples</span><span class="p">,</span> <span class="n">training_targets</span> <span class="o">=</span> <span class="n">select_training_samples</span><span class="p">(</span><span class="n">thetas</span><span class="p">,</span> <span class="n">igs</span><span class="p">)</span>
+
+<span class="c1"># Create and fit the model</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> 
+          <span class="n">RBF</span><span class="p">(</span><span class="n">length_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">length_scale_bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> 
+          <span class="n">WhiteKernel</span><span class="p">(</span><span class="n">noise_level</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">noise_level_bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">,</span> <span class="mf">5e-1</span><span class="p">))</span>
+         <span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">GPR</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">normalize_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_samples</span><span class="p">,</span> <span class="n">training_targets</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then we can make predictions on the whole domain and visualize the predictions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plot_ig_surface</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">lat_range</span><span class="p">,</span> 
+                <span class="n">lon_range</span><span class="p">,</span> 
+                <span class="n">plot_title</span><span class="o">=</span><span class="s2">&quot;Network analysis with uniform prior&quot;</span>
+               <span class="p">)</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../../_images/unif_analysis.png"><img alt="../../_images/unif_analysis.png" src="../../_images/unif_analysis.png" style="width: 80%;" /></a>
+</figure>
+</section>
+</section>
+<section id="analysis-with-nonuniform-prior">
+<h3>Analysis with nonuniform prior<a class="headerlink" href="#analysis-with-nonuniform-prior" title="Link to this heading">#</a></h3>
+<p>Instead of a uniform prior on seismic event locations, in this example we will assume depth is uniformly distributed and magnitude follows the same exponential distribution as in the previous example, but in this example we will assume location (latitude and longitude) follows a Gaussian mixture distribution as shown in this figure:</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../../_images/prior.png"><img alt="../../_images/prior.png" src="../../_images/prior.png" style="width: 80%;" /></a>
+</figure>
+<p>The functions that perform the sampling operations for <span class="math notranslate nohighlight">\(\theta\)</span> can be found in the file <a class="reference external" href="https://github.com/sandialabs/seismic_boed/blob/master/examples/sampling_files/nonuniform_prior.py"><code class="docutils literal notranslate"><span class="pre">nonuniform_prior.py</span></code></a>.
+For more information on how to write a sampling file, see #TODO.</p>
+<section id="inputs">
+<h4>Inputs<a class="headerlink" href="#inputs" title="Link to this heading">#</a></h4>
+<p>The input file we use for this example will be almost identical to the uniform prior example, with the only change being the line providing the path to the sampling file:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>4096
+16384
+32
+nonuniform_prior.py
+40.5,-109,0,2.,0.
+40.5,-110,0,2.,0.
+40.5,-111,0,2.,0.
+41,-109,0,2.,0.
+41,-110,0,2.,0.
+41,-111,0,2.,0.
+41.5,-109,0,2.,0.
+41.5,-110,0,2.,0.
+41.5,-111,0,2.,0.
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h4>Executing the example<a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<p>We will execute the network analysis the same way as in the uniform example, but we re-emphasize that any of the methods described in <a class="reference internal" href="basics_opt.html#run-the-code"><span class="std std-ref">Running the code</span></a> will work. On a system with 16 cores per node, we request 16 nodes:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>salloc<span class="w"> </span>--nodes<span class="o">=</span><span class="m">32</span><span class="w"> </span>--time<span class="o">=</span><span class="m">8</span>:00:00
+</pre></div>
+</div>
+<p>and then run the <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code> script:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>--bind-to<span class="w"> </span>core<span class="w"> </span>--npernode<span class="w"> </span><span class="m">16</span><span class="w"> </span>-n<span class="w"> </span><span class="m">512</span><span class="w"> </span>python3<span class="w"> </span>eig_calc.py<span class="w"> </span>nonuniform_inputs.dat<span class="w"> </span>nonuniform_outputs.npz<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+<section id="visualizing-the-results">
+<h4>Visualizing the results<a class="headerlink" href="#visualizing-the-results" title="Link to this heading">#</a></h4>
+<p>We will visualize the results similarly to the previous example by creating a surface predicting the Expected Information Gain at each point in the lat/lon domain. We load the outputs of the analysis with the nonuniform prior:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1"># Load outputs</span>
+<span class="n">output_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;nonuniform_outputs.npz&#39;</span><span class="p">)</span>
+
+<span class="c1"># Get events</span>
+<span class="n">thetas</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;theta_data&#39;</span><span class="p">]</span>
+
+<span class="c1"># Get ig values for each event</span>
+<span class="n">kls</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;ig&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">4096</span><span class="p">,</span> <span class="mi">32</span><span class="p">))</span>
+<span class="n">igs</span> <span class="o">=</span> <span class="n">kls</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Get theta domain</span>
+<span class="n">lat_range</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;lat_range&#39;</span><span class="p">]</span>
+<span class="n">lon_range</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;lon_range&#39;</span><span class="p">]</span>
+
+<span class="c1"># Get sensors, only store latitude and longitude</span>
+<span class="n">sensors</span> <span class="o">=</span> <span class="n">output_data</span><span class="p">[</span><span class="s1">&#39;sensors&#39;</span><span class="p">][:,:</span><span class="mi">2</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Next, we fit a surrogate to the Information Gain values and predict the values at all the non-sampled points</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Downsample training data since a GP will take a long time to train with 4096 points</span>
+<span class="n">training_samples</span><span class="p">,</span> <span class="n">training_targets</span> <span class="o">=</span> <span class="n">select_training_samples</span><span class="p">(</span><span class="n">thetas</span><span class="p">,</span> <span class="n">igs</span><span class="p">)</span>
+
+<span class="c1"># Create and fit the model</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> 
+          <span class="n">RBF</span><span class="p">(</span><span class="n">length_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">length_scale_bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> 
+          <span class="n">WhiteKernel</span><span class="p">(</span><span class="n">noise_level</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">noise_level_bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">1e-2</span><span class="p">,</span> <span class="mf">5e-1</span><span class="p">))</span>
+         <span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">GPR</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">normalize_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training_samples</span><span class="p">,</span> <span class="n">training_targets</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then we can make predictions on the whole domain and visualize the predictions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plot_ig_surface</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">lat_range</span><span class="p">,</span> 
+                <span class="n">lon_range</span><span class="p">,</span> 
+                <span class="n">plot_title</span><span class="o">=</span><span class="s2">&quot;Network analysis with nonuniform prior&quot;</span>
+               <span class="p">)</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../../_images/nonunif_analysis.png"><img alt="../../_images/nonunif_analysis.png" src="../../_images/nonunif_analysis.png" style="width: 80%;" /></a>
+</figure>
+</section>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./source/tutorials"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../sboed/changelog.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">What’s New</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="basics_opt.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Getting Started: Network Optimization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-code">Running the code</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-locally">Running locally</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-using-hpc-interactively">Running using HPC interactively</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-on-hpc-with-script">Running on HPC with script</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#code-outputs">Code outputs</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis-with-uniform-prior">Analysis with uniform prior</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#input-file">Input file</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#executing-the-example">Executing the example</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-outputs">Visualizing outputs</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#analysis-with-nonuniform-prior">Analysis with nonuniform prior</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inputs">Inputs</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Executing the example</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-the-results">Visualizing the results</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Sandia National Laboratories
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

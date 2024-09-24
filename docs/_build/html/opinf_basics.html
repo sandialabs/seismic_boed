@@ -1,0 +1,1591 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Getting Started</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'opinf_basics';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="source/index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/sboed_logo.png" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="_static/sboed_logo.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="source/index.html">
+                    Seismic Bayesian Optimal Experiment Design in Python
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Seismic Bayesian OED</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="source/sboed/installation.html">Package Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/sboed/literature.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/sboed/changelog.html">What’s New</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="source/tutorials/basics_analysis.html">Getting Started: Network Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/tutorials/basics_opt.html">Getting Started: Network Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/tutorials/bounded.html">Performing bounded optimization</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="source/tutorials/inputs.html">Writing input files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/tutorials/priors.html">Customizing the event prior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/tutorials/data_gen.html">Sampling synthetic data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/tutorials/likelihood.html">Constructing likelihood models</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="source/api/main.html"><code class="docutils literal notranslate"><span class="pre">seismic-boed</span></code></a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed/issues/new?title=Issue%20on%20page%20%2Fopinf_basics.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/opinf_basics.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Getting Started</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-statement">Problem Statement</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-data">Training Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#operator-inference">Operator Inference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-compression">Data Compression</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#time-derivative-estimation">Time Derivative Estimation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-the-model-operators">Specifying the Model Operators</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calibrating-model-operators">Calibrating Model Operators</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regularization-stabilizing-the-inference-problem">Regularization: Stabilizing the Inference Problem</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#solving-the-reduced-order-model">Solving the Reduced-order Model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-rom-class">The ROM Class</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluate-rom-performance">Evaluate ROM Performance</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#rom-accuracy">ROM Accuracy</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#rom-computational-speedup">ROM Computational Speedup</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prediction-new-initial-conditions">Prediction: New Initial Conditions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#first-attempt">First Attempt</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#second-attempt-a-better-basis">Second Attempt: a Better Basis</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">opinf</span></code> package constructs reduced-order models for large dynamical systems.
+Such systems often arise from the numerical solution of partial differentials equations.
+In this introductory tutorial, we use operator inference (OpInf) to learn a reduced-order model for a simple heat equation.
+This is a simplified version of the first numerical example in <span id="id1">[]</span>.</p>
+<section id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Link to this heading">#</a></h2>
+<div class="note admonition">
+<p class="admonition-title">Governing Equations</p>
+<p>For the spatial domain <span class="math notranslate nohighlight">\(\Omega = [0,L]\subset \RR\)</span> and the time domain <span class="math notranslate nohighlight">\([t_0,t_f]\subset\RR\)</span>, consider the one-dimensional heat equation with homogeneous Dirichlet boundary conditions:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+    &amp;\frac{\partial}{\partial t} q(x,t) = \frac{\partial^2}{\partial x^2}q(x,t)
+    &amp; x &amp;\in\Omega,\quad t\in(t_0,t_f],
+    \\
+    &amp;q(0,t) = q(L,t) = 0
+    &amp; t &amp;\in [t_0,t_f],
+    \\
+    &amp;q(x,t_0) = q_{0}(x)
+    &amp; x &amp;\in \Omega.
+\end{aligned}
+\end{split}\]</div>
+<p>This is a model for a one-dimensional rod that conducts heat.
+The unknown state variable <span class="math notranslate nohighlight">\(q(x,t)\)</span> represents the temperature of the rod at location <span class="math notranslate nohighlight">\(x\)</span> and time <span class="math notranslate nohighlight">\(t\)</span>; the temperature at the ends of the rod are fixed at <span class="math notranslate nohighlight">\(0\)</span> and heat is allowed to flow out of the rod at the ends.</p>
+</div>
+<div class="note admonition">
+<p class="admonition-title">Objective</p>
+<p>Construct a low-dimensional system of ordinary differential equations, called the <em>reduced-order model</em> (ROM), which can be solved rapidly to produce approximate solutions <span class="math notranslate nohighlight">\(q(x, t)\)</span> to the partial differential equation given above. We will use OpInf to learn the ROM from high-fidelity data for one choice of initial condition <span class="math notranslate nohighlight">\(q_0(x)\)</span> and test its performance on new initial conditions.</p>
+</div>
+<p>We will make use of <code class="xref py py-mod docutils literal notranslate"><span class="pre">numpy</span></code>, <code class="xref py py-mod docutils literal notranslate"><span class="pre">scipy</span></code>, and <code class="xref py py-mod docutils literal notranslate"><span class="pre">matplotlib</span></code> from the standard Python scientific stack, which are all automatically installed when <code class="docutils literal notranslate"><span class="pre">opinf</span></code> is <a class="reference internal" href="#../opinf/installation.md"><span class="xref myst">installed</span></a>.
+The <code class="xref py py-mod docutils literal notranslate"><span class="pre">pandas</span></code> library is also used later to consolidate and report results.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span>
+<span class="kn">import</span> <span class="nn">scipy.integrate</span>
+<span class="kn">import</span> <span class="nn">scipy.linalg</span> <span class="k">as</span> <span class="nn">la</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">import</span> <span class="nn">opinf</span>
+
+<span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">mpl_config</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">line</span> <span class="mi">8</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span> <span class="kn">import</span> <span class="nn">scipy.linalg</span> <span class="k">as</span> <span class="nn">la</span>
+<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="ne">----&gt; </span><span class="mi">8</span> <span class="kn">import</span> <span class="nn">opinf</span>
+<span class="g g-Whitespace">     </span><span class="mi">10</span> <span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">mpl_config</span><span class="p">()</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;opinf&#39;
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="training-data">
+<h2>Training Data<a class="headerlink" href="#training-data" title="Link to this heading">#</a></h2>
+<p>We begin by generating training data through a traditional numerical method.
+A spatial discretization of the governing equations with <span class="math notranslate nohighlight">\(n\)</span> degrees of freedom via finite differences or the finite element method leads to a linear semi-discrete system of <span class="math notranslate nohighlight">\(n\)</span> ordinary differential equations,</p>
+<div class="math notranslate nohighlight" id="equation-eq-basics-fom">
+<span class="eqno">()<a class="headerlink" href="#equation-eq-basics-fom" title="Link to this equation">#</a></span>\[
+\begin{aligned}
+    \ddt\q(t) = \A\q(t),
+    \qquad
+    \q(0) = \q_0,
+\end{aligned}
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\q:\RR\to\RR^n\)</span>, <span class="math notranslate nohighlight">\(\A\in\RR^{n\times n}\)</span>, and <span class="math notranslate nohighlight">\(\q_0\in\RR^n\)</span>.
+For this tutorial, we use central finite differences to construct this system.</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text">Discretization details</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<p class="sd-card-text">For a given <span class="math notranslate nohighlight">\(n\in\NN\)</span>, let <span class="math notranslate nohighlight">\(\{x\}_{i=0}^{n+1}\)</span> be an equidistant grid of <span class="math notranslate nohighlight">\(n+2\)</span> points on <span class="math notranslate nohighlight">\(\Omega\)</span>, i.e.,</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    0 &amp;= x_0 &lt; x_1 &lt; \cdots &lt; x_n &lt; x_{n+1} = L
+    &amp;
+    &amp;\text{and}
+    &amp;
+    x_{i+1} - x_{i} &amp;= \delta x := \frac{L}{n+1},\quad i=1,\ldots,n-1.
+\end{aligned}
+\]</div>
+<p class="sd-card-text">The boundary conditions prescribe <span class="math notranslate nohighlight">\(q(x_0,t) = q(x_{n+1},t) = 0\)</span>.
+Our goal is to compute <span class="math notranslate nohighlight">\(q(x, t)\)</span> at the interior spatial points <span class="math notranslate nohighlight">\(x_{1}, x_{2}, \ldots, x_{n}\)</span> for various <span class="math notranslate nohighlight">\(t \in [t_0,t_f].\)</span> That is, we wish to compute the state vector</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+    \q(t)
+    = \left[\begin{array}{c}
+        q(x_1,t) \\ \vdots \\ q(x_n,t)
+    \end{array}\right]\in\RR^n.
+\end{aligned}
+\end{split}\]</div>
+<p class="sd-card-text">Introducing a central finite difference approximation for the spatial derivative,</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \frac{\partial^2}{\partial x^2}q(x,t)
+    &amp;\approx \frac{q(x-\delta x,t) - 2q(x,t) + q(x+\delta x,t)}{(\delta x)^2},
+\end{aligned}
+\]</div>
+<p class="sd-card-text">yields the semi-discrete linear system</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \ddt\q(t) = \A\q(t),
+    \qquad
+    \q(0) = \q_0,
+\end{aligned}
+\]</div>
+<p class="sd-card-text">where</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+    \A &amp;= \frac{1}{(\delta x)^2}\left[\begin{array}{ccccc}
+        -2 &amp; 1 &amp; &amp; &amp; \\
+        1 &amp; -2 &amp; 1 &amp; &amp; \\
+        &amp; \ddots &amp; \ddots &amp; \ddots &amp; \\
+        &amp; &amp; 1 &amp; -2 &amp; 1 \\
+        &amp; &amp; &amp; 1 &amp; -2 \\
+    \end{array}\right] \in\RR^{n\times n},
+    &amp;
+    \q_0 &amp;= \left[\begin{array}{c}
+    q_{0}(x_{1}) \\ q_{0}(x_{2}) \\ \vdots \\ q_{0}(x_{n-1}) \\ q_{0}(x_{n})
+    \end{array}\right] \in\RR^{n}.
+\end{aligned}
+\end{split}\]</div>
+</div>
+</details><p>The system <a class="reference internal" href="#equation-eq-basics-fom">()</a> is called the <em>full-order model</em> (FOM) or the <em>high-fidelity model</em>. The computational complexity of solving <a class="reference internal" href="#equation-eq-basics-fom">()</a> depends on the dimension <span class="math notranslate nohighlight">\(n\)</span>, which must often be large in order for <span class="math notranslate nohighlight">\(\q(t)\)</span> to approximate <span class="math notranslate nohighlight">\(q(x,t)\)</span> well over the spatial grid. Our goal is to construct a ROM that approximates the FOM, but whose computational complexity only depends on some smaller dimension <span class="math notranslate nohighlight">\(r \ll n\)</span>.</p>
+<div class="important admonition">
+<p class="admonition-title">No FOM? No Problem.</p>
+<p>One key advantage of OpInf is that, because it learns a ROM from data alone, direct access to a FOM is not required.
+In this tutorial, we explicitly construct a FOM, but in practice, we only need the following:</p>
+<ol class="arabic simple">
+<li><p>Solution data to learn from, and</p></li>
+<li><p>Some knowledge of the structure of the governing equations.</p></li>
+</ol>
+</div>
+<p>For this demo, we set <span class="math notranslate nohighlight">\(L = 1\)</span>, <span class="math notranslate nohighlight">\(t_0 = 0\)</span>, <span class="math notranslate nohighlight">\(t_f = 1\)</span>, and use <span class="math notranslate nohighlight">\(n = 2^{10} - 1 = 1023\)</span> spatial degrees of freedom.
+We begin by solving the FOM with the initial condition</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    q_{0}(x) = x(1 - x),
+\end{aligned}
+\]</div>
+<p>and record the solution every <span class="math notranslate nohighlight">\(\delta t = 0.0025\)</span> time units.
+This results in <span class="math notranslate nohighlight">\(k = 401\)</span> state snapshots (<span class="math notranslate nohighlight">\(400\)</span> time steps after the initial condition), which are organized into the <em>snapshot matrix</em> <span class="math notranslate nohighlight">\(\Q\in\RR^{n\times k}\)</span>, where the <span class="math notranslate nohighlight">\(j\)</span>-th column is the solution trajectory at time <span class="math notranslate nohighlight">\(t_j\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+    \Q = \left[\begin{array}{ccc}
+        &amp;&amp; \\
+        \q_{0} &amp; \cdots &amp; \q_{k-1}
+        \\ &amp;&amp;
+    \end{array}\right] \in\RR^{n\times k},
+    \qquad
+    \q_{j} := \q(t_j) \in\RR^{n},\quad j = 0, \ldots, k-1.
+\end{aligned}
+\end{split}\]</div>
+<p>Note that the initial condition <span class="math notranslate nohighlight">\(\q_{0}\)</span> is included as a column in the snapshot matrix.</p>
+<p>The following code constructs the spatial and time domains, the FOM matrix <span class="math notranslate nohighlight">\(\A\)</span>, the initial condition vector <span class="math notranslate nohighlight">\(\q_0\)</span>, and solves the FOM with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.integrate.solve_ivp()</span></code>.</p>
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Construct the spatial domain.</span>
+<span class="n">L</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">10</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">x_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">x_all</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">dx</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># Construct the temporal domain.</span>
+<span class="n">t0</span><span class="p">,</span> <span class="n">tf</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mi">401</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">tf</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># Construct the full-order state matrix A.</span>
+<span class="n">diags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">diags</span><span class="p">(</span><span class="n">diags</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+<span class="c1"># Construct the initial condition for the training data.</span>
+<span class="n">q0</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">full_order_solve</span><span class="p">(</span><span class="n">initial_condition</span><span class="p">,</span> <span class="n">time_domain</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solve the full-order model with SciPy.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">scipy</span><span class="o">.</span><span class="n">integrate</span><span class="o">.</span><span class="n">solve_ivp</span><span class="p">(</span>
+        <span class="n">fun</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">A</span> <span class="o">@</span> <span class="n">q</span><span class="p">,</span>
+        <span class="n">t_span</span><span class="o">=</span><span class="p">[</span><span class="n">time_domain</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">time_domain</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
+        <span class="n">y0</span><span class="o">=</span><span class="n">initial_condition</span><span class="p">,</span>
+        <span class="n">t_eval</span><span class="o">=</span><span class="n">time_domain</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BDF&quot;</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">y</span>
+
+
+<span class="c1"># Solve the full-order model to obtain training snapshots.</span>
+<span class="k">with</span> <span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">TimedBlock</span><span class="p">(</span><span class="s2">&quot;Full-order solve&quot;</span><span class="p">):</span>
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">full_order_solve</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Spatial domain size:</span><span class="se">\t</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Spatial step size:</span><span class="se">\t</span><span class="si">{</span><span class="n">dx</span><span class="si">=:</span><span class="s2">.10f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Time domain size:</span><span class="se">\t</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Temporal step size:</span><span class="se">\t</span><span class="si">{</span><span class="n">dt</span><span class="si">=:</span><span class="s2">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Full-order matrix A:</span><span class="se">\t</span><span class="si">{</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Initial condition:</span><span class="se">\t</span><span class="si">{</span><span class="n">q0</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Training snapshots:</span><span class="se">\t</span><span class="si">{</span><span class="n">Q</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+<p>Next, we visualize the snapshots to get a sense of how the solution looks qualitatively.</p>
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_heat_data</span><span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize temperature data in space and time.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Plot a few snapshots over the spatial domain.</span>
+    <span class="n">sample_columns</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">160</span><span class="p">,</span> <span class="mi">320</span><span class="p">]</span>
+    <span class="n">color</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">viridis_r</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_columns</span><span class="p">))))</span>
+
+    <span class="n">leftBC</span><span class="p">,</span> <span class="n">rightBC</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">sample_columns</span><span class="p">:</span>
+        <span class="n">q_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">leftBC</span><span class="p">,</span> <span class="n">Z</span><span class="p">[:,</span> <span class="n">j</span><span class="p">],</span> <span class="n">rightBC</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_all</span><span class="p">,</span> <span class="n">q_all</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="nb">next</span><span class="p">(</span><span class="n">color</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="sa">rf</span><span class="s2">&quot;$q(x,t_</span><span class="se">{{</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="se">}}</span><span class="s2">)$&quot;</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">x_all</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x_all</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$x$&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$q(x,t)$&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mf">1.05</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_heat_data</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="s2">&quot;Snapshot data&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>In the figure, earlier times are lighter colors and later times are darker colors.
+This matches our intuition: initially there is more heat toward the center of the rod, which then diffuses out of the ends of the rod.</p>
+</section>
+<section id="operator-inference">
+<h2>Operator Inference<a class="headerlink" href="#operator-inference" title="Link to this heading">#</a></h2>
+<p>At this point, we have gathered some training data by simulating the FOM.
+We also have an initial condition and a time domain.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Name</p></th>
+<th class="head text-center"><p>Symbol</p></th>
+<th class="head text-left"><p>Code Variable</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>State snapshots</p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\Q\)</span></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">Q</span></code></p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>Initial state</p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\(\q_0\)</span></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">q0</span></code></p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>Time domain</p></td>
+<td class="text-center"><p><span class="math notranslate nohighlight">\([t_0,t_f]\)</span></p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">t</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Our task now is to construct a low-dimensional system whose solutions can be used as approximate solutions to the PDE.
+Below we show the overall process, then explain each piece that happens under the hood.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">opinf</span>
+
+<span class="c1"># Define the reduced-order model.</span>
+<span class="n">rom</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">ROM</span><span class="p">(</span>
+    <span class="n">basis</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">PODBasis</span><span class="p">(</span><span class="n">cumulative_energy</span><span class="o">=</span><span class="mf">0.9999</span><span class="p">),</span>
+    <span class="n">ddt_estimator</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">ddt</span><span class="o">.</span><span class="n">UniformFiniteDifferencer</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;ord6&quot;</span><span class="p">),</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ContinuousModel</span><span class="p">(</span>
+        <span class="n">operators</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+        <span class="n">solver</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">lstsq</span><span class="o">.</span><span class="n">L2Solver</span><span class="p">(</span><span class="n">regularizer</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Calibrate the reduced-order model to data.</span>
+<span class="n">rom</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+
+<span class="c1"># Solve the reduced-order model.</span>
+<span class="k">with</span> <span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">TimedBlock</span><span class="p">(</span><span class="s2">&quot;Reduced-order solve&quot;</span><span class="p">):</span>
+    <span class="n">Q_ROM</span> <span class="o">=</span> <span class="n">rom</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BDF&quot;</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+
+<span class="c1"># Compute the relative error of the ROM solution.</span>
+<span class="n">opinf</span><span class="o">.</span><span class="n">post</span><span class="o">.</span><span class="n">frobenius_error</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">Q_ROM</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="data-compression">
+<h3>Data Compression<a class="headerlink" href="#data-compression" title="Link to this heading">#</a></h3>
+<p>Our first task is to construct a low-dimensional representation of the FOM state <span class="math notranslate nohighlight">\(\q(t)\in\RR^{n}\)</span>, denoted <span class="math notranslate nohighlight">\(\qhat(t)\in\RR^r\)</span>.
+A ROM is a system of equations that acts on the reduced state <span class="math notranslate nohighlight">\(\qhat(t)\)</span>.
+The integer <span class="math notranslate nohighlight">\(r\)</span> is the dimension of the ROM: if <span class="math notranslate nohighlight">\(r \ll n\)</span>, we can expect to be able to solve the ROM much faster than we can solve the FOM.</p>
+<p>The relationship between <span class="math notranslate nohighlight">\(\q(t)\)</span> and <span class="math notranslate nohighlight">\(\qhat(t)\)</span> helps dictate the structure of the ROM and allows us to compress the state snapshots <span class="math notranslate nohighlight">\(\q_0,\ldots,\q_{k-1}\in\RR^{n}\)</span> to low-dimensional representations <span class="math notranslate nohighlight">\(\qhat_0,\ldots,\qhat_{k-1}\in\RR^{r}\)</span> that are used to calibrate the ROM.
+Tools for defining low-dimensional approximations of high-dimensional states are defined in <code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.basis</span></code>.</p>
+<p>For this problem, we use a linear approximation for <span class="math notranslate nohighlight">\(\q(t)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \q(t)
+    \approx \Vr\qhat(t).
+\end{aligned}
+\]</div>
+<p>The matrix <span class="math notranslate nohighlight">\(\Vr\in\RR^{n\times r}\)</span> is called a <em>basis matrix</em> and its columns are called <em>basis vectors</em>.
+We typically have <span class="math notranslate nohighlight">\(\Vr\trp\Vr = \I\)</span>, i.e., the basis vectors form an orthonormal set.
+Note that the product <span class="math notranslate nohighlight">\(\Vr\qhat(t)\)</span> is a linear combination of the basis vectors, so <span class="math notranslate nohighlight">\(\q(t)\)</span> can only be approximated well if it is within or near the span of the basis vectors.</p>
+<p>We choose <span class="math notranslate nohighlight">\(\Vr\)</span> using proper orthogonal decomposition (POD), which is based on the singular value decomposition (SVD) of samples of <span class="math notranslate nohighlight">\(\q(t)\)</span>.
+The singular values give some guidance on choosing an appropriate ROM dimension <span class="math notranslate nohighlight">\(r\)</span>.
+Fast singular value decay is a good sign that a ROM may be successful with this kind of data; if the singular values do not decay quickly, then a large <span class="math notranslate nohighlight">\(r\)</span> may be required to capture the behavior of the system.
+Below, we initialize a <code class="xref py py-class docutils literal notranslate"><span class="pre">opinf.basis.PODBasis</span></code> object with the following criteria for selecting <span class="math notranslate nohighlight">\(r\)</span>: choose the smallest <span class="math notranslate nohighlight">\(r\)</span> such that we capture over <span class="math notranslate nohighlight">\(99.9999\%\)</span> of the <a class="reference internal" href="#sec:api-basis-dimselect"><span class="xref myst">cumulative energy</span></a> of the system.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize a basis.</span>
+<span class="n">basis</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">PODBasis</span><span class="p">(</span><span class="n">cumulative_energy</span><span class="o">=</span><span class="mf">0.9999</span><span class="p">)</span>
+
+<span class="c1"># Fit the basis (compute Vr) using the snapshot data.</span>
+<span class="n">basis</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+
+<span class="c1"># Visualize the basis vectors.</span>
+<span class="n">basis</span><span class="o">.</span><span class="n">plot1D</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Solutions of our eventual ROM are restricted to linear combinations of these two basis vectors.</p>
+<p>After the basis is initialized and calibrated, we can use it to compress the state snapshots to an <span class="math notranslate nohighlight">\(r\)</span>-dimensional representation.
+In this case, we have <span class="math notranslate nohighlight">\(\qhat_j = \Vr\trp\q_j \in \RR^{r}\)</span>.
+These <span class="math notranslate nohighlight">\(\qhat_j\)</span> are data for the ROM state <span class="math notranslate nohighlight">\(\qhat(t)\)</span> at time <span class="math notranslate nohighlight">\(t_j\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compress the state snapshots to the reduced space defined by the basis.</span>
+<span class="n">Q_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Q</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">Q_</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>To see how well the state can be represented by a given basis matrix, it is helpful to examine the <em>projection</em> of the state snapshots.
+For linear state approximations like POD, the projection of <span class="math notranslate nohighlight">\(\q\in\RR^n\)</span> is the vector <span class="math notranslate nohighlight">\(\Vr\Vr\trp\q\in\RR^n\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">basis</span><span class="o">.</span><span class="n">projection_error</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="time-derivative-estimation">
+<h3>Time Derivative Estimation<a class="headerlink" href="#time-derivative-estimation" title="Link to this heading">#</a></h3>
+<p>In addition to the compressed state snapshots <span class="math notranslate nohighlight">\(\qhat_0,\ldots,\qhat_{k-1}\)</span>, OpInf for time-continuous (ODE) models requires data for the time derivatives of the state snapshots, denoted</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \dot{\qhat}_j
+    = \ddt\qhat(t)\big|_{t=t_j}
+    \in\RR^{r}.
+\end{aligned}
+\]</div>
+<p>There are two ways to get such data.</p>
+<ol class="arabic simple">
+<li><p>If time derivatives of the original state snapshots are available, they can be compressed to the reduced state space.</p></li>
+<li><p>Otherwise, the time derivatives may be estimated from the compressed states.</p></li>
+</ol>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.ddt</span></code> module defines tools for estimating time derivatives from state data.</p>
+<p>Recall that the FOM in this problem <a class="reference internal" href="#equation-eq-basics-fom">()</a> is given by <span class="math notranslate nohighlight">\(\ddt\q(t) = \A\q(t)\)</span>.
+In this case we have <span class="math notranslate nohighlight">\(\A\)</span>, so we can compute <span class="math notranslate nohighlight">\(\dot{\q}_j = \A\q_j\)</span>, then set <span class="math notranslate nohighlight">\(\dot{\qhat}_j = \Vr\trp\dot{\q}_j\)</span>.
+Below, we should how this approach compares with using tools from <code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.ddt</span></code>.
+Since the data <span class="math notranslate nohighlight">\(\q_0,\ldots,\q_{k-1}\)</span> are defined on a uniform time grid, we use <code class="xref py py-class docutils literal notranslate"><span class="pre">opinf.ddt.UniformFiniteDifferencer</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compute exact time derivatives using the FOM and compress them.</span>
+<span class="n">Qdot_exact</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">A</span> <span class="o">@</span> <span class="n">Q</span><span class="p">)</span>
+
+<span class="c1"># Estimate time derivatives using 6th-order finite differences.</span>
+<span class="n">ddt_estimator</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">ddt</span><span class="o">.</span><span class="n">UniformFiniteDifferencer</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;ord6&quot;</span><span class="p">)</span>
+<span class="n">Qdot_</span> <span class="o">=</span> <span class="n">ddt_estimator</span><span class="o">.</span><span class="n">estimate</span><span class="p">(</span><span class="n">Q_</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Qdot_exact</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="se">\t</span><span class="si">{</span><span class="n">Qdot_</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check that the estimate is close to the true time derivatives.</span>
+<span class="n">la</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Qdot_exact</span> <span class="o">-</span> <span class="n">Qdot_</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span> <span class="o">/</span> <span class="n">la</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Qdot_exact</span><span class="p">,</span> <span class="nb">ord</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="specifying-the-model-operators">
+<h3>Specifying the Model Operators<a class="headerlink" href="#specifying-the-model-operators" title="Link to this heading">#</a></h3>
+<p>We now have low-dimensional state and time derivative data.
+To learn a ROM with OpInf, we must specify the structure of the ROM, which should be motivated by the structure of the FOM and the dimensionality reduction strategy.</p>
+<p>The FOM <a class="reference internal" href="#equation-eq-basics-fom">()</a> is a linear system of ODEs,</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \ddt\q(t) = \A\q(t),
+    \qquad
+    \q(0) = \q_0.
+\end{aligned}
+\]</div>
+<p>Substituting in the approximation <span class="math notranslate nohighlight">\(\q(t)\approx\Vr\qhat(t)\)</span>, we have</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \ddt\Vr\qhat(t) = \A\Vr\qhat(t),
+    \qquad
+    \Vr\qhat(0) = \q_0.
+\end{aligned}
+\]</div>
+<p>Next, left multiply by <span class="math notranslate nohighlight">\(\Vr\trp\)</span> and use the fact that <span class="math notranslate nohighlight">\(\Vr\trp\Vr = \I\)</span> to get the following:</p>
+<div class="math notranslate nohighlight" id="equation-eq-basics-intrusiverom">
+<span class="eqno">()<a class="headerlink" href="#equation-eq-basics-intrusiverom" title="Link to this equation">#</a></span>\[
+\begin{aligned}
+    \ddt\qhat(t) = \tilde{\A}\qhat(t),
+    \qquad
+    \qhat(0) = \Vr\trp\q_0,
+\end{aligned}
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\tilde{\A} = \Vr\trp\A\Vr \in \RR^{r\times r}\)</span>.
+The system <a class="reference internal" href="#equation-eq-basics-intrusiverom">()</a> is called the <em>intrusive Galerkin ROM</em> corresponding to the FOM and the choice of basis matrix <span class="math notranslate nohighlight">\(\Vr\)</span>.
+The intrusive ROM can only be constructed if <span class="math notranslate nohighlight">\(\A\)</span> is known; with OpInf, we aim to construct a reduced system with the same linear structure as the intrusive ROM, but without using <span class="math notranslate nohighlight">\(\A\)</span> explicitly:</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \ddt\qhat(t) = \Ahat\qhat(t),
+    \qquad
+    \qhat(0) = \Vr\trp\q_0,
+\end{aligned}
+\]</div>
+<p>for some <span class="math notranslate nohighlight">\(\Ahat\in\RR^{r\times r}\)</span> inferred from the training data.
+We specify this linear structure by initializing an <code class="xref py py-class docutils literal notranslate"><span class="pre">opinf.models.ContinuousModel</span></code> with the string <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ContinuousModel</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Model Constructor Shortcut</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&quot;A&quot;</span></code> argument in the constructor is a shortcut for a slightly longer statement:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ContinuousModel</span><span class="p">([</span><span class="n">opinf</span><span class="o">.</span><span class="n">operators</span><span class="o">.</span><span class="n">LinearOperator</span><span class="p">()])</span>
+</pre></div>
+</div>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">opinf.operators.LinearOperator</span></code> class represents the <span class="math notranslate nohighlight">\(r \times r\)</span> matrix <span class="math notranslate nohighlight">\(\Ahat\)</span>, whose entries will be calibrated via regression.
+See <code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.operators</span></code> for the kinds of terms that OpInf ROMs can contain.</p>
+</div>
+</section>
+<section id="calibrating-model-operators">
+<h3>Calibrating Model Operators<a class="headerlink" href="#calibrating-model-operators" title="Link to this heading">#</a></h3>
+<p>Our task now is to learn the entries of <span class="math notranslate nohighlight">\(\Ahat\)</span> using the compressed state snapshots <span class="math notranslate nohighlight">\(\qhat_0,\ldots,\qhat_{k-1}\)</span> and the corresponding time derivatives <span class="math notranslate nohighlight">\(\dot{\qhat}_0,\ldots,\dot{\qhat}_{k-1}\)</span>.
+OpInf does this through minimizing the residual of the model equation with respect to the data:</p>
+<div class="math notranslate nohighlight" id="equation-eq-basics-opinf">
+<span class="eqno">()<a class="headerlink" href="#equation-eq-basics-opinf" title="Link to this equation">#</a></span>\[
+\begin{aligned}
+    \min_{\Ahat\in\RR^{r\times r}}
+    \sum_{j=0}^{k-1}\left\|
+        \Ahat\qhat_{j} - \dot{\qhat}_{j}
+    \right\|_{2}^2
+    + \mathcal{R}(\Ahat),
+\end{aligned}
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathcal{R}(\Ahat)\)</span> is a regularization term (more on this later).</p>
+<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.lstsq</span></code> module defines tools for solving this problem (or variations on it).
+By default, the regression is solved without regularization, i.e., <span class="math notranslate nohighlight">\(\mathcal{R}(\Ahat) = 0\)</span>.
+The following code compares the OpInf ROM matrix <span class="math notranslate nohighlight">\(\Ahat\)</span> to the intrusive ROM matrix <span class="math notranslate nohighlight">\(\tilde{\A} = \Vr\trp\A\Vr\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">states</span><span class="o">=</span><span class="n">Q_</span><span class="p">,</span> <span class="n">ddts</span><span class="o">=</span><span class="n">Qdot_exact</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Construct the intrusive ROM linear operator.</span>
+<span class="n">Vr</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">entries</span>
+<span class="n">A_intrusive</span> <span class="o">=</span> <span class="n">Vr</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">A</span> <span class="o">@</span> <span class="n">Vr</span>
+
+<span class="c1"># Compare the OpInf ROM linear operator to the intrusive one.</span>
+<span class="n">A_opinf</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">operators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">entries</span>
+<span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">A_intrusive</span><span class="p">,</span> <span class="n">A_opinf</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>In this simple problem, using exact time derivative data <span class="math notranslate nohighlight">\(\Vr\trp\A\Q\)</span> and with zero regularization, OpInf produces the intrusive ROM.
+However, if estimated time derivative data are used instead, the OpInf ROM differs slightly from the intrusive ROM.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Construct the OpInf ROM with estimated time derivatives.</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">states</span><span class="o">=</span><span class="n">Q_</span><span class="p">,</span> <span class="n">ddts</span><span class="o">=</span><span class="n">Qdot_</span><span class="p">)</span>
+<span class="n">A_opinf</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">operators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">entries</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">A_intrusive</span><span class="p">,</span> <span class="n">A_opinf</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check the difference between intrusive projection and OpInf.</span>
+<span class="n">la</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">A_intrusive</span> <span class="o">-</span> <span class="n">A_opinf</span><span class="p">)</span> <span class="o">/</span> <span class="n">la</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">A_intrusive</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="regularization-stabilizing-the-inference-problem">
+<h3>Regularization: Stabilizing the Inference Problem<a class="headerlink" href="#regularization-stabilizing-the-inference-problem" title="Link to this heading">#</a></h3>
+<p>Ill-conditioning in the data, errors in the estimation of the time derivatives, or overfitting to the data can result in an <span class="math notranslate nohighlight">\(\Ahat\)</span> that defines an inaccurate or even unstable ROM.
+Introducing a regularization term promotes solutions that respect both the training data and the physics of the problem.
+One common option is <a class="reference external" href="https://en.wikipedia.org/wiki/Tikhonov_regularization">Tikhonov regularization</a>, which sets <span class="math notranslate nohighlight">\(\mathcal{R}(\Ahat) = \|\lambda\Ahat\|_{F}^{2}\)</span> to penalize the entries of the learned operators.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define a solver for the Tikhonov-regularized least-squares problem.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ContinuousModel</span><span class="p">(</span>
+    <span class="s2">&quot;A&quot;</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">lstsq</span><span class="o">.</span><span class="n">L2Solver</span><span class="p">(</span><span class="n">regularizer</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Construct the OpInf ROM through regularized least squares.</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">states</span><span class="o">=</span><span class="n">Q_</span><span class="p">,</span> <span class="n">ddts</span><span class="o">=</span><span class="n">Qdot_exact</span><span class="p">)</span>
+<span class="n">A_opinf</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">operators</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">entries</span>
+
+<span class="c1"># Compare to the intrusive model.</span>
+<span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">A_intrusive</span><span class="p">,</span> <span class="n">A_opinf</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check the difference between intrusive projection and OpInf.</span>
+<span class="n">la</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">A_intrusive</span> <span class="o">-</span> <span class="n">A_opinf</span><span class="p">)</span> <span class="o">/</span> <span class="n">la</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">A_intrusive</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>With inexact time derivatives or regularization, OpInf differs slightly from the intrusive operator <span class="math notranslate nohighlight">\(\tilde{\A}\)</span>.
+However, we will see that in this example the ROM produced by OpInf is highly accurate.
+In fact, it is sometimes the case that OpInf outperforms intrusive Galerkin projection.</p>
+<div class="important admonition">
+<p class="admonition-title">Regularization Matters</p>
+<p>Regularization is important in all but the simplest OpInf problems.
+If OpInf produces an unstable ROM, try different values for the <code class="docutils literal notranslate"><span class="pre">regularizer</span></code>.
+See <span id="id2">[]</span> for an example of a principled choice of regularization for a combustion problem.</p>
+</div>
+</section>
+<section id="solving-the-reduced-order-model">
+<h3>Solving the Reduced-order Model<a class="headerlink" href="#solving-the-reduced-order-model" title="Link to this heading">#</a></h3>
+<p>Once the model is calibrated, we may solve the ROM with <code class="xref py py-meth docutils literal notranslate"><span class="pre">opinf.models.ContinuousModel.predict()</span></code>, which wraps <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.integrate.solve_ivp()</span></code>. This method takes an initial condition for the model <span class="math notranslate nohighlight">\(\qhat_0 = \Vr\trp\q_0\)</span>, the time domain over which to record the solution, and any additional arguments for the integrator.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">q0_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">q0</span><span class="p">)</span>  <span class="c1"># Compress the initial conditions.</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ContinuousModel</span><span class="p">(</span>
+    <span class="s2">&quot;A&quot;</span><span class="p">,</span>
+    <span class="n">solver</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">lstsq</span><span class="o">.</span><span class="n">L2Solver</span><span class="p">(</span><span class="n">regularizer</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">),</span>
+<span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Q_</span><span class="p">,</span> <span class="n">Qdot_</span><span class="p">)</span>
+
+<span class="n">Q_ROM_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">q0_</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BDF&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Q_ROM_</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>The solution is still in the low-dimensional state space; it can be mapped to the original state space by applying <span class="math notranslate nohighlight">\(\Vr\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Q_ROM</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">Q_ROM_</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Q_ROM</span><span class="o">.</span><span class="n">shape</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Custom ODE Solvers</p>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">opinf.models.ContinuousModel.predict()</span></code> is convenient, but <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.integrate.solve_ivp()</span></code> implements a limited repertoire of time integration schemes.
+However, the ROM can be simulated by any ODE solver scheme by extracting the inferred operator <span class="math notranslate nohighlight">\(\Ahat\)</span>.
+If <code class="docutils literal notranslate"><span class="pre">timestepper(A,</span> <span class="pre">q0)</span></code> were a solver for systems of the form <span class="math notranslate nohighlight">\(\ddt\qhat = \Ahat\qhat(t),\ \qhat(0) = \qhat_0\)</span>, we could simulate the ROM with the following code.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">q0_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">q0</span><span class="p">)</span>                        <span class="c1"># Compress the initial conditions.</span>
+<span class="n">Q_ROM_</span> <span class="o">=</span> <span class="n">timestepper</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">A_</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span> <span class="n">q0_</span><span class="p">)</span>     <span class="c1"># Solve the ROM in the reduced space.</span>
+<span class="n">Q_ROM</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">Q_ROM_</span><span class="p">)</span>                <span class="c1"># Decompress the ROM solutions.</span>
+</pre></div>
+</div>
+<p>More generally, the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">opinf.models.ContinuousModel.rhs()</span></code> represents the right-hand side of the model, the <span class="math notranslate nohighlight">\(\hat{\mathbf{f}}\)</span> of <span class="math notranslate nohighlight">\(\ddt\qhat(t) = \hat{\mathbf{f}}(t, \qhat(t))\)</span>.
+General-purpose integrators can therefore be applied to the function <code class="xref py py-meth docutils literal notranslate"><span class="pre">opinf.models.ContinuousModel.rhs()</span></code>.</p>
+</div>
+</section>
+<section id="the-rom-class">
+<h3>The ROM Class<a class="headerlink" href="#the-rom-class" title="Link to this heading">#</a></h3>
+<p>Up to this point, we have done the following steps using several package submodules.</p>
+<ol class="arabic simple">
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.basis</span></code>: Data compression.</p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.ddt</span></code>: Time derivative estimation.</p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">opinf.models</span></code>: Specify and <a class="reference internal" href="#opinf.lstsq"><span class="xref myst">calibrate</span></a> model <a class="reference internal" href="#opinf.operators"><span class="xref myst">operators</span></a>, then integrate the reduced system.</p></li>
+</ol>
+<p>The <a class="reference internal" href="#opinf.roms.ROM"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">opinf.ROM</span></code></span></a> class wraps these steps for convenience.
+Its constructor takes a initialized basis, time derivative estimator, and model objects.
+Then, <a class="reference internal" href="#opinf.roms.ROM.fit"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">fit()</span></code></span></a> calibrates the basis, compresses the state data, estimates the time derivatives, and calibrates the model.
+Use <a class="reference internal" href="#opinf.roms.ROM.predict"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">predict()</span></code></span></a> to compress initial conditions, solve the model, and express the solutions in the original state space.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rom</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">ROM</span><span class="p">(</span>
+    <span class="n">basis</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">PODBasis</span><span class="p">(</span><span class="n">cumulative_energy</span><span class="o">=</span><span class="mf">0.9999</span><span class="p">),</span>
+    <span class="n">ddt_estimator</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">ddt</span><span class="o">.</span><span class="n">UniformFiniteDifferencer</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;ord6&quot;</span><span class="p">),</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ContinuousModel</span><span class="p">(</span>
+        <span class="n">operators</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+        <span class="n">solver</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">lstsq</span><span class="o">.</span><span class="n">L2Solver</span><span class="p">(</span><span class="n">regularizer</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">rom</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rom</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">rom</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Q_ROM_2</span> <span class="o">=</span> <span class="n">rom</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BDF&quot;</span><span class="p">)</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">Q_ROM_2</span> <span class="o">==</span> <span class="n">Q_ROM</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="evaluate-rom-performance">
+<h3>Evaluate ROM Performance<a class="headerlink" href="#evaluate-rom-performance" title="Link to this heading">#</a></h3>
+<p>The quality or usefulness of a ROM depends on its accuracy and its computational efficiency.</p>
+<section id="rom-accuracy">
+<h4>ROM Accuracy<a class="headerlink" href="#rom-accuracy" title="Link to this heading">#</a></h4>
+<p>To get a sense of how well the ROM approximates the FOM, we begin by visualizing the simulation output <code class="docutils literal notranslate"><span class="pre">Q_ROM</span></code>.
+It should look similar to the plot of the snapshot data <code class="docutils literal notranslate"><span class="pre">Q</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="p">[</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">]</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plot_heat_data</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="s2">&quot;Snapshot data&quot;</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span>
+<span class="n">plot_heat_data</span><span class="p">(</span><span class="n">Q_ROM</span><span class="p">,</span> <span class="s2">&quot;ROM state output&quot;</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>For more detail, we evaluate the <span class="math notranslate nohighlight">\(\ell^2\)</span> error of the ROM output, comparing it to the snapshot set via <code class="xref py py-func docutils literal notranslate"><span class="pre">opinf.post.lp_error()</span></code>.
+This calculates the absolute and relative error as a function of time,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+    \text{err}_\text{absolute}(t)
+    &amp;= \|\q(t) - \q_{\text{ROM}}(t)\|_{2},
+    \\ ~ \\
+    \text{err}_\text{relative}(t)
+    &amp;= \frac{\|\q(t) - \q_{\text{ROM}}(t)\|_{2}}{\|\q(t)\|_{2}}.
+\end{aligned}
+\end{split}\]</div>
+<div class="tip admonition">
+<p class="admonition-title">Normalized Absolute Error</p>
+<p>In this problem, <span class="math notranslate nohighlight">\(\q(t)\to\0\)</span> as <span class="math notranslate nohighlight">\(t\)</span> increases, so a relative error may not be appropriate since <span class="math notranslate nohighlight">\(\|\q(t)\|_{2}\)</span> appears in the denominator.
+In situations like this, consider using the <em>normalized absolute error</em> by replacing the denominator with <span class="math notranslate nohighlight">\(\max_{\tau\in[t_0,t_f]}\|\q(t)\|.\)</span>
+Set <code class="docutils literal notranslate"><span class="pre">normalize=True</span></code> in <code class="xref py py-func docutils literal notranslate"><span class="pre">opinf.post.lp_error()</span></code> to use this error measure instead of the relative error.</p>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">abs_l2err</span><span class="p">,</span> <span class="n">norm_l2err</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">post</span><span class="o">.</span><span class="n">lp_error</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">Q_ROM</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">abs_l2err</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;Absolute $\ell^2$ error&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">norm_l2err</span><span class="p">,</span> <span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;Normalized absolute $\ell^2$ error&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;$t$&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower left&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>In this simple example, the error decreases with time (as solutions get quickly pushed to zero), but this is not the kind of error behavior that should be expected when modeling more complicated phenomena.</p>
+<p>We can also get a scalar error measurement by calculating the relative Frobenius norm error with <code class="xref py py-func docutils literal notranslate"><span class="pre">opinf.post.frobenius_error()</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">abs_froerr</span><span class="p">,</span> <span class="n">rel_froerr</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">post</span><span class="o">.</span><span class="n">frobenius_error</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">Q_ROM</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Relative Frobenius-norm error: </span><span class="si">{</span><span class="n">rel_froerr</span><span class="si">:</span><span class="s2">%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>In other words, the ROM simulation is within about 0.1% of the snapshot data.
+Note that this value is very close to the projection error that we calculated earlier.</p>
+</section>
+<section id="rom-computational-speedup">
+<h4>ROM Computational Speedup<a class="headerlink" href="#rom-computational-speedup" title="Link to this heading">#</a></h4>
+<p>When a FOM is available, a ROM is only useful if it can be solved much faster than the FOM.
+The solution speed can be quickly checked using <code class="xref py py-class docutils literal notranslate"><span class="pre">opinf.utils.TimedBlock</span></code>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">TimedBlock</span><span class="p">(</span><span class="s2">&quot;Full-order solve&quot;</span><span class="p">):</span>
+    <span class="n">full_order_solve</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">TimedBlock</span><span class="p">(</span><span class="s2">&quot;Reduced-order solve&quot;</span><span class="p">):</span>
+    <span class="n">rom</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BDF&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>More precise measurements can be take by aliasing the <code class="xref py py-class docutils literal notranslate"><span class="pre">opinf.utils.TimedBlock</span></code> and accessing the <code class="docutils literal notranslate"><span class="pre">elapsed</span></code> attribute.
+Below, we solve each model several times to get an average time.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_trials</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="k">with</span> <span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">TimedBlock</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_trials</span><span class="si">}</span><span class="s2"> FOM solves&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fomtime</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_trials</span><span class="p">):</span>
+        <span class="n">full_order_solve</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">opinf</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">TimedBlock</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_trials</span><span class="si">}</span><span class="s2"> ROM solves&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">romtime</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_trials</span><span class="p">):</span>
+        <span class="n">rom</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BDF&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average FOM time: </span><span class="si">{</span><span class="n">fomtime</span><span class="o">.</span><span class="n">elapsed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_trials</span><span class="w"> </span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average ROM time: </span><span class="si">{</span><span class="n">romtime</span><span class="o">.</span><span class="n">elapsed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_trials</span><span class="w"> </span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ROM speedup: </span><span class="si">{</span><span class="n">fomtime</span><span class="o">.</span><span class="n">elapsed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">romtime</span><span class="o">.</span><span class="n">elapsed</span><span class="w"> </span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> times!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>In this example, the FOM is efficient because it takes advantage of the sparsity of <span class="math notranslate nohighlight">\(\A\in\RR^{n\times n}\)</span>.
+Even so, the ROM achieves a modest speedup due to the smaller size of <span class="math notranslate nohighlight">\(\Ahat\in\RR^{r\times r}\)</span>.</p>
+</section>
+</section>
+</section>
+<section id="prediction-new-initial-conditions">
+<h2>Prediction: New Initial Conditions<a class="headerlink" href="#prediction-new-initial-conditions" title="Link to this heading">#</a></h2>
+<p>The ROM was trained using only data corresponding to the initial condition <span class="math notranslate nohighlight">\(q_0(x) = x(1 - x).\)</span> We’ll now test the ROM on the following new initial conditions and compare the results to the corresponding FOM solution:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{aligned}
+    q_0(x) &amp;= 10x (1 - x),
+    &amp;
+    q_0(x) &amp;= 5x^{2}(1 - x)^{2},
+    \\
+    q_0(x) &amp;= 50x^{4}(1 - x)^{4},
+    &amp;
+    q_0(x) &amp;= \frac{1}{2}\sqrt{x(1 - x)},
+    \\
+    q_0(x) &amp;= \frac{1}{4}\sqrt[4]{x(1 - x)},
+    &amp;
+    q_0(x) &amp;= \frac{1}{3}\sin(\pi x) + \tfrac{1}{5}\sin(5\pi x).
+\end{aligned}
+\end{split}\]</div>
+<p>Before we compute the ROM error, we also compute the <em>projection error</em> of the new initial condition,</p>
+<div class="math notranslate nohighlight">
+\[
+\begin{aligned}
+    \frac{||\q_{0} - \Vr \Vr\trp\q_{0}||_{2}}{||\q_{0}||_{2}}.
+\end{aligned}
+\]</div>
+<p>If this projection error is large, then the new initial condition cannot be represented well within the range of <span class="math notranslate nohighlight">\(\Vr\)</span>. This will be apparent in the ROM solutions.</p>
+<section id="first-attempt">
+<h3>First Attempt<a class="headerlink" href="#first-attempt" title="Link to this heading">#</a></h3>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_new_initial_condition</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">rom</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare full-order model and reduced-order model solutions for a given</span>
+<span class="sd">    initial condition.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    q0 : (n,) ndarray</span>
+<span class="sd">        Heat equation initial conditions q0(x) to be tested.</span>
+<span class="sd">    rom : opinf.ROM</span>
+<span class="sd">        Trained reduced-order model object.</span>
+<span class="sd">    label : str</span>
+<span class="sd">        Description of the initial condition being tested.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Calculate the projection error of the new initial condition.</span>
+    <span class="n">rel_projerr</span> <span class="o">=</span> <span class="n">rom</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">projection_error</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Solve the full-order model (FOM) and the reduced-order model (ROM).</span>
+    <span class="n">Q_FOM</span> <span class="o">=</span> <span class="n">full_order_solve</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">Q_ROM</span> <span class="o">=</span> <span class="n">rom</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;BDF&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Plot the FOM and ROM solutions side by side.</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="p">[</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">]</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">plot_heat_data</span><span class="p">(</span><span class="n">Q_FOM</span><span class="p">,</span> <span class="s2">&quot;Full-order model solution&quot;</span><span class="p">,</span> <span class="n">ax1</span><span class="p">)</span>
+    <span class="n">plot_heat_data</span><span class="p">(</span><span class="n">Q_ROM</span><span class="p">,</span> <span class="s2">&quot;Reduced-order model solution&quot;</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">([])</span>
+    <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+    <span class="c1"># Calculate the ROM error in the Frobenius norm.</span>
+    <span class="n">abs_froerr</span><span class="p">,</span> <span class="n">rel_froerr</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">post</span><span class="o">.</span><span class="n">frobenius_error</span><span class="p">(</span><span class="n">Q_FOM</span><span class="p">,</span> <span class="n">Q_ROM</span><span class="p">)</span>
+
+    <span class="c1"># Report results.</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Relative projection error of initial condition: </span><span class="si">{</span><span class="n">rel_projerr</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;Relative Frobenius-norm ROM error: </span><span class="si">{</span><span class="n">rel_froerr</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">rel_projerr</span><span class="p">,</span> <span class="n">rel_froerr</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">q0_new</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mi">10</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">),</span>
+    <span class="mi">5</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="mi">50</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)),</span>
+    <span class="mf">0.25</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">))),</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">q0_titles</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="sa">r</span><span class="s2">&quot;$q_</span><span class="si">{0}</span><span class="s2">(x) = 10 x (1 - x)$&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s2">&quot;$q_</span><span class="si">{0}</span><span class="s2">(x) = 5 x^</span><span class="si">{2}</span><span class="s2"> (1 - x)^</span><span class="si">{2}</span><span class="s2">$&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s2">&quot;$q_</span><span class="si">{0}</span><span class="s2">(x) = 50 x^</span><span class="si">{4}</span><span class="s2"> (1 - x)^</span><span class="si">{4}</span><span class="s2">$&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s2">&quot;$q_</span><span class="si">{0}</span><span class="s2">(x) = \frac</span><span class="si">{1}{2}</span><span class="s2">\sqrt{x (1 - x)}$&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s2">&quot;$q_</span><span class="si">{0}</span><span class="s2">(x) = \frac</span><span class="si">{1}{4}</span><span class="s2">\sqrt[4]{x (1 - x)}$&quot;</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s2">&quot;$q_</span><span class="si">{0}</span><span class="s2">(x) = \frac</span><span class="si">{1}{3}</span><span class="s2">\sin(\pi x) + \frac</span><span class="si">{1}{5}</span><span class="s2">\sin(5\pi x)$&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">[</span><span class="n">q00</span><span class="p">,</span> <span class="n">title</span><span class="p">]</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">q0_new</span><span class="p">,</span> <span class="n">q0_titles</span><span class="p">)):</span>
+    <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Experiment </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_new_initial_condition</span><span class="p">(</span>
+        <span class="n">q00</span><span class="p">,</span> <span class="n">rom</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Experiment </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Relative projection error of initial condition&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Relative Frobenius-norm ROM error&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+</section>
+<section id="second-attempt-a-better-basis">
+<h3>Second Attempt: a Better Basis<a class="headerlink" href="#second-attempt-a-better-basis" title="Link to this heading">#</a></h3>
+<p>The ROM performs well for <span class="math notranslate nohighlight">\(q_{0}(x) = 10x(1 - x)\)</span>, which is unsurprising because this new initial condition is a scalar multiple of the initial condition used to generate the training data.
+In other cases, the ROM is less successful because the new initial condition cannot be represented well in the span of the basis vectors.
+For example:</p>
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">plot_initial_condition_projection</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot initial conditions 4 and 5 and their projections with respect to</span>
+<span class="sd">    the basis `base`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    base : opinf.basis.PODBasis</span>
+<span class="sd">        Trained basis object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">axes</span><span class="p">):</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span>
+            <span class="n">q0_new</span><span class="p">[</span><span class="n">j</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;True initial condition ($\mathbf</span><span class="si">{q}</span><span class="s2">_</span><span class="si">{0}</span><span class="s2">$)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">q0_new</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+            <span class="s2">&quot;--&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;Basis approximation of initial condition &quot;</span>
+            <span class="sa">r</span><span class="s2">&quot;($\mathbf</span><span class="si">{V}</span><span class="s2">_{\!r}\mathbf</span><span class="si">{V}</span><span class="s2">_{\!r}^{\mathsf</span><span class="si">{T}</span><span class="s2">}\mathbf</span><span class="si">{q}</span><span class="s2">_</span><span class="si">{0}</span><span class="s2">$)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Experiment </span><span class="si">{</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">rect</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span>
+        <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower center&quot;</span><span class="p">,</span>
+        <span class="n">fontsize</span><span class="o">=</span><span class="s2">&quot;large&quot;</span><span class="p">,</span>
+        <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.05</span><span class="p">),</span>
+        <span class="n">bbox_transform</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">transFigure</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_initial_condition_projection</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>To improve the ROM performace <em>without getting new data from the FOM</em>, we will enrich the basis by</p>
+<ol class="arabic simple">
+<li><p>Including the new initial conditions in the basis computation, and</p></li>
+<li><p>Using a few more basis vectors (we currently have <span class="math notranslate nohighlight">\(r = 2\)</span>, let’s use <span class="math notranslate nohighlight">\(r = 5\)</span>).</p></li>
+</ol>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Include the new initial conditions in the basis training data.</span>
+<span class="n">Q_and_new_q0s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">Q</span><span class="p">,</span> <span class="o">*</span><span class="n">q0_new</span><span class="p">))</span>
+<span class="n">newbasis</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">basis</span><span class="o">.</span><span class="n">PODBasis</span><span class="p">(</span><span class="n">num_vectors</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Q_and_new_q0s</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">newbasis</span><span class="p">)</span>
+
+<span class="c1"># Plot the projection of the initial conditions in the new basis</span>
+<span class="n">plot_initial_condition_projection</span><span class="p">(</span><span class="n">newbasis</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize a ROM with the new basis.</span>
+<span class="n">rom</span> <span class="o">=</span> <span class="n">opinf</span><span class="o">.</span><span class="n">ROM</span><span class="p">(</span>
+    <span class="n">basis</span><span class="o">=</span><span class="n">newbasis</span><span class="p">,</span>
+    <span class="n">ddt_estimator</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">ddt</span><span class="o">.</span><span class="n">UniformFiniteDifferencer</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;ord6&quot;</span><span class="p">),</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">ContinuousModel</span><span class="p">(</span>
+        <span class="n">operators</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+        <span class="n">solver</span><span class="o">=</span><span class="n">opinf</span><span class="o">.</span><span class="n">lstsq</span><span class="o">.</span><span class="n">L2Solver</span><span class="p">(</span><span class="n">regularizer</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1"># Use the same training data as before, but do not reset the basis.</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">rom</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">fit_basis</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">rom</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell tag_hide-input docutils container">
+<details class="hide above-input">
+<summary aria-label="Toggle hidden content">
+<span class="collapsed">Show code cell source</span>
+<span class="expanded">Hide code cell source</span>
+</summary>
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Repeat the experiments.</span>
+<span class="n">results_new</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">[</span><span class="n">q00</span><span class="p">,</span> <span class="n">title</span><span class="p">]</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">q0_new</span><span class="p">,</span> <span class="n">q0_titles</span><span class="p">)):</span>
+    <span class="n">results_new</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Experiment </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s2">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_new_initial_condition</span><span class="p">(</span>
+        <span class="n">q00</span><span class="p">,</span>
+        <span class="n">rom</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;Experiment </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="c1"># Display results summary.</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results_new</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+</div>
+</details>
+</div>
+<p>With a more expressive basis, the ROM performance improves significantly.</p>
+<div class="tip admonition">
+<p class="admonition-title">No Better than the Basis</p>
+<p>This example illustrates a fundamental principle of model reduction: the accuracy of the ROM is limited by the accuracy of the underlying low-dimensional approximation, which in this case is <span class="math notranslate nohighlight">\(\q(t) \approx \Vr\qhat(t)\)</span>. In other words, a good <span class="math notranslate nohighlight">\(\Vr\)</span> is critical in order for the ROM to be accurate and predictive.</p>
+</div>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-statement">Problem Statement</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-data">Training Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#operator-inference">Operator Inference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-compression">Data Compression</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#time-derivative-estimation">Time Derivative Estimation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#specifying-the-model-operators">Specifying the Model Operators</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calibrating-model-operators">Calibrating Model Operators</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regularization-stabilizing-the-inference-problem">Regularization: Stabilizing the Inference Problem</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#solving-the-reduced-order-model">Solving the Reduced-order Model</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-rom-class">The ROM Class</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluate-rom-performance">Evaluate ROM Performance</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#rom-accuracy">ROM Accuracy</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#rom-computational-speedup">ROM Computational Speedup</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prediction-new-initial-conditions">Prediction: New Initial Conditions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#first-attempt">First Attempt</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#second-attempt-a-better-basis">Second Attempt: a Better Basis</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Sandia National Laboratories
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

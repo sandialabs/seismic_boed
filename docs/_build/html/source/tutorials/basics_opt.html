@@ -1,0 +1,683 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Getting Started: Network Optimization</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'source/tutorials/basics_opt';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Performing bounded optimization" href="bounded.html" />
+    <link rel="prev" title="Getting Started: Network Analysis" href="basics_analysis.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/sboed_logo.png" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/sboed_logo.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    Seismic Bayesian Optimal Experiment Design in Python
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Seismic Bayesian OED</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../sboed/installation.html">Package Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sboed/literature.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sboed/changelog.html">What’s New</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="basics_analysis.html">Getting Started: Network Analysis</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Getting Started: Network Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bounded.html">Performing bounded optimization</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="inputs.html">Writing input files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="priors.html">Customizing the event prior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_gen.html">Sampling synthetic data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="likelihood.html">Constructing likelihood models</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html"><code class="docutils literal notranslate"><span class="pre">seismic-boed</span></code></a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed/issues/new?title=Issue%20on%20page%20%2Fsource/tutorials/basics_opt.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/source/tutorials/basics_opt.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Getting Started: Network Optimization</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-code">Running the code</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-using-hpc-interactively">Running using HPC interactively</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-on-hpc-with-script">Running on HPC with script</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization-output">Optimization output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="getting-started-network-optimization">
+<h1>Getting Started: Network Optimization<a class="headerlink" href="#getting-started-network-optimization" title="Link to this heading">#</a></h1>
+<p>The optimization code is a wrapper around the analysis code. Given an initial network configuration of sensors, the code will add a desired number of sensors to the network. The goal of the optimization is to maximized the EIG of the new sensor network. This is done with a sequential (greedy) optimization that adds sensors one at a time to the initial network. Each optimization is done using a Bayesian optimization method that construct a Gaussian process (GP) surrogate model of the EIG optimization surface. This is done by evaluating many potential new sensor locations and measuring the EIG using the analysis code. These data are then used to construct the surrogate and inform new trial points to query the EIG function. The code then returns the new sensor network after the optimal sensors have been added.</p>
+<p>The optimization code is contained within the script <code class="docutils literal notranslate"><span class="pre">network_opt.py</span></code>.
+This script takes four arguments: a configuration file, an output file name, the path to a folder to save the output and all intermediate files, and a verbosity control. An example configuration file, which we call <code class="docutils literal notranslate"><span class="pre">opt_inputs.dat</span></code>, might look like this:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>1
+20
+sensor_optimization_boundary.json
+2,2,0
+0
+1024
+4096
+2
+event_sampling_boundary.json
+mpiexec --bind-to core --npernode 16 --n 512
+unif_prior.py
+10
+40.0, -111.5,0.1,2,0  
+</pre></div>
+</div>
+<p>Here, observe several things about the input file:</p>
+<ul class="simple">
+<li><p>Line 3 specifies the filename (and path, if in a different directory) of the shapefile used to define the boundary for the sensors. At this time, a boundary file must always be provided (meaning that if we wanted to simply optimize the sensors over a square domain, we would need to provide a file specifying that).</p></li>
+<li><p>Line 4 specifies that we wish to use sensors with an SNR offset of 2, an output vector length of 4, and of type <code class="docutils literal notranslate"><span class="pre">0</span></code>–meaning sensors that detect seismic waves.</p></li>
+<li><p>Line 10 uses nodes with 36 cores per node and specifies 256 total cores. If the server being used had a different architecture, this line would need to be modified to match the server.</p></li>
+<li><p>Lines 9 specifies the file defining the boundary from which events may be sampled.</p></li>
+<li><p>Line 11 specifies the file that contains the proper functions for sampling events (see <a class="reference internal" href="#prior.ipynb"><span class="xref myst">Customizing the event prior</span></a> for details).</p></li>
+</ul>
+<p>For more information on input files, see <a class="reference internal" href="inputs.html"><span class="std std-doc">Writing input files</span></a>.</p>
+<section id="running-the-code">
+<span id="run-the-code"></span><h2>Running the code<a class="headerlink" href="#running-the-code" title="Link to this heading">#</a></h2>
+<p>The code can be run interactively, either locally or on an HPC system, or it can be run through a HPC scheduler. This tutorial assumes the HPC system uses <a class="reference external" href="https://slurm.schedmd.com/documentation.html">Slurm</a>.</p>
+<p>The code for optimizing a network is contained in the Python file <code class="docutils literal notranslate"><span class="pre">network_opt.py</span></code>, which is executed with the with the following arguments:</p>
+<ul class="simple">
+<li><p>Input file: path to the input file (see <a class="reference internal" href="inputs.html"><span class="std std-doc">Writing input files</span></a> for more details)</p></li>
+<li><p>Output file: Path to the location and filename where the
+outputs will be saved. File must be in <code class="docutils literal notranslate"><span class="pre">.npz</span></code> format.</p></li>
+<li><p>Output path: Location where a directory will be created to store the output
+and temporary files created by the run.</p></li>
+<li><p>Verbosity: One of 2 verbosity levels may be specified: <code class="docutils literal notranslate"><span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">1</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code> has no output other than the final optimized network.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code> is the most verbose with printed statements throughout the
+code describing what is going on. This verbosity level also
+causes each intermediate input files to the <code class="docutils literal notranslate"><span class="pre">eig_calc.py</span></code> script,
+the outputs of those intermediate runs,
+and the intermediate optimization objects to be stored in the output path directory.s</p></li>
+</ul>
+</li>
+</ul>
+<section id="running-using-hpc-interactively">
+<h3>Running using HPC interactively<a class="headerlink" href="#running-using-hpc-interactively" title="Link to this heading">#</a></h3>
+<p>To submit an interactive job, use the <code class="docutils literal notranslate"><span class="pre">salloc</span></code> command. The command
+<code class="docutils literal notranslate"><span class="pre">salloc</span></code> requests a slurm allocation, and has several flags that are
+used to specify the details of the allocation. This varies by system,
+but typically the number of nodes and the allocation time are required:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-nodes</span></code>: The number of nodes to request.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--time</span></code>: The time the nodes will be allocated to your account</p></li>
+</ul>
+<p>An example job allocation request looks like this:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>salloc<span class="w"> </span>--nodes<span class="o">=</span><span class="m">2</span><span class="w"> </span>--time<span class="o">=</span><span class="m">2</span>:00:00
+</pre></div>
+</div>
+<p>This command is requesting 2
+nodes for a length of 2 hours. For more details on <code class="docutils literal notranslate"><span class="pre">salloc</span></code>, see the
+Slurm documentation: <a class="reference external" href="https://slurm.schedmd.com/documentation.html">https://slurm.schedmd.com/documentation.html</a>.</p>
+<p>Once you have an allocation, you can now submit the job. For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>network_opt.py<span class="w"> </span>inputs.dat<span class="w"> </span>outputs.npz<span class="w"> </span>ouput_path<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+<p>which executes the <code class="docutils literal notranslate"><span class="pre">network_opt.py</span></code> script with Python,
+reads the input data from <code class="docutils literal notranslate"><span class="pre">inputs.dat</span></code>, saves the
+output data to <code class="docutils literal notranslate"><span class="pre">outputs.npz</span></code>, in a directory called <code class="docutils literal notranslate"><span class="pre">output_path</span></code>, and uses verbose setting <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p>
+</section>
+<section id="running-on-hpc-with-script">
+<h3>Running on HPC with script<a class="headerlink" href="#running-on-hpc-with-script" title="Link to this heading">#</a></h3>
+<p>A bash script can be written that will submit a job to the HPC job
+queue. This does not require the user to specifically allocate nodes to
+use for the job; nodes will be allocated and the job will begin
+automatically once the number of nodes specified in the bash script are
+available.
+An example script might look like</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>#!/bin/bash
+## Do not put any commands or blank lines before the #SBATCH lines
+#SBATCH --nodes=16                   # Number of nodes - all cores 
+                                     #per node are allocated to the job
+#SBATCH --time=04:00:00              # Wall clock time (HH:MM:SS) - 
+                                     # once the job exceeds this time, the job will be terminated (default is 5 minutes)
+#SBATCH --job-name=net_analysis          # Name of job
+#SBATCH --export=ALL                 # export environment variables from the submission env
+                                     # (modules, bashrc etc)
+
+nodes=$SLURM_JOB_NUM_NODES           # Number of nodes - the number of 
+                                     # nodes you have requested (for a 
+                                     # list of SLURM environment 
+                                     # variables see &quot;man sbatch&quot;)
+cores=16                             # Number MPI processes to run 
+                                     # on each node (a.k.a. PPN)
+                                   
+
+python3 network_opt.py inputs.dat output_path outputs.npz 1
+</pre></div>
+</div>
+<p>This script can then be submitted
+using the <code class="docutils literal notranslate"><span class="pre">sbatch</span></code> command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>sbatch<span class="w"> </span>network_opt_batch_submission_script.bash
+</pre></div>
+</div>
+<p>For a comprehensive
+list of available options, see the Slurm documentation
+(<a class="reference external" href="https://slurm.schedmd.com/documentation.html">https://slurm.schedmd.com/documentation.html</a>), and in particular the
+Slurm command/option summary, found
+<a class="reference external" href="https://slurm.schedmd.com/documentation.html">here</a>.</p>
+</section>
+</section>
+<section id="optimization-output">
+<span id="code-outputs"></span><h2>Optimization output<a class="headerlink" href="#optimization-output" title="Link to this heading">#</a></h2>
+<p>When <code class="docutils literal notranslate"><span class="pre">network_opt.py</span></code> finishes, it will display the optimized sensor
+network configuration e.g. for each sensor its lat, long, noise level,
+number of output variables, and sensor type. This network configuration
+will then be saved in the output numpy file (e.g. <code class="docutils literal notranslate"><span class="pre">opt_network.npz</span></code>).</p>
+<p>Additionally, if the verbose flag is set to 1, two files are created per
+optimization level where a new sensor number is being placed. The first
+file is <code class="docutils literal notranslate"><span class="pre">result*.pkl</span></code>, where <code class="docutils literal notranslate"><span class="pre">*</span></code> is the sensor number being placed. This
+file contains an optimization result object. This object contains
+information about the GP surrogate used to find the optimization
+objective and the data used to fit it. More information can be found in
+the Scikit-Learn documentation
+(<a class="reference external" href="https://scikit-optimize.github.io/stable/auto_examples/store-and-load-results.html">https://scikit-optimize.github.io/stable/auto_examples/store-and-load-results.html</a>).
+The second file, <code class="docutils literal notranslate"><span class="pre">result_eigdata*.npz</span></code> is a numpy file that contains
+three variables: <code class="docutils literal notranslate"><span class="pre">sensors</span></code>, <code class="docutils literal notranslate"><span class="pre">eigdata_full</span></code>, and <code class="docutils literal notranslate"><span class="pre">Xs</span></code>. <code class="docutils literal notranslate"><span class="pre">sensors</span></code> lists
+the current network configuration before optimization. <code class="docutils literal notranslate"><span class="pre">eigdata_full</span></code>
+contains the [EIG, std EIG, minESS] for each trial new sensor location
+to augment the current network. <code class="docutils literal notranslate"><span class="pre">Xs</span></code> includes the trial sensor
+locations.</p>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<p>For examples of using this code to optimize a sensor network, see the next section, <a class="reference internal" href="bounded.html"><span class="std std-doc">Performing bounded optimization</span></a>.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./source/tutorials"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="basics_analysis.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Getting Started: Network Analysis</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="bounded.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Performing bounded optimization</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-code">Running the code</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-using-hpc-interactively">Running using HPC interactively</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-on-hpc-with-script">Running on HPC with script</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization-output">Optimization output</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Sandia National Laboratories
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

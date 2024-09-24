@@ -1,0 +1,765 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Performing bounded optimization</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'source/tutorials/bounded';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Writing input files" href="inputs.html" />
+    <link rel="prev" title="Getting Started: Network Optimization" href="basics_opt.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/sboed_logo.png" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../_static/sboed_logo.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    Seismic Bayesian Optimal Experiment Design in Python
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Seismic Bayesian OED</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../sboed/installation.html">Package Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sboed/literature.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sboed/changelog.html">What’s New</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="basics_analysis.html">Getting Started: Network Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basics_opt.html">Getting Started: Network Optimization</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Performing bounded optimization</a></li>
+
+<li class="toctree-l1"><a class="reference internal" href="inputs.html">Writing input files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="priors.html">Customizing the event prior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_gen.html">Sampling synthetic data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="likelihood.html">Constructing likelihood models</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../api/main.html"><code class="docutils literal notranslate"><span class="pre">seismic-boed</span></code></a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/sandialabs/seismic_boed/issues/new?title=Issue%20on%20page%20%2Fsource/tutorials/bounded.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/source/tutorials/bounded.ipynb" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.ipynb</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Performing bounded optimization</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Performing bounded optimization</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#bounded-optimization">Bounded Optimization</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#defining-the-boundary-constraint-file">Defining the boundary constraint file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimizing-a-network-with-boundary-constraints">Optimizing a network with boundary constraints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="performing-bounded-optimization">
+<h1>Performing bounded optimization<a class="headerlink" href="#performing-bounded-optimization" title="Link to this heading">#</a></h1>
+</section>
+<section class="tex2jax_ignore mathjax_ignore" id="bounded-optimization">
+<span id="boundary-opt"></span><h1>Bounded Optimization<a class="headerlink" href="#bounded-optimization" title="Link to this heading">#</a></h1>
+<p>Both the network analysis code and network optimization code require a
+domain over which to analyze/optimize. In the latitude/longitude
+dimensions, this domain can be made up of an arbitrary number of
+polygonal shapes. This means that the placement of sensors can be
+constrained according to the needs of the user. Additionally, this means
+that the seismic events used to analyze networks may also be sampled
+from an arbitrary latitude/longitude domain. These two domains do not
+need to be the same, allowing sensors to be placed in a different area
+than events of interest. Seismic events must also be provided with a
+range for depth and a range for magnitude from which they can be
+sampled.</p>
+<p>Currently, only a range for depth and magnitude (as opposed to an
+arbitrary number of polygonal shapes) is supported. These domains should
+be specified in a boundary constraint file.</p>
+<section id="defining-the-boundary-constraint-file">
+<h2>Defining the boundary constraint file<a class="headerlink" href="#defining-the-boundary-constraint-file" title="Link to this heading">#</a></h2>
+<p>Boundary constraints should be provided in a JSON file. If the sensors
+and events are to be sampled from the exact same domain, these files may
+be the same; otherwise, two files must be created.</p>
+<p>A constraint file should in the JSON format, which is a lightweight way
+of storing dictionaries (for more information see the <a class="reference external" href="https://wwwJSON.org/json-en.html">JSON
+documentation</a>). There are two ways to
+specify a latitude/longitude constraint:</p>
+<ul class="simple">
+<li><p>A set of coordinates. Each coordinate should be of the form (lon,
+lat) and should be the coordinate of a corner of a polygon defining
+the bounded domain. Many such sets of coordinates may be provided in
+order to specify a disconnected domain that consists of several
+polygonal shapes.</p></li>
+<li><p>In the case that the optimization domain is a single rectangular
+region, a latitude range and longitude range may be provided.</p></li>
+</ul>
+<p>These two methods are mutually exclusive. If a latitude/longitude range
+is provided, a set of coordinates may not be provided, and vice versa.
+When defining a domain for sampling events, a depth range and magnitude
+range must also be provided. These specifications are provided in a
+dictionary format, with each key corresponding to either a range or a
+set of coordinates. The appropriate keys are specified below:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Dictionary Key</p></th>
+<th class="head text-left"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">depth_range</span></code></p></td>
+<td class="text-left"><p>Range, in list format, from which depth may be sampled for seismic events</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">magnitude_range</span></code></p></td>
+<td class="text-left"><p>Range, in list format, from which magnitude may be sampled for seismic events. This range must be a subset of the range <code class="docutils literal notranslate"><span class="pre">[0,10]</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">lat_range</span></code></p></td>
+<td class="text-left"><p>Range, in list format, from which latitude may be sampled for either seismic events or sensor locations. If this key is included, the <code class="docutils literal notranslate"><span class="pre">lon_range</span></code> key must also be included and none of the <code class="docutils literal notranslate"><span class="pre">coordinates_*</span></code> keys may be included.</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">lon_range</span></code></p></td>
+<td class="text-left"><p>Range, in list format, from which longitude may be sampled for either seismic events or sensor locations. If this key is included, the <code class="docutils literal notranslate"><span class="pre">lat_range</span></code> key must also be included and none of the <code class="docutils literal notranslate"><span class="pre">coordinates_*</span></code> keys may be included.</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">coordinates_1</span></code></p></td>
+<td class="text-left"><p>Set of coordinates in (longitude, latitude) form where each coordinate defines a corner of a polygon. As many keys specifying sets of coordinates as desired may be included. If any <code class="docutils literal notranslate"><span class="pre">coordinates_*</span></code> key is included, the <code class="docutils literal notranslate"><span class="pre">lat_range</span></code> and <code class="docutils literal notranslate"><span class="pre">lon_range</span></code> keys may not be included.</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">coordinates_2</span></code></p></td>
+<td class="text-left"><p>A second set of coordinates in (longitude, latitude) form where each coordinate defines a corner of a polygon.</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>…</p></td>
+<td class="text-left"><p>…</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">coordinates_N</span></code></p></td>
+<td class="text-left"><p>The <span class="math notranslate nohighlight">\(N^{th}\)</span> set of coordinates in (longitude, latitude) form where each coordinate defines a corner of a polygon.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The format for the boundary file when using lat and lon range is:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;depth_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">dep</span><span class="kc">t</span><span class="err">h_</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">dep</span><span class="kc">t</span><span class="err">h_</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;mag_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">mag_</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">mag_</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;lat_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">la</span><span class="kc">t</span><span class="err">_</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;lon_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">2</span><span class="p">]</span>
+<span class="w">        </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>while the format for the boundary file when using arrays of coordinates is:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;depth_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">dep</span><span class="kc">t</span><span class="err">h_</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">dep</span><span class="kc">t</span><span class="err">h_</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;mag_range&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">mag_</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">mag_</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;coordinates_1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_</span><span class="mi">11</span><span class="p">],</span>
+<span class="w">                           </span><span class="p">[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_</span><span class="mi">12</span><span class="p">],</span>
+<span class="w">                           </span><span class="err">...</span>
+<span class="w">                           </span><span class="p">[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">1</span><span class="kc">n</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_</span><span class="mi">1</span><span class="kc">n</span><span class="p">]],</span>
+<span class="w">         </span><span class="nt">&quot;coordinates_2&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">21</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_</span><span class="mi">21</span><span class="p">],</span>
+<span class="w">                           </span><span class="p">[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">22</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_</span><span class="mi">22</span><span class="p">],</span>
+<span class="w">                           </span><span class="err">...</span>
+<span class="w">                           </span><span class="p">[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_</span><span class="mi">2</span><span class="err">m</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="mi">2</span><span class="err">m</span><span class="p">]],</span>
+<span class="w">        </span><span class="err">.</span>
+<span class="w">        </span><span class="err">.</span>
+<span class="w">        </span><span class="err">.</span>
+<span class="w">        </span><span class="nt">&quot;coordinates_N&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_N</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_N</span><span class="mi">1</span><span class="p">],</span>
+<span class="w">                          </span><span class="p">[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_N</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_N</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">                          </span><span class="err">...</span>
+<span class="w">                          </span><span class="p">[</span><span class="err">lo</span><span class="kc">n</span><span class="err">_NM</span><span class="p">,</span><span class="w"> </span><span class="err">la</span><span class="kc">t</span><span class="err">_NM</span><span class="p">]]</span>
+<span class="w">        </span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<p>This boundary file:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;coordinates_1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+<span class="w">                    </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">],</span>
+<span class="w">                    </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span>
+<span class="w">                    </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">                    </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+<span class="w">                    </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>will create a boundary that looks like this:</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../../_images/simple_bound.png"><img alt="../../_images/simple_bound.png" src="../../_images/simple_bound.png" style="width: 80%;" /></a>
+</figure>
+<p>This boundary file:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;coordinates_1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span>
+<span class="w"> </span><span class="nt">&quot;coordinates_2&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mf">2.5</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mf">2.5</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+<span class="w">                   </span><span class="p">[</span><span class="mf">2.5</span><span class="p">,</span><span class="mi">5</span><span class="p">]]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>will create a boundary that looks like this:</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../../_images/simple_bound_multiple.png"><img alt="../../_images/simple_bound_multiple.png" src="../../_images/simple_bound_multiple.png" style="width: 80%;" /></a>
+</figure>
+<section id="optimizing-a-network-with-boundary-constraints">
+<h3>Optimizing a network with boundary constraints<a class="headerlink" href="#optimizing-a-network-with-boundary-constraints" title="Link to this heading">#</a></h3>
+<p>Suppose we’re interested in detecting events inside the area shown by the orange bow below,
+but it is only possible to place sensors inside the yellow area.</p>
+<figure class="align-default">
+<img alt="../../_images/uinta_nosensors.png" src="../../_images/uinta_nosensors.png" />
+</figure>
+<p>This constraint on sensor placement could be due to state
+lines, natural features like rivers, man-made features like roads, or
+other boundaries like state and national forest boundaries.</p>
+<p>To accomplish this optimization, we create a boundary file containing the coordinates that define the corners ofthe yellow polygon shown above.
+We save the file as <a class="reference external" href="https://github.com/sandialabs/seismic_boed/blob/master/examples/boundary_files/bounds_with_coordinates.json"><code class="docutils literal notranslate"><span class="pre">example_boundary.json</span></code></a>.</p>
+<p>Next, we define the input file to the <code class="docutils literal notranslate"><span class="pre">network_opt.py</span></code> script:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>1
+20
+example_boundary.json
+2,2,0
+0
+1024
+4096
+2
+square_event_coordinates.json
+mpiexec --bind-to core --npernode 16 --n 512
+unif_prior.py
+10
+37.,-116.,2.,2.,0.
+</pre></div>
+</div>
+<p>Here, observe several things about the input file:</p>
+<ul class="simple">
+<li><p>Line 3 specifies the filename (and path, if in a different
+directory) of the shapefile used to define the boundary for the
+sensors. At this time, a boundary file must always be provided
+(meaning that if we wanted to simply optimize the sensors over a
+square domain, we would need to provide a file specifying that).</p></li>
+<li><p>Line 4 specifies that we wish to use sensors with an SNR offset of
+2, an output vector length of 4, and of type <code class="docutils literal notranslate"><span class="pre">0</span></code>—meaning sensors
+that detect seismic waves.</p></li>
+<li><p>Line 10 uses nodes with 36 cores per node and specifies 256 total
+cores. If the system being used had a different architecture, this
+line would need to be modified to match the system.</p></li>
+<li><p>Lines 9 specifies the file defining the boundary from which events
+may be sampled.</p></li>
+<li><p>Line 11 specifies the file that contains the proper functions for
+sampling events (see
+<a class="reference internal" href="#./tutorials/prior.ipynb"><span class="xref myst">Writing a sampling file</span></a>).</p></li>
+</ul>
+<p>For more details on the input file, see <a class="reference internal" href="#inputs.md"><span class="xref myst">Writing an input file</span></a>.
+Now that we have an input file defined, we can run <code class="docutils literal notranslate"><span class="pre">network_opt.py</span></code> on
+Sandia’s HPC clusters as described in <a class="reference internal" href="basics_opt.html"><span class="std std-doc">Getting started: Network optimization</span></a>.</p>
+<p>We will run interactively: first we’ll request the nodes to use for our job.
+Running on a system with 16 cores per node, we need to request at least 32 nodes
+in order to ensure our allocation matches the instructions on line 13
+of our input file.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>salloc<span class="w"> </span>-N<span class="w"> </span><span class="m">32</span><span class="w"> </span>-t<span class="w"> </span><span class="m">8</span>:00:00
+</pre></div>
+</div>
+<p>Then, we run <code class="docutils literal notranslate"><span class="pre">network_opt.py</span></code> with Python (for details on the
+script arguments see <a class="reference internal" href="basics_opt.html"><span class="std std-doc">Getting started: Network optimization</span></a>):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>network_opt.py<span class="w"> </span>opt_inputs.dat<span class="w"> </span>sensor_output.npz<span class="w"> </span>output_dir<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+<p>The script will output optimization results after each new sensor is
+placed, and will save a <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file (in this example we called it
+<code class="docutils literal notranslate"><span class="pre">sensor_output.npz</span></code>) containing the final optimized network. These will
+be saved in the specified directory (called <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> in our
+example). The network created by our script under our boundary
+constraints looks like this:</p>
+<figure class="align-default">
+<img alt="../../_images/uinta_sensors.png" src="../../_images/uinta_sensors.png" />
+</figure>
+</section>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./source/tutorials"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="basics_opt.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Getting Started: Network Optimization</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="inputs.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Writing input files</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Performing bounded optimization</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#bounded-optimization">Bounded Optimization</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#defining-the-boundary-constraint-file">Defining the boundary constraint file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optimizing-a-network-with-boundary-constraints">Optimizing a network with boundary constraints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Sandia National Laboratories
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2023.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

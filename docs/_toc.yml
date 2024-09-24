@@ -1,0 +1,31 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: source/index.md
+parts:
+  # Introduction / summary, installation, change log
+  - caption: Seismic Bayesian OED
+    maxdepth: 1
+    chapters:
+      - file: source/sboed/installation.md
+      - file: source/sboed/literature.md
+      - file: source/sboed/changelog.md
+
+  # Examples written in tutorial style
+  - caption: Tutorials
+    maxdepth: 1
+    chapters:
+      - file: source/tutorials/basics_analysis.ipynb
+      - file: source/tutorials/basics_opt.ipynb
+      - file: source/tutorials/bounded.ipynb
+      - file: source/tutorials/inputs.ipynb
+      - file: source/tutorials/priors.ipynb
+      - file: source/tutorials/data_gen.ipynb
+      - file: source/tutorials/likelihood.ipynb
+
+  # API - use sphinx-autodoc
+  - caption: API Reference
+    maxdepth: 1
+    chapters:
+      - file: source/api/main.md
