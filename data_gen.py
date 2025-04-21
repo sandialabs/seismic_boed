@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import sobol_seq as sq
 from scipy import stats
 
 import like_models as lm
