@@ -3,38 +3,142 @@ import warnings
 
 import numpy as np
 from obspy import geodetics
-from obspy.geodetics.base import (degrees2kilometers, gps2dist_azimuth,
-                                  kilometers2degrees)
+from obspy.geodetics.base import (
+    degrees2kilometers,
+    gps2dist_azimuth,
+    kilometers2degrees,
+)
 from obspy.taup import TauPyModel
 from obspy.taup.taup_geo import calc_dist
 from scipy import stats
 from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 
+# NEW: Import the ML wrapper
+import ml_utils
+
 warnings.filterwarnings("ignore")
 
 
-# Helper functions for seismic sensor models
-# ------------------------------------------
+# --------------------------------------------------------------------------
+# Power Model Helpers (The Heteroscedastic Noise Logic)
+# --------------------------------------------------------------------------
+def observation_variance_power(
+    log_power, sigma_min=0.1, sigma_max=2.0, log_power_ref=-15.5, decay_rate=0.5
+):
+    """
+    Computes additional observation variance that depends on signal strength.
+    Low signal (<-15.5) -> High variance (sigma_max)
+    High signal (>-15.5) -> Low variance (sigma_min)
+    """
+    sigma = sigma_min + (sigma_max - sigma_min) / (
+        1.0 + np.exp(decay_rate * (log_power - log_power_ref))
+    )
+    return sigma**2
+
+
+def compute_power(theta, sensors, stype):
+    """
+    Computes predicted power using the MLP and returns error components.
+
+    Returns
+    -------
+    result : np.array (n_sensors x 3)
+        [predicted_log_power, model_sigma, measurement_sigma]
+    """
+    # 1. Get the singleton model instance
+    # Note: You must initialize this in your main script before calling likelihoods!
+    # e.g., ml_utils.get_power_model("model.pt", "x.pkl", "y.pkl")
+    power_model = ml_utils.get_power_model()
+
+    # 2. Predict Mean Log Power (Vectorized ML inference)
+    # The ml_utils.predict_log_power handles the Mag -> Isotropic Tensor conversion
+    pred_log_power = power_model.predict_log_power(theta, sensors)
+
+    # 3. Model Error (Aleatoric/Epistemic mix)
+    # We use the optimized parameters from our discussion:
+    # A0 = log(0.3) approx -1.2, A1 = 0.0 (constant relative error)
+    model_sigma = np.full_like(pred_log_power, 0.3)
+
+    # 4. Measurement Error (Sensor Fidelity)
+    # We map the sensor's 'Gaussian_variance' column (idx 2) to measurement sigma
+    # Assuming the column sensors[:, 2] is strictly variance, we take sqrt
+    # If it is already sigma, remove the sqrt.
+    measure_sigma = np.sqrt(sensors[:, 2])
+
+    # Stack results
+    return np.column_stack([pred_log_power, model_sigma, measure_sigma])
+
+
+def power_likelihood(theta, sensors, data, stype):
+    """
+    Computes Log-Likelihood for Power data (Column Block 5).
+    Uses a Heteroscedastic Gaussian on Log-Power.
+    """
+    # Get predictions and base errors
+    # result shape: (N_sensors, 3) -> [pred, sigma_model, sigma_measure]
+    power_components = compute_power(theta, sensors, stype)
+
+    pred_log_power = power_components[:, 0]
+    sigma_model = power_components[:, 1]
+    sigma_measure = power_components[:, 2]
+
+    # Calculate the Signal-Dependent Noise (The "Noise Floor" Effect)
+    # This adds variance when the signal is weak
+    var_hetero = observation_variance_power(pred_log_power)
+
+    # Total Variance = Model^2 + Measure^2 + SignalDep^2
+    sigma_sq_total = sigma_model**2 + sigma_measure**2 + var_hetero
+
+    # Prepare Data Extraction
+    # Data shape is (ndata, Total_Cols)
+    # We need to find where the power data lives.
+    # Architecture: [Arrivals(N) | Detect(N) | Az(N) | Inc(N) | POWER(N)]
+    [ndata, ndpt] = data.shape
+    nsens = int(ndpt / 5)  # Updated stride to 5
+
+    loglike = np.zeros(ndata)
+
+    # Loop over data realizations (vectorizing this is possible but complex due to masking)
+    for idata in range(ndata):
+        # Power data is in the 5th block (indices 4*nsens to 5*nsens)
+        # However, we only evaluate power if the sensor DETECTED the event.
+        # Check Detections (Block 2: indices nsens to 2*nsens)
+        detection_mask = data[idata, nsens : 2 * nsens]
+        maskidx = np.nonzero(detection_mask)[0]
+
+        if len(maskidx) == 0:
+            continue
+
+        # Extract observed power for detecting sensors
+        obs_power = data[idata, 4 * nsens : 5 * nsens][maskidx]
+
+        # Extract predictions for detecting sensors
+        curr_pred = pred_log_power[maskidx]
+        curr_var = sigma_sq_total[maskidx]
+
+        # Gaussian Log Likelihood
+        # -0.5 * log(2pi * sigma^2) - 0.5 * (obs - pred)^2 / sigma^2
+        ll_terms = (
+            -0.5 * np.log(2 * np.pi * curr_var)
+            - 0.5 * (obs_power - curr_pred) ** 2 / curr_var
+        )
+
+        loglike[idata] = np.sum(ll_terms)
+
+    return loglike
+
+
+# --------------------------------------------------------------------------
+# Existing Helper Functions (Unchanged but included for context)
+# --------------------------------------------------------------------------
 def haversine(lat1, lon1, lat2, lon2):
-    """
-    Calculate the great-circle distance (in km) between two points
-    using their longitude and latitude (in degrees).
-    """
-    # Radius of the Earth
     correction = 0.9996400
     r = 6372.8 * 1000 * correction
-
-    # Convert degrees to radians
-    # First point
     lat1 = np.radians(lat1)
     lon1 = np.radians(lon1)
-
-    # Second Point
     lat2 = np.radians(lat2)
     lon2 = np.radians(lon2)
-
-    # Haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
@@ -302,10 +406,10 @@ def detection_likelihood(theta, sensors, data, stype):
                          seismic event
     """
     # probs = detection_probability(theta, sensors, stype)
-    probs = detection_probability(theta, sensors,"seismic")
+    probs = detection_probability(theta, sensors, "seismic")
 
     [ndata, ndpt] = data.shape
-    nsens = int(ndpt / 4)
+    nsens = int(ndpt / 5)
 
     loglike = np.zeros(ndata)
 
@@ -581,7 +685,7 @@ def arrival_likelihood_gaussian(theta, sensors, data, stype):
     cov = np.multiply(np.outer(stdmodel, stdmodel), corr) + np.diag(measurenoise**2.0)
 
     [ndata, ndpt] = data.shape
-    nsens = int(ndpt / 4)
+    nsens = int(ndpt / 5)
 
     loglike = np.zeros(ndata)
 
@@ -691,7 +795,7 @@ def incident_likelihood(theta, sensors, data, stype):
     if stype in ["infrasound", "array"]:
         angle_data = compute_incident(theta, sensors, stype)
         [ndata, ndpt] = data.shape
-        nsens = int(ndpt / 4)
+        nsens = int(ndpt / 5)
 
         loglike = np.zeros(ndata)
 
@@ -794,7 +898,7 @@ def azimuth_likelihood(theta, sensors, data, stype):
     ]:
         azmth_data = compute_azimuth(theta, sensors, stype)
         [ndata, ndpt] = data.shape
-        nsens = int(ndpt / 4)
+        nsens = int(ndpt / 5)
 
         loglike = np.zeros(ndata)
 
@@ -831,46 +935,51 @@ Detection likelihood models
 
 def extract_sensor_data(sensor_idx, total_data):
     """
-    Function that extracts data corresponding to a specific set of sensors from
-    from the total dataset and compiles it into a single dataset
-
-    Inputs
-    ------
-    sensor_idx (list)    : list of sensor indices to extract data for
-    total_data (ndarray) : array of shape (number of data realizations x 4 * total number of sensors)
-                           that contains all data generated
-
-    Returns
-    -------
-    sensor_data (ndarray) : array of shape (number of data realizations x 4 * number of specific sensors)
-                            that contains only data generated by those specific sensors
+    Extracts data for specific sensors.
+    UPDATED: Now handles 5 blocks of data (Arrival, Detect, Az, Inc, Power)
     """
     nsens = len(sensor_idx)
-    ntotal_sens = int(total_data.shape[1] / 4)
+    ntotal_sens = int(total_data.shape[1] / 5)  # DIVIDE BY 5 NOW
     ndata = total_data.shape[0]
-    sensor_data = np.zeros((ndata, nsens * 4))
+    sensor_data = np.zeros((ndata, nsens * 5))
 
-    # Extract arrivals
+    # Extract Arrivals
     sensor_data[:, :nsens] = total_data[:, sensor_idx]
-    # Extract detections
+    # Extract Detections
     sensor_data[:, nsens : 2 * nsens] = total_data[:, ntotal_sens + sensor_idx]
-    # Extract azimuths
+    # Extract Azimuths
     sensor_data[:, 2 * nsens : 3 * nsens] = total_data[:, 2 * ntotal_sens + sensor_idx]
-    # Extract incident angles
-    sensor_data[:, 3 * nsens :] = total_data[:, 3 * ntotal_sens + sensor_idx]
+    # Extract Incident Angles
+    sensor_data[:, 3 * nsens : 4 * nsens] = total_data[:, 3 * ntotal_sens + sensor_idx]
+    # Extract Power (NEW)
+    sensor_data[:, 4 * nsens :] = total_data[:, 4 * ntotal_sens + sensor_idx]
 
     return sensor_data
 
 
 def compute_sensor_loglikes(theta, sensors, data, stype="seismic"):
+    if sensors.shape[0] == 0:
+        return np.zeros(data.shape[0])
+
+    # Existing likelihoods
     detect_loglikes = detection_likelihood(theta, sensors, data, stype=stype)
     arrival_loglikes = arrival_likelihood_gaussian(theta, sensors, data, stype=stype)
     incident_loglikes = incident_likelihood(theta, sensors, data, stype=stype)
     azimuth_loglikes = azimuth_likelihood(theta, sensors, data, stype=stype)
 
+    # NEW: Power likelihood
+    # Only calculate for seismic/array sensors, others get 0
+    if stype in ["seismic", "array"]:
+        power_loglikes = power_likelihood(theta, sensors, data, stype=stype)
+    else:
+        power_loglikes = 0.0
+
     loglikes = (
-        detect_loglikes + arrival_loglikes
-    )  # + incident_loglikes + azimuth_loglikes
+        detect_loglikes
+        + arrival_loglikes
+        + power_loglikes
+        # + incident_loglikes + azimuth_loglikes (Uncomment if you use them)
+    )
     return loglikes
 
 

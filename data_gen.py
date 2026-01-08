@@ -126,6 +126,44 @@ def gen_azimuth_vonmises(theta, sensors, ndata, stype):
     return azimuths
 
 
+def gen_power_normal(theta, sensors, ndata, stype):
+    """
+    Simulates Power data (Log-Integrated Power).
+    """
+    if stype not in ["seismic", "array"]:
+        # Return NaNs for sensors that don't support power
+        power_data = np.empty((ndata, sensors.shape[0]))
+        power_data.fill(np.nan)
+        return power_data
+
+    # 1. Get Predictions and Sigmas from the model
+    # compute_power returns [pred, sigma_model, sigma_measure]
+    # Shape: (N_sensors, 3)
+    power_components = lm.compute_power(theta, sensors, stype)
+    
+    pred_log_power = power_components[:, 0]
+    sigma_model = power_components[:, 1]
+    sigma_measure = power_components[:, 2]
+    
+    # 2. Add Heteroscedastic Noise
+    # This noise depends on the PREDICTED signal strength
+    var_hetero = lm.observation_variance_power(pred_log_power)
+    
+    # 3. Total Variance
+    sigma_sq_total = sigma_model**2 + sigma_measure**2 + var_hetero
+    sigma_total = np.sqrt(sigma_sq_total)
+    
+    # 4. Sample
+    # We need (ndata, n_sensors)
+    # pred_log_power is (n_sensors,)
+    means = np.tile(pred_log_power, (ndata, 1))
+    stds = np.tile(sigma_total, (ndata, 1))
+    
+    power_data = np.random.normal(means, stds)
+    
+    return power_data
+
+
 def generate_sensor_data(theta, sensors, ndata, stype):
     """
     Generates all types of data for a given set of sensors and corresponding
@@ -145,49 +183,41 @@ def generate_sensor_data(theta, sensors, ndata, stype):
     """
     # compute detection probablity
     probs = lm.detection_probability(theta, sensors, stype)
-
-    # make probs bigger
     fullprobs = np.outer(np.ones(ndata), probs)
     u_mat = np.random.uniform(size=fullprobs.shape)
+    detections = u_mat < fullprobs
 
-    # sample arrival times
+    # sample components
     atimes = gen_arrival_normal(theta, sensors, ndata, stype)
-
-    # sample incident angles
     incidents = gen_incident_vonmises(theta, sensors, ndata, stype)
-
     azimuths = gen_azimuth_vonmises(theta, sensors, ndata, stype)
 
+    # Sample signal power
+    power = gen_power_normal(theta, sensors, ndata, stype)
+
     # get data[probs arrivaltimes]
-    data = np.concatenate((atimes, u_mat < fullprobs, azimuths, incidents), axis=1)
+    data = np.concatenate((atimes, detections, azimuths, incidents, power), axis=1)
     return data
 
 
 def generate_data(theta, sensors, ndata):
     """
     Generates all types of data for all sensors.
-
-    Inputs
-    ------
-    theta (np.array) : (m x 4) array containing parameters for each seismic event
-    sensors (np.array) : (n x 5) array containing parameters for each seismic sensor
-    ndata (int) : number of realizations of data to generate
-
-    Returns
-    -------
-    data (np.array) : (ndata*m x n*4) array containing sampled data.
+    UPDATED: Handles 5 data types (Cols = 5 * num_sensors).
     """
 
     def split_data(data):
-        # splits data into arrival times, detections, azimuths, and incidents
-
-        nsens = int(data.shape[1] / 4)
+        # splits data into arrival times, detections, azimuths, incidents, AND POWER
+        # UPDATED: We now divide by 5
+        nsens = int(data.shape[1] / 5)
+        
         atimes = data[:, :nsens]
         detections = data[:, nsens : 2 * nsens]
         azmths = data[:, 2 * nsens : 3 * nsens]
-        incdnt = data[:, 3 * nsens :]
+        incdnt = data[:, 3 * nsens : 4 * nsens]
+        power = data[:, 4 * nsens :] # New 5th Block
 
-        return atimes, detections, azmths, incdnt
+        return atimes, detections, azmths, incdnt, power
 
     num_sensors = sensors.shape[0]
 
@@ -225,23 +255,19 @@ def generate_data(theta, sensors, ndata):
     if array_exists:
         array_data = generate_sensor_data(theta, array_sensors, ndata, stype="array")
 
-    # Split each sensor type's data into detections, arrivals, azimuths, incident angles
-    # in order to recombine into a single dataset
+    # Split each sensor type's data into components
     if seismic_exists:
-        seis_atimes, seis_detects, seis_azmths, seis_incdnts = split_data(seismic_data)
+        seis_atimes, seis_detects, seis_azmths, seis_incdnts, seis_power = split_data(seismic_data)
     if instant_exists:
-        inst_atimes, inst_detects, inst_azmths, inst_incdnts = split_data(instant_data)
+        inst_atimes, inst_detects, inst_azmths, inst_incdnts, inst_power = split_data(instant_data)
     if infra_exists:
-        infra_atimes, infra_detects, infra_azmths, infra_incdnts = split_data(
-            infra_data
-        )
+        infra_atimes, infra_detects, infra_azmths, infra_incdnts, infra_power = split_data(infra_data)
     if array_exists:
-        array_atimes, array_detects, array_azmths, array_incdnts = split_data(
-            array_data
-        )
+        array_atimes, array_detects, array_azmths, array_incdnts, array_power = split_data(array_data)
 
     # Create matrix for storing all generated data
-    total_data = np.zeros((ndata, 4 * num_sensors))
+    # UPDATED: Total columns = 5 * num_sensors
+    total_data = np.zeros((ndata, 5 * num_sensors))
 
     # Now add data from each sensor type into its column corresponding to sensor
     # positions in original sensor array
@@ -252,6 +278,7 @@ def generate_data(theta, sensors, ndata):
         total_data[:, num_sensors + seismic_idx] = seis_detects
         total_data[:, 2 * num_sensors + seismic_idx] = seis_azmths
         total_data[:, 3 * num_sensors + seismic_idx] = seis_incdnts
+        total_data[:, 4 * num_sensors + seismic_idx] = seis_power # NEW
 
     # Instant origin data
     if instant_exists:
@@ -259,6 +286,7 @@ def generate_data(theta, sensors, ndata):
         total_data[:, num_sensors + instant_idx] = inst_detects
         total_data[:, 2 * num_sensors + instant_idx] = inst_azmths
         total_data[:, 3 * num_sensors + instant_idx] = inst_incdnts
+        total_data[:, 4 * num_sensors + instant_idx] = inst_power # NEW
 
     # Infrasound data
     if infra_exists:
@@ -266,6 +294,7 @@ def generate_data(theta, sensors, ndata):
         total_data[:, num_sensors + infra_idx] = infra_detects
         total_data[:, 2 * num_sensors + infra_idx] = infra_azmths
         total_data[:, 3 * num_sensors + infra_idx] = infra_incdnts
+        total_data[:, 4 * num_sensors + infra_idx] = infra_power # NEW
 
     # Seismic array data
     if array_exists:
@@ -273,6 +302,7 @@ def generate_data(theta, sensors, ndata):
         total_data[:, num_sensors + array_idx] = array_detects
         total_data[:, 2 * num_sensors + array_idx] = array_azmths
         total_data[:, 3 * num_sensors + array_idx] = array_incdnts
+        total_data[:, 4 * num_sensors + array_idx] = array_power # NEW
 
     return total_data
 

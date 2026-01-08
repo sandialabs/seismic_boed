@@ -10,6 +10,13 @@ import warnings
 import numpy as np
 from mpi4py import MPI
 
+import ml_utils
+
+# Constants for ML Model
+MODEL_PATH = "checkpoint_N1000000_seed38_epoch999.pt"
+X_SCALER_PATH = "x_scaler_38_1000000.pkl"
+Y_SCALER_PATH = "y_scaler_38_1000000.pkl"
+
 # from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from data_gen import generate_data
 from like_models import compute_loglikes
@@ -24,6 +31,20 @@ if __name__ == "__main__":
 
     # make each rank of its own seed
     np.random.seed(int(time.time()) + rank)
+
+    # Initialize ML Model on ALL Ranks
+    try:
+        if rank == 0 and not os.path.exists(MODEL_PATH):
+            print(f"ERROR: Model file not found at {MODEL_PATH}")
+            sys.stdout.flush()
+        
+        ml_utils.get_power_model(MODEL_PATH, X_SCALER_PATH, Y_SCALER_PATH)
+        
+        if rank == 0:
+            print("ML Model successfully initialized on all ranks.")
+    except Exception as e:
+        if rank == 0: print(f"CRITICAL ERROR loading ML model: {e}")
+        sys.exit(1)
 
     # Rank 0 intializes stuff
     if rank == 0:
@@ -136,7 +157,7 @@ if __name__ == "__main__":
     # Every core generate hypohtetical dataset on their bit of theta
     # Generate Hypothetical Datasets
 
-    dataveclen = int(sensors.shape[0] * 4)
+    dataveclen = int(sensors.shape[0] * 5)
     localdataz = np.zeros([local_nlpts_data * ndata, dataveclen])
     for ievent in range(0, local_nlpts_data):
         if rank == 0 and verbose == 1:
@@ -360,7 +381,7 @@ if __name__ == "__main__":
                 depth_range=depth_range,
                 mag_range=mag_range,
                 loglikes=loglikes,
-                weight_loglike=weight_loglike,
+                weight_loglikes=weight_loglikes,
                 dataz=dataz,
                 data_importance_weight=data_importance_weight,
             )
