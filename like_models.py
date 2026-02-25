@@ -1,6 +1,9 @@
+import os
 import pickle
 import warnings
+from pathlib import Path
 
+import ml_utils
 import numpy as np
 from obspy import geodetics
 from obspy.geodetics.base import (
@@ -14,16 +17,38 @@ from scipy import stats
 from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 
-# NEW: Import the ML wrapper
-import ml_utils
-import os
-
 warnings.filterwarnings("ignore")
 
 
-BASE_DIR = "/home/jpcalla/seismic_oed" # Hardcoded absolute path
-CUBIC_PATH = os.path.join(BASE_DIR, "cubic_reg.pkl")
-TTSTD_PATH = os.path.join(BASE_DIR, "TTstd.pkl")
+def _resolve_repo_root():
+    env_root = os.environ.get("SEISMIC_OED_ROOT")
+    if env_root:
+        return Path(env_root).expanduser().resolve()
+    return Path(__file__).resolve().parent
+
+
+BASE_DIR = _resolve_repo_root()
+CUBIC_PATH = BASE_DIR / "cubic_reg.pkl"
+TTSTD_PATH = BASE_DIR / "TTstd.pkl"
+
+_POWER_GATE_DIAGNOSTICS = {
+    "total_checked": 0,
+    "failed_lat_local": 0,
+    "failed_lon_local": 0,
+    "failed_depth_m": 0,
+    "failed_gaussian_variance": 0,
+    "failed_mt_norm": 0,
+    "power_disabled_count": 0,
+}
+
+
+def reset_power_gate_diagnostics():
+    for key in _POWER_GATE_DIAGNOSTICS:
+        _POWER_GATE_DIAGNOSTICS[key] = 0
+
+
+def get_power_gate_diagnostics():
+    return dict(_POWER_GATE_DIAGNOSTICS)
 
 
 
@@ -50,31 +75,57 @@ def compute_power(theta, sensors, stype):
 
     Returns
     -------
-    result : np.array (n_sensors x 3)
-        [predicted_log_power, model_sigma, measurement_sigma]
+    result : np.array (n_sensors x 4)
+        [predicted_log_power, model_sigma, measurement_sigma, enabled_mask]
     """
-    # 1. Get the singleton model instance
-    # Note: You must initialize this in your main script before calling likelihoods!
-    # e.g., ml_utils.get_power_model("model.pt", "x.pkl", "y.pkl")
-    power_model = ml_utils.get_power_model()
+    n_sensors = sensors.shape[0]
+    if stype not in ["seismic", "array"] or n_sensors == 0:
+        return np.column_stack(
+            [
+                np.full(n_sensors, np.nan),
+                np.full(n_sensors, np.nan),
+                np.full(n_sensors, np.nan),
+                np.zeros(n_sensors, dtype=bool),
+            ]
+        )
 
-    # 2. Predict Mean Log Power (Vectorized ML inference)
-    # The ml_utils.predict_log_power handles the Mag -> Isotropic Tensor conversion
-    pred_log_power = power_model.predict_log_power(theta, sensors)
+    map_strategy = os.environ.get("SEISMIC_OED_FIDELITY_MAP", "clamped_linear")
+    gaussian_variance = ml_utils.map_sensor_fidelity_to_gaussian_variance(
+        sensors[:, 2], strategy=map_strategy
+    )
 
-    # 3. Model Error (Aleatoric/Epistemic mix)
-    # We use the optimized parameters from our discussion:
-    # A0 = log(0.3) approx -1.2, A1 = 0.0 (constant relative error)
-    model_sigma = np.full_like(pred_log_power, 0.3)
+    enabled_mask, gate_masks, _ = ml_utils.evaluate_power_domain_gates(
+        theta,
+        sensors,
+        gaussian_variance=gaussian_variance,
+    )
 
-    # 4. Measurement Error (Sensor Fidelity)
-    # We map the sensor's 'Gaussian_variance' column (idx 2) to measurement sigma
-    # Assuming the column sensors[:, 2] is strictly variance, we take sqrt
-    # If it is already sigma, remove the sqrt.
-    measure_sigma = np.sqrt(sensors[:, 2])
+    _POWER_GATE_DIAGNOSTICS["total_checked"] += int(n_sensors)
+    _POWER_GATE_DIAGNOSTICS["failed_lat_local"] += int(np.count_nonzero(~gate_masks["lat_local"]))
+    _POWER_GATE_DIAGNOSTICS["failed_lon_local"] += int(np.count_nonzero(~gate_masks["lon_local"]))
+    _POWER_GATE_DIAGNOSTICS["failed_depth_m"] += int(np.count_nonzero(~gate_masks["depth_m"]))
+    _POWER_GATE_DIAGNOSTICS["failed_gaussian_variance"] += int(
+        np.count_nonzero(~gate_masks["gaussian_variance"])
+    )
+    _POWER_GATE_DIAGNOSTICS["failed_mt_norm"] += int(np.count_nonzero(~gate_masks["mt_norm"]))
+    _POWER_GATE_DIAGNOSTICS["power_disabled_count"] += int(np.count_nonzero(~enabled_mask))
 
-    # Stack results
-    return np.column_stack([pred_log_power, model_sigma, measure_sigma])
+    pred_log_power = np.full(n_sensors, np.nan, dtype=float)
+    model_sigma = np.full(n_sensors, np.nan, dtype=float)
+    measure_sigma = np.full(n_sensors, np.nan, dtype=float)
+
+    if np.any(enabled_mask):
+        if ml_utils.TORCH_AVAILABLE:
+            power_model = ml_utils.get_power_model()
+            pred_log_power[enabled_mask] = power_model.predict_log_power(
+                theta,
+                sensors[enabled_mask],
+                gaussian_variance=gaussian_variance[enabled_mask],
+            )
+            model_sigma[enabled_mask] = 0.3
+            measure_sigma[enabled_mask] = np.sqrt(gaussian_variance[enabled_mask])
+
+    return np.column_stack([pred_log_power, model_sigma, measure_sigma, enabled_mask])
 
 
 def power_likelihood(theta, sensors, data, stype):
@@ -89,6 +140,7 @@ def power_likelihood(theta, sensors, data, stype):
     pred_log_power = power_components[:, 0]
     sigma_model = power_components[:, 1]
     sigma_measure = power_components[:, 2]
+    enabled_mask = power_components[:, 3].astype(bool)
 
     # Calculate the Signal-Dependent Noise (The "Noise Floor" Effect)
     # This adds variance when the signal is weak
@@ -111,8 +163,9 @@ def power_likelihood(theta, sensors, data, stype):
         # Power data is in the 5th block (indices 4*nsens to 5*nsens)
         # However, we only evaluate power if the sensor DETECTED the event.
         # Check Detections (Block 2: indices nsens to 2*nsens)
-        detection_mask = data[idata, nsens : 2 * nsens]
-        maskidx = np.nonzero(detection_mask)[0]
+        detection_mask = data[idata, nsens : 2 * nsens].astype(bool)
+        finite_mask = np.isfinite(pred_log_power) & np.isfinite(sigma_sq_total)
+        maskidx = np.nonzero(detection_mask & enabled_mask & finite_mask)[0]
 
         if len(maskidx) == 0:
             continue

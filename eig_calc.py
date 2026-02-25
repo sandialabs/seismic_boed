@@ -6,29 +6,31 @@ import os
 import sys
 import time
 import warnings
+from pathlib import Path
 
 import numpy as np
-from mpi4py import MPI
 
 import ml_utils
 
-# --- PATH CORRECTION ---
-# Hardcoding absolute paths to ensureRM finds them regardless of launch dir
-BASE_ML_DIR = "/home/jpcalla/seismic_oed"
+# --- PATH RESOLUTION ---
+BASE_ML_DIR = Path(
+    os.environ.get("SEISMIC_OED_ROOT", Path(__file__).resolve().parent)
+).expanduser().resolve()
 
-MODEL_PATH = os.path.join(BASE_ML_DIR, "checkpoint_N1000000_seed38_epoch999.pt")
-X_SCALER_PATH = os.path.join(BASE_ML_DIR, "x_scaler_38_1000000.pkl")
-Y_SCALER_PATH = os.path.join(BASE_ML_DIR, "y_scaler_38_1000000.pkl")
-# -----------------------
+MODEL_PATH = str(BASE_ML_DIR / "checkpoint_N1000000_seed38_epoch999.pt")
+X_SCALER_PATH = str(BASE_ML_DIR / "x_scaler_38_1000000.pkl")
+Y_SCALER_PATH = str(BASE_ML_DIR / "y_scaler_38_1000000.pkl")
 
 # from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from data_gen import generate_data
-from like_models_noise_sweep import compute_loglikes
+from like_models import compute_loglikes
 from utils import plot_surface, read_bounds, read_input_file
 
 # warnings.filterwarnings('error')
 
 if __name__ == "__main__":
+    from mpi4py import MPI
+
     comm = MPI.COMM_WORLD
     size = comm.Get_size()  # Assume size, ndata, and nlpts all have divisiblity
     rank = comm.Get_rank()
@@ -403,4 +405,3 @@ if __name__ == "__main__":
             )
 
         print(str(eig) + " " + str(seig) + " " + str(miness), flush=True)
-

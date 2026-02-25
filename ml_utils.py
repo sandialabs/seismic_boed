@@ -1,29 +1,50 @@
+import os
+from pathlib import Path
+
 import joblib
 import numpy as np
-import torch
-import torch.nn as nn
 from obspy import geodetics
+
+try:
+    import torch
+    import torch.nn as nn
+
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    nn = None
+    TORCH_AVAILABLE = False
 
 # --- 1. Model Definition (Must match training exactly) ---
 DEPTH = 4
 WIDTH = 256
 DROPOUT = 0.0
+DEFAULT_MODEL_FILE = "checkpoint_N1000000_seed38_epoch999.pt"
+DEFAULT_X_SCALER_FILE = "x_scaler_38_1000000.pkl"
+DEFAULT_Y_SCALER_FILE = "y_scaler_38_1000000.pkl"
 
 
-class MLP(nn.Module):
-    def __init__(self, n_in, depth=DEPTH, width=WIDTH, dropout=DROPOUT):
-        super().__init__()
-        layers = [nn.Linear(n_in, width), nn.ReLU()]
-        for _ in range(depth - 1):
-            layers += [nn.Linear(width, width), nn.ReLU()]
-        self.backbone = nn.Sequential(*layers)
-        self.dropout = nn.Dropout(dropout)
-        self.out = nn.Linear(width, 1)
+if TORCH_AVAILABLE:
+    class MLP(nn.Module):
+        def __init__(self, n_in, depth=DEPTH, width=WIDTH, dropout=DROPOUT):
+            super().__init__()
+            layers = [nn.Linear(n_in, width), nn.ReLU()]
+            for _ in range(depth - 1):
+                layers += [nn.Linear(width, width), nn.ReLU()]
+            self.backbone = nn.Sequential(*layers)
+            self.dropout = nn.Dropout(dropout)
+            self.out = nn.Linear(width, 1)
 
-    def forward(self, x):
-        x = self.backbone(x)
-        x = self.dropout(x)
-        return self.out(x)
+        def forward(self, x):
+            x = self.backbone(x)
+            x = self.dropout(x)
+            return self.out(x)
+else:
+    class MLP:  # pragma: no cover - fallback type for import-time compatibility
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "torch is not installed; ML power inference is unavailable in this environment."
+            )
 
 
 # --- 2. Helper: Mag -> Moment Tensor ---
@@ -41,6 +62,90 @@ def magnitude_to_moment_tensor_isotropic(mag):
     # For isotropic, diagonal terms are M0, off-diagonals are 0.
     # [m_rr, m_tt, m_pp, m_rt, m_rp, m_tp]
     return np.array([m0, m0, m0, 0.0, 0.0, 0.0])
+
+
+def resolve_repo_root():
+    env_root = os.environ.get("SEISMIC_OED_ROOT")
+    if env_root:
+        return Path(env_root).expanduser().resolve()
+    return Path(__file__).resolve().parent
+
+
+def resolve_power_model_paths(model_path=None, x_path=None, y_path=None):
+    root = resolve_repo_root()
+    model = Path(model_path) if model_path is not None else root / DEFAULT_MODEL_FILE
+    x_scaler = Path(x_path) if x_path is not None else root / DEFAULT_X_SCALER_FILE
+    y_scaler = Path(y_path) if y_path is not None else root / DEFAULT_Y_SCALER_FILE
+    return str(model), str(x_scaler), str(y_scaler)
+
+
+def map_sensor_fidelity_to_gaussian_variance(
+    sensor_fidelity, strategy="clamped_linear", raw_min=0.0, raw_max=0.2, fixed_value=2.0
+):
+    fidelity = np.asarray(sensor_fidelity, dtype=float)
+    if strategy == "direct":
+        return fidelity.copy()
+    if strategy == "fixed_nominal":
+        return np.full_like(fidelity, float(fixed_value), dtype=float)
+    if strategy == "clamped_linear":
+        denom = max(float(raw_max) - float(raw_min), 1e-12)
+        scaled = 1.0 + 2.0 * ((fidelity - float(raw_min)) / denom)
+        return np.clip(scaled, 1.0, 3.0)
+    raise ValueError(f"Unknown fidelity mapping strategy: {strategy}")
+
+
+def training_mt_norm_reference(mw_ref=5.0):
+    return float(np.linalg.norm(magnitude_to_moment_tensor_isotropic(mw_ref)))
+
+
+def evaluate_power_domain_gates(
+    theta,
+    sensors,
+    gaussian_variance,
+    latlon_abs_bound=2.0,
+    depth_min_m=5000.0,
+    depth_max_m=20000.0,
+    gauss_min=1.0,
+    gauss_max=3.0,
+    mt_norm_ratio_min=0.5,
+    mt_norm_ratio_max=2.0,
+):
+    src_lat, src_lon, src_depth_km, src_mag = theta
+    sens_lat = sensors[:, 0]
+    sens_lon = sensors[:, 1]
+    gaussian_variance = np.asarray(gaussian_variance, dtype=float)
+
+    local_lat = sens_lat - src_lat
+    local_lon = sens_lon - src_lon
+    depth_m = float(src_depth_km) * 1000.0
+
+    lat_gate = np.abs(local_lat) <= float(latlon_abs_bound)
+    lon_gate = np.abs(local_lon) <= float(latlon_abs_bound)
+    depth_gate = (depth_m >= float(depth_min_m)) & (depth_m <= float(depth_max_m))
+    gauss_gate = (gaussian_variance >= float(gauss_min)) & (
+        gaussian_variance <= float(gauss_max)
+    )
+
+    mt = magnitude_to_moment_tensor_isotropic(src_mag)
+    mt_norm = float(np.linalg.norm(mt))
+    mt_ref_norm = training_mt_norm_reference(5.0)
+    ratio = mt_norm / max(mt_ref_norm, 1e-30)
+    mt_gate_scalar = (ratio >= float(mt_norm_ratio_min)) & (ratio <= float(mt_norm_ratio_max))
+    mt_gate = np.full(len(sensors), mt_gate_scalar, dtype=bool)
+
+    enabled = lat_gate & lon_gate & depth_gate & gauss_gate & mt_gate
+    gate_masks = {
+        "lat_local": lat_gate,
+        "lon_local": lon_gate,
+        "depth_m": np.full(len(sensors), depth_gate, dtype=bool),
+        "gaussian_variance": gauss_gate,
+        "mt_norm": mt_gate,
+    }
+
+    return enabled, gate_masks, {
+        "mt_norm_ratio": ratio,
+        "depth_m": depth_m,
+    }
 
 
 # --- 3. The Interface Class ---
@@ -63,7 +168,7 @@ class SeismicPowerInterface:
         self.x_scaler = joblib.load(x_scaler_path)
         self.y_scaler = joblib.load(y_scaler_path)
 
-    def predict_log_power(self, theta, sensors):
+    def predict_log_power(self, theta, sensors, gaussian_variance=None):
         """
         Predicts log integrated power for a single event `theta` against multiple `sensors`.
 
@@ -86,7 +191,7 @@ class SeismicPowerInterface:
         # Assuming sensor columns: [Lat, Lon, Fidelity, ..., Type]
         sens_lat = sensors[:, 0]
         sens_lon = sensors[:, 1]
-        sens_fidelity = sensors[:, 2]  # This maps to 'Gaussian_variance'
+        sens_fidelity = sensors[:, 2] if gaussian_variance is None else gaussian_variance
 
         # 1. Compute Distances
         # Use obspy's vector-capable function if possible, or loop.
@@ -108,17 +213,13 @@ class SeismicPowerInterface:
         # Create the feature matrix
         features = np.zeros((N, 11))
 
-        # Fill sensor-specific columns
-        # Note: Model trained on source-relative coords?
-        # Usually ML models take raw coords if trained globally.
-        # Using Source Lat/Lon here per your csv sample (row 1 implies these are inputs).
-        # WAIT: Your CSV has "Lat", "Lon" columns. Are these Source or Sensor?
-        # Based on "Distance_to_source_km" being a separate col, "Lat/Lon" are likely RECEIVER coords.
-        features[:, 0] = sens_lat
-        features[:, 1] = sens_lon
+        # Fill sensor-specific columns (source-relative lat/lon in degrees)
+        features[:, 0] = sens_lat - src_lat
+        features[:, 1] = sens_lon - src_lon
 
         # Fill Source-specific columns (repeated for all sensors)
-        features[:, 2] = src_depth
+        # Model expects source depth in meters
+        features[:, 2] = src_depth * 1000.0
         features[:, 3] = dists_km
         features[:, 4] = sens_fidelity
 
@@ -127,13 +228,15 @@ class SeismicPowerInterface:
 
         # 4. Scale Inputs
         features_scaled = self.x_scaler.transform(features).astype(np.float32)
-        if not hasattr(self, "_printed_debug"):
+        abs_z = np.abs(features_scaled)
+        if np.any(abs_z > 10.0) and not hasattr(self, "_printed_ood_warning"):
+            max_flat_idx = int(np.argmax(abs_z))
+            max_row, max_col = np.unravel_index(max_flat_idx, abs_z.shape)
+            max_abs_z = float(abs_z[max_row, max_col])
             print(
-                f"[ML power debug] raw_depth_feature={features[0,2]:.3f}, scaled_depth_feature={self.x_scaler.transform(features[:1])[0,2]:.3f}, dist_km={features[0,3]:.3f}, fidelity={features[0,4]:.3f}"
+                f"[ML power OOD warning] abs(z)>10 detected; max_abs_z={max_abs_z:.3f} at feature_index={max_col}"
             )
-            print("[ML debug raw]", features[0])
-            print("[ML debug z]", self.x_scaler.transform(features[:1])[0])
-            self._printed_debug = True
+            self._printed_ood_warning = True
 
         # 5. Inference
         with torch.no_grad():
@@ -157,7 +260,10 @@ def get_power_model(model_path=None, x_path=None, y_path=None):
     """Singleton accessor to avoid reloading weights."""
     global _POWER_MODEL
     if _POWER_MODEL is None:
-        if model_path is None:
-            raise ValueError("Must provide paths for first initialization")
+        if not TORCH_AVAILABLE:
+            raise RuntimeError(
+                "torch is not installed; cannot initialize seismic power model."
+            )
+        model_path, x_path, y_path = resolve_power_model_paths(model_path, x_path, y_path)
         _POWER_MODEL = SeismicPowerInterface(model_path, x_path, y_path)
     return _POWER_MODEL

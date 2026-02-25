@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 from scipy import stats
 
-import like_models_noise_sweep as lm
+import like_models as lm
 
 warnings.filterwarnings("ignore")
 
@@ -137,13 +137,14 @@ def gen_power_normal(theta, sensors, ndata, stype):
         return power_data
 
     # 1. Get Predictions and Sigmas from the model
-    # compute_power returns [pred, sigma_model, sigma_measure]
-    # Shape: (N_sensors, 3)
+    # compute_power returns [pred, sigma_model, sigma_measure, enabled_mask]
+    # Shape: (N_sensors, 4)
     power_components = lm.compute_power(theta, sensors, stype)
 
     pred_log_power = power_components[:, 0]
     sigma_model = power_components[:, 1]
     sigma_measure = power_components[:, 2]
+    enabled_mask = power_components[:, 3].astype(bool)
 
     # 2. Add Heteroscedastic Noise
     # This noise depends on the PREDICTED signal strength
@@ -159,7 +160,11 @@ def gen_power_normal(theta, sensors, ndata, stype):
     means = np.tile(pred_log_power, (ndata, 1))
     stds = np.tile(sigma_total, (ndata, 1))
 
-    power_data = np.random.normal(means, stds)
+    power_data = np.full((ndata, sensors.shape[0]), np.nan)
+    if np.any(enabled_mask):
+        power_data[:, enabled_mask] = np.random.normal(
+            means[:, enabled_mask], stds[:, enabled_mask]
+        )
 
     return power_data
 
