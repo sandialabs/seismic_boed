@@ -38,7 +38,31 @@ except Exception as exc:
         "Stage 1 requires matplotlib to write required PNG outputs. Install matplotlib before running."
     ) from exc
 
-REPO_ROOT = Path(os.environ.get("SEISMIC_OED_ROOT", Path(__file__).resolve().parents[2])).expanduser().resolve()
+def resolve_repo_root() -> Path:
+    candidates = []
+    env_root = os.environ.get("SEISMIC_OED_ROOT")
+    if env_root:
+        candidates.append(Path(env_root).expanduser().resolve())
+    candidates.append(Path(__file__).resolve().parents[2])
+    candidates.append(Path.cwd().resolve())
+
+    # Include all parents of this script as fallback search locations.
+    script_path = Path(__file__).resolve()
+    candidates.extend(script_path.parents)
+
+    seen = set()
+    for c in candidates:
+        if c in seen:
+            continue
+        seen.add(c)
+        if (c / "like_models.py").exists() and (c / "ml_utils.py").exists():
+            return c
+
+    # Last fallback to original default behavior.
+    return Path(__file__).resolve().parents[2]
+
+
+REPO_ROOT = resolve_repo_root()
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -56,9 +80,16 @@ except Exception as exc:
         "Stage 1 requires mpi4py in the environment. Install mpi4py before running."
     ) from exc
 
-import like_models
-import ml_utils
-import utils
+try:
+    import like_models
+    import ml_utils
+    import utils
+except ModuleNotFoundError as exc:
+    raise RuntimeError(
+        f"Failed importing project modules from repo root '{REPO_ROOT}'. "
+        f"sys.path[0:5]={sys.path[:5]}. "
+        "Set SEISMIC_OED_ROOT to your repository root and rerun."
+    ) from exc
 
 
 def get_git_sha(repo_root: Path) -> str:
