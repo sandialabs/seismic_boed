@@ -16,8 +16,15 @@ from sklearn.mixture import GaussianMixture
 
 # NEW: Import the ML wrapper
 import ml_utils
+import os
 
 warnings.filterwarnings("ignore")
+
+
+BASE_DIR = "/home/jpcalla/seismic_oed" # Hardcoded absolute path
+CUBIC_PATH = os.path.join(BASE_DIR, "cubic_reg.pkl")
+TTSTD_PATH = os.path.join(BASE_DIR, "TTstd.pkl")
+
 
 
 # --------------------------------------------------------------------------
@@ -578,14 +585,17 @@ def compute_tt(theta, sensors, stype):
     src_lat, src_long, zdepth, src_mag = theta
     # sensors
     rlats, rlongs, sensor_fidelity, *_ = sensors.T
-
+    
     if stype in ["seismic", "instant", "array"]:
         model = TauPyModel(model="iasp91")
-        with open("cubic_reg.pkl", "rb") as inp:
+        
+        # Updated to use absolute paths
+        with open(CUBIC_PATH, "rb") as inp:
             reg = pickle.load(inp)
-        with open("TTstd.pkl", "rb") as inp:
+        with open(TTSTD_PATH, "rb") as inp:
             std_reg = pickle.load(inp)
 
+        # ... rest of the function remains identical ...
         # mean and model std and measurment std
         ptime = np.zeros((len(rlats), 3))
 

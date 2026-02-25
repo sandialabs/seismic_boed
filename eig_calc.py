@@ -12,14 +12,18 @@ from mpi4py import MPI
 
 import ml_utils
 
-# Constants for ML Model
-MODEL_PATH = "checkpoint_N1000000_seed38_epoch999.pt"
-X_SCALER_PATH = "x_scaler_38_1000000.pkl"
-Y_SCALER_PATH = "y_scaler_38_1000000.pkl"
+# --- PATH CORRECTION ---
+# Hardcoding absolute paths to ensureRM finds them regardless of launch dir
+BASE_ML_DIR = "/home/jpcalla/seismic_oed"
+
+MODEL_PATH = os.path.join(BASE_ML_DIR, "checkpoint_N1000000_seed38_epoch999.pt")
+X_SCALER_PATH = os.path.join(BASE_ML_DIR, "x_scaler_38_1000000.pkl")
+Y_SCALER_PATH = os.path.join(BASE_ML_DIR, "y_scaler_38_1000000.pkl")
+# -----------------------
 
 # from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from data_gen import generate_data
-from like_models import compute_loglikes
+from like_models_noise_sweep import compute_loglikes
 from utils import plot_surface, read_bounds, read_input_file
 
 # warnings.filterwarnings('error')
@@ -34,16 +38,23 @@ if __name__ == "__main__":
 
     # Initialize ML Model on ALL Ranks
     try:
-        if rank == 0 and not os.path.exists(MODEL_PATH):
-            print(f"ERROR: Model file not found at {MODEL_PATH}")
-            sys.stdout.flush()
-        
+        # Check existence on Rank 0 to fail fast
+        if rank == 0:
+            if not os.path.exists(MODEL_PATH):
+                print(f"CRITICAL ERROR: Model file not found at {MODEL_PATH}")
+                print(f"Current Working Dir: {os.getcwd()}")
+                sys.stdout.flush()
+                # We don't exit here immediately to allow other ranks to crash gracefully or sync
+
+        # Initialize the model (Singleton)
         ml_utils.get_power_model(MODEL_PATH, X_SCALER_PATH, Y_SCALER_PATH)
-        
+
         if rank == 0:
             print("ML Model successfully initialized on all ranks.")
+
     except Exception as e:
-        if rank == 0: print(f"CRITICAL ERROR loading ML model: {e}")
+        if rank == 0:
+            print(f"CRITICAL ERROR loading ML model: {e}")
         sys.exit(1)
 
     # Rank 0 intializes stuff
@@ -62,7 +73,12 @@ if __name__ == "__main__":
             verbose = int(sys.argv[3])
 
             # Set up functions for sampling events
-            samplingfile_name, samplingfile_ext = os.path.splitext(sampling_fname)
+            # Handle absolute paths by stripping directory info
+            samplingfile_basename = os.path.basename(sampling_fname)
+            samplingfile_name, samplingfile_ext = os.path.splitext(
+                samplingfile_basename
+            )
+
             if samplingfile_ext != ".py":
                 raise ValueError(
                     f"Sampling file must have filetype '.py', not {samplingfile_ext}"
@@ -387,3 +403,4 @@ if __name__ == "__main__":
             )
 
         print(str(eig) + " " + str(seig) + " " + str(miness), flush=True)
+
