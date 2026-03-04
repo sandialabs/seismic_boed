@@ -51,6 +51,11 @@ def get_power_gate_diagnostics():
     return dict(_POWER_GATE_DIAGNOSTICS)
 
 
+def _mt_power_enabled():
+    raw = os.environ.get("SEISMIC_OED_USE_MT_POWER", "1").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
 
 # --------------------------------------------------------------------------
 # Power Model Helpers (The Heteroscedastic Noise Logic)
@@ -80,6 +85,18 @@ def compute_power(theta, sensors, stype):
     """
     n_sensors = sensors.shape[0]
     if stype not in ["seismic", "array"] or n_sensors == 0:
+        return np.column_stack(
+            [
+                np.full(n_sensors, np.nan),
+                np.full(n_sensors, np.nan),
+                np.full(n_sensors, np.nan),
+                np.zeros(n_sensors, dtype=bool),
+            ]
+        )
+
+    if not _mt_power_enabled():
+        _POWER_GATE_DIAGNOSTICS["total_checked"] += int(n_sensors)
+        _POWER_GATE_DIAGNOSTICS["power_disabled_count"] += int(n_sensors)
         return np.column_stack(
             [
                 np.full(n_sensors, np.nan),
