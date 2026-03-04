@@ -181,14 +181,16 @@ def power_likelihood(theta, sensors, data, stype):
         # However, we only evaluate power if the sensor DETECTED the event.
         # Check Detections (Block 2: indices nsens to 2*nsens)
         detection_mask = data[idata, nsens : 2 * nsens].astype(bool)
+        obs_power_full = data[idata, 4 * nsens : 5 * nsens]
         finite_mask = np.isfinite(pred_log_power) & np.isfinite(sigma_sq_total)
-        maskidx = np.nonzero(detection_mask & enabled_mask & finite_mask)[0]
+        finite_obs_mask = np.isfinite(obs_power_full)
+        maskidx = np.nonzero(detection_mask & enabled_mask & finite_mask & finite_obs_mask)[0]
 
         if len(maskidx) == 0:
             continue
 
         # Extract observed power for detecting sensors
-        obs_power = data[idata, 4 * nsens : 5 * nsens][maskidx]
+        obs_power = obs_power_full[maskidx]
 
         # Extract predictions for detecting sensors
         curr_pred = pred_log_power[maskidx]
@@ -201,7 +203,9 @@ def power_likelihood(theta, sensors, data, stype):
             - 0.5 * (obs_power - curr_pred) ** 2 / curr_var
         )
 
-        loglike[idata] = np.sum(ll_terms)
+        finite_terms = np.isfinite(ll_terms)
+        if np.any(finite_terms):
+            loglike[idata] = np.sum(ll_terms[finite_terms])
 
     return loglike
 
