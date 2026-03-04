@@ -185,6 +185,27 @@ def compute_metric_row(
     return out
 
 
+def build_monotonic_bins(values: np.ndarray, n_edges: int = 16) -> np.ndarray | None:
+    finite_vals = np.asarray(values, dtype=float)
+    finite_vals = finite_vals[np.isfinite(finite_vals)]
+    if finite_vals.size == 0:
+        return None
+
+    vmin = float(np.min(finite_vals))
+    vmax = float(np.max(finite_vals))
+    if np.isclose(vmin, vmax):
+        # Expand a tiny symmetric interval so cut() has strictly increasing edges.
+        span = max(1e-6, abs(vmin) * 1e-6, 1.0)
+        bins = np.linspace(vmin - span, vmax + span, n_edges)
+    else:
+        bins = np.linspace(vmin, vmax, n_edges)
+
+    bins = np.unique(bins)
+    if bins.size < 2:
+        return None
+    return bins
+
+
 def main() -> None:
     args = parse_args()
     np.random.seed(args.seed)
@@ -393,6 +414,12 @@ def main() -> None:
     fig1, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
     for ax, label in zip(axes, ["A_domain_valid", "B_full_domain_extrapolation"]):
         d = plot_df.loc[plot_df["cohort"] == label]
+        if d.empty:
+            ax.text(0.5, 0.5, "No finite points", ha="center", va="center", transform=ax.transAxes)
+            ax.set_title(label)
+            ax.set_xlabel("Old log SNR (natural log units)")
+            ax.set_ylabel("New log SNR (natural log units)")
+            continue
         ax.scatter(d["old_log_snr"], d["new_log_snr"], s=6, alpha=0.2, edgecolors="none")
         minv = float(np.nanmin([d["old_log_snr"].min(), d["new_log_snr"].min()]))
         maxv = float(np.nanmax([d["old_log_snr"].max(), d["new_log_snr"].max()]))
@@ -408,19 +435,32 @@ def main() -> None:
     fig2, ax2 = plt.subplots(figsize=(8.5, 5.5), constrained_layout=True)
     for label, color in [("A_domain_valid", "tab:blue"), ("B_full_domain_extrapolation", "tab:orange")]:
         d = plot_df.loc[plot_df["cohort"] == label].copy()
+        if d.empty:
+            continue
         old_vals = d["old_log_snr"].to_numpy()
         new_vals = d["new_log_snr"].to_numpy()
         old_z = (old_vals - old_vals.mean()) / (old_vals.std(ddof=0) if old_vals.std(ddof=0) > 0 else 1.0)
         new_z = (new_vals - new_vals.mean()) / (new_vals.std(ddof=0) if new_vals.std(ddof=0) > 0 else 1.0)
         d["residual_z"] = new_z - old_z
 
-        bins = np.linspace(float(d["distance_km"].min()), float(d["distance_km"].max()), 16)
-        d["dist_bin"] = pd.cut(d["distance_km"], bins=bins, include_lowest=True)
+        bins = build_monotonic_bins(d["distance_km"].to_numpy(), n_edges=16)
+        if bins is None:
+            continue
+
+        d["dist_bin"] = pd.cut(
+            d["distance_km"],
+            bins=bins,
+            include_lowest=True,
+            duplicates="drop",
+        )
         grouped = d.groupby("dist_bin", observed=True)
         x = grouped["distance_km"].mean().to_numpy()
         y = grouped["residual_z"].mean().to_numpy()
         ylo = grouped["residual_z"].quantile(0.10).to_numpy()
         yhi = grouped["residual_z"].quantile(0.90).to_numpy()
+
+        if x.size == 0:
+            continue
 
         ax2.plot(x, y, label=label, color=color, linewidth=2.0)
         ax2.fill_between(x, ylo, yhi, color=color, alpha=0.18)
