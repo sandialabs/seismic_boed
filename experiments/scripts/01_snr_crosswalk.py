@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -113,6 +114,17 @@ def parse_args() -> argparse.Namespace:
         "--noise-floors",
         default="1e-8,3e-8,1e-7",
         help="Comma-separated linear noise floors (power units).",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print progress updates during event evaluation and output generation.",
+    )
+    parser.add_argument(
+        "--progress-every",
+        type=int,
+        default=100,
+        help="Progress print interval in events per cohort when --verbose is enabled.",
     )
     return parser.parse_args()
 
@@ -223,6 +235,9 @@ def evaluate_pairs_for_events(
     gaussian_variance: np.ndarray,
     power_model,
     mode: str,
+    cohort_label: str,
+    verbose: bool = False,
+    progress_every: int = 100,
 ) -> tuple[pd.DataFrame, dict]:
     pair_rows = []
     gate_totals = {
@@ -234,6 +249,8 @@ def evaluate_pairs_for_events(
         "domain_valid_count": 0,
     }
 
+    n_events = int(events.shape[0])
+    start_t = time.time()
     for event_idx, theta in enumerate(events):
         enabled_mask, gate_masks, gate_meta = ml_utils.evaluate_power_domain_gates(
             theta=theta,
@@ -279,12 +296,31 @@ def evaluate_pairs_for_events(
                 }
             )
 
+        if verbose and (((event_idx + 1) % max(progress_every, 1) == 0) or (event_idx + 1 == n_events)):
+            elapsed = time.time() - start_t
+            rate = (event_idx + 1) / max(elapsed, 1e-9)
+            pct = 100.0 * (event_idx + 1) / max(n_events, 1)
+            print(
+                f"[progress] cohort={cohort_label} mode={mode} "
+                f"events={event_idx + 1}/{n_events} ({pct:.1f}%) "
+                f"rate={rate:.2f} evt/s elapsed={elapsed:.1f}s"
+            )
+
+    if verbose:
+        elapsed = time.time() - start_t
+        print(
+            f"[done] cohort={cohort_label} mode={mode} "
+            f"pairs={len(pair_rows)} domain_valid={gate_totals['domain_valid_count']} "
+            f"elapsed={elapsed:.1f}s"
+        )
+
     return pd.DataFrame(pair_rows), gate_totals
 
 
 def main() -> None:
     args = parse_args()
     np.random.seed(args.seed)
+    t_main = time.time()
 
     if not ml_utils.TORCH_AVAILABLE:
         raise RuntimeError(
@@ -294,6 +330,10 @@ def main() -> None:
     if "SEISMIC_OED_FIDELITY_MAP" not in os.environ:
         os.environ["SEISMIC_OED_FIDELITY_MAP"] = "clamped_linear"
     fidelity_strategy = os.environ["SEISMIC_OED_FIDELITY_MAP"]
+
+    if args.verbose:
+        print("[start] Stage 1 SNR crosswalk")
+        print(f"[config] seed={args.seed} n_events_per_cohort={args.n_events} fidelity_map={fidelity_strategy}")
 
     out_dir = REPO_ROOT / "experiments" / "stage1"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -330,6 +370,8 @@ def main() -> None:
     noise_floors = [float(x.strip()) for x in args.noise_floors.split(",") if x.strip()]
     if len(noise_floors) < 3:
         raise RuntimeError("Provide at least 3 noise floor values via --noise-floors.")
+    if args.verbose:
+        print(f"[config] noise_floors={noise_floors}")
 
     power_model = ml_utils.get_power_model()
     gaussian_variance = ml_utils.map_sensor_fidelity_to_gaussian_variance(
@@ -342,6 +384,9 @@ def main() -> None:
         gaussian_variance=gaussian_variance,
         power_model=power_model,
         mode="gated",
+        cohort_label="A_domain_valid",
+        verbose=args.verbose,
+        progress_every=args.progress_every,
     )
     pairs_b, gates_b = evaluate_pairs_for_events(
         events=events_b,
@@ -349,6 +394,9 @@ def main() -> None:
         gaussian_variance=gaussian_variance,
         power_model=power_model,
         mode="full",
+        cohort_label="B_full_domain_extrapolation",
+        verbose=args.verbose,
+        progress_every=args.progress_every,
     )
 
     timestamp = datetime.now(timezone.utc).isoformat()
@@ -414,6 +462,8 @@ def main() -> None:
     metrics_df = pd.DataFrame(records)
     metrics_csv = out_dir / "snr_crosswalk.csv"
     metrics_df.to_csv(metrics_csv, index=False)
+    if args.verbose:
+        print(f"[write] {metrics_csv}")
 
     breakdown_rows = [
         {
@@ -448,6 +498,8 @@ def main() -> None:
     breakdown_df = pd.DataFrame(breakdown_rows)
     breakdown_csv = out_dir / "domain_validity_breakdown.csv"
     breakdown_df.to_csv(breakdown_csv, index=False)
+    if args.verbose:
+        print(f"[write] {breakdown_csv}")
 
     primary_nf = noise_floors[0]
     plot_a = cohort_a_df.copy()
@@ -480,6 +532,8 @@ def main() -> None:
     scatter_path = out_dir / "fig_scatter_old_vs_new.png"
     fig1.savefig(scatter_path, dpi=200)
     plt.close(fig1)
+    if args.verbose:
+        print(f"[write] {scatter_path}")
 
     fig2, ax2 = plt.subplots(figsize=(8.5, 5.5), constrained_layout=True)
     for label, color in [("A_domain_valid", "tab:blue"), ("B_full_domain_extrapolation", "tab:orange")]:
@@ -522,6 +576,8 @@ def main() -> None:
     resid_path = out_dir / "fig_residual_by_distance.png"
     fig2.savefig(resid_path, dpi=200)
     plt.close(fig2)
+    if args.verbose:
+        print(f"[write] {resid_path}")
 
     summary_lines = [
         "# Stage 1 SNR Crosswalk Summary",
@@ -582,6 +638,8 @@ def main() -> None:
     ]
     summary_path = out_dir / "summary.md"
     summary_path.write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
+    if args.verbose:
+        print(f"[write] {summary_path}")
 
     required_files = [
         metrics_csv,
@@ -624,6 +682,8 @@ def main() -> None:
     for path_obj, ok in file_checks:
         print(f"   - {path_obj.relative_to(REPO_ROOT)}: {'OK' if ok else 'MISSING/EMPTY'}")
     print("4) compact metric table printed above: PASS")
+    if args.verbose:
+        print(f"[done] total_elapsed={time.time() - t_main:.1f}s")
 
 
 if __name__ == "__main__":
