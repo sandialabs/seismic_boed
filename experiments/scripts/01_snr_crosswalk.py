@@ -206,55 +206,24 @@ def build_monotonic_bins(values: np.ndarray, n_edges: int = 16) -> np.ndarray | 
     return bins
 
 
-def main() -> None:
-    args = parse_args()
-    np.random.seed(args.seed)
+def sample_mw5_indomain_events(sensors: np.ndarray, n_events: int, seed: int) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    lat_center = float(np.mean(sensors[:, 0]))
+    lon_center = float(np.mean(sensors[:, 1]))
+    lat = rng.uniform(lat_center - 0.2, lat_center + 0.2, n_events)
+    lon = rng.uniform(lon_center - 0.2, lon_center + 0.2, n_events)
+    depth = rng.uniform(5.0, 20.0, n_events)  # km
+    mag = rng.uniform(4.9, 5.1, n_events)
+    return np.column_stack([lat, lon, depth, mag])
 
-    if not ml_utils.TORCH_AVAILABLE:
-        raise RuntimeError(
-            "ml_utils reports TORCH_AVAILABLE=False; cannot run power-derived SNR crosswalk."
-        )
 
-    if "SEISMIC_OED_FIDELITY_MAP" not in os.environ:
-        os.environ["SEISMIC_OED_FIDELITY_MAP"] = "clamped_linear"
-    fidelity_strategy = os.environ["SEISMIC_OED_FIDELITY_MAP"]
-
-    out_dir = REPO_ROOT / "experiments" / "stage1"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    inputs_path = (REPO_ROOT / args.inputs).resolve()
-    nlpts_data, nlpts_space, ndata, bounds_fname, sampling_fname, sensors = utils.read_input_file(str(inputs_path))
-    bounds_path = (REPO_ROOT / bounds_fname).resolve()
-    latlon_bounds, depth_range, mag_range = utils.read_bounds(str(bounds_path), sensor_bounds=False)
-
-    sampling_mod_name = Path(sampling_fname).stem
-    sampling_mod = importlib.import_module(sampling_mod_name)
-    events = sampling_mod.generate_theta_data(
-        bounds=latlon_bounds,
-        depth_range=depth_range,
-        mag_range=mag_range,
-        nsamp=args.n_events,
-        skip=args.seed,
-    )
-    n_events = int(events.shape[0])
-    n_sensors = int(sensors.shape[0])
-    total_pairs = n_events * n_sensors
-
-    if total_pairs < 20000:
-        raise RuntimeError(
-            f"Need at least 20k event-sensor pairs; got {total_pairs}. "
-            "Increase --n-events."
-        )
-
-    noise_floors = [float(x.strip()) for x in args.noise_floors.split(",") if x.strip()]
-    if len(noise_floors) < 3:
-        raise RuntimeError("Provide at least 3 noise floor values via --noise-floors.")
-
-    power_model = ml_utils.get_power_model()
-    gaussian_variance = ml_utils.map_sensor_fidelity_to_gaussian_variance(
-        sensors[:, 2], strategy=fidelity_strategy
-    )
-
+def evaluate_pairs_for_events(
+    events: np.ndarray,
+    sensors: np.ndarray,
+    gaussian_variance: np.ndarray,
+    power_model,
+    mode: str,
+) -> tuple[pd.DataFrame, dict]:
     pair_rows = []
     gate_totals = {
         "failed_lat_local": 0,
@@ -283,17 +252,20 @@ def main() -> None:
             [geodetics.locations2degrees(src_lat, src_lon, rlat, rlon) for rlat, rlon in sensors[:, :2]]
         )
         dist_km = geodetics.degrees2kilometers(dist_deg)
-
         old_log_snr = like_models.seismic_snr_cal(dist_km, src_mag, sensors[:, 2])
-        gated_power = like_models.compute_power(theta, sensors, stype="seismic")
-        pred_log_power_gated = gated_power[:, 0]
-        pred_log_power_full = power_model.predict_log_power(
-            theta=theta,
-            sensors=sensors,
-            gaussian_variance=gaussian_variance,
-        )
 
-        for sensor_idx in range(n_sensors):
+        if mode == "gated":
+            pred_log_power = like_models.compute_power(theta, sensors, stype="seismic")[:, 0]
+        elif mode == "full":
+            pred_log_power = power_model.predict_log_power(
+                theta=theta,
+                sensors=sensors,
+                gaussian_variance=gaussian_variance,
+            )
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
+        for sensor_idx in range(sensors.shape[0]):
             pair_rows.append(
                 {
                     "event_idx": event_idx,
@@ -301,23 +273,103 @@ def main() -> None:
                     "distance_km": float(dist_km[sensor_idx]),
                     "magnitude": float(src_mag),
                     "old_log_snr": float(old_log_snr[sensor_idx]),
-                    "pred_log_power_gated": float(pred_log_power_gated[sensor_idx]),
-                    "pred_log_power_full": float(pred_log_power_full[sensor_idx]),
+                    "pred_log_power": float(pred_log_power[sensor_idx]),
                     "is_domain_valid": bool(enabled_mask[sensor_idx]),
                     "mt_norm_ratio": float(gate_meta["mt_norm_ratio"]),
                 }
             )
 
-    pairs_df = pd.DataFrame(pair_rows)
+    return pd.DataFrame(pair_rows), gate_totals
+
+
+def main() -> None:
+    args = parse_args()
+    np.random.seed(args.seed)
+
+    if not ml_utils.TORCH_AVAILABLE:
+        raise RuntimeError(
+            "ml_utils reports TORCH_AVAILABLE=False; cannot run power-derived SNR crosswalk."
+        )
+
+    if "SEISMIC_OED_FIDELITY_MAP" not in os.environ:
+        os.environ["SEISMIC_OED_FIDELITY_MAP"] = "clamped_linear"
+    fidelity_strategy = os.environ["SEISMIC_OED_FIDELITY_MAP"]
+
+    out_dir = REPO_ROOT / "experiments" / "stage1"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    inputs_path = (REPO_ROOT / args.inputs).resolve()
+    nlpts_data, nlpts_space, ndata, bounds_fname, sampling_fname, sensors = utils.read_input_file(str(inputs_path))
+    bounds_path = (REPO_ROOT / bounds_fname).resolve()
+    latlon_bounds, depth_range, mag_range = utils.read_bounds(str(bounds_path), sensor_bounds=False)
+
+    sampling_mod_name = Path(sampling_fname).stem
+    sampling_mod = importlib.import_module(sampling_mod_name)
+    events_b = sampling_mod.generate_theta_data(
+        bounds=latlon_bounds,
+        depth_range=depth_range,
+        mag_range=mag_range,
+        nsamp=args.n_events,
+        skip=args.seed,
+    )
+    events_a = sample_mw5_indomain_events(sensors=sensors, n_events=args.n_events, seed=args.seed + 1)
+
+    n_events_a = int(events_a.shape[0])
+    n_events_b = int(events_b.shape[0])
+    n_sensors = int(sensors.shape[0])
+    total_pairs_a = n_events_a * n_sensors
+    total_pairs_b = n_events_b * n_sensors
+    total_pairs_evaluated = total_pairs_a + total_pairs_b
+
+    if total_pairs_evaluated < 20000:
+        raise RuntimeError(
+            f"Need at least 20k event-sensor pairs; got {total_pairs_evaluated}. "
+            "Increase --n-events."
+        )
+
+    noise_floors = [float(x.strip()) for x in args.noise_floors.split(",") if x.strip()]
+    if len(noise_floors) < 3:
+        raise RuntimeError("Provide at least 3 noise floor values via --noise-floors.")
+
+    power_model = ml_utils.get_power_model()
+    gaussian_variance = ml_utils.map_sensor_fidelity_to_gaussian_variance(
+        sensors[:, 2], strategy=fidelity_strategy
+    )
+
+    pairs_a, gates_a = evaluate_pairs_for_events(
+        events=events_a,
+        sensors=sensors,
+        gaussian_variance=gaussian_variance,
+        power_model=power_model,
+        mode="gated",
+    )
+    pairs_b, gates_b = evaluate_pairs_for_events(
+        events=events_b,
+        sensors=sensors,
+        gaussian_variance=gaussian_variance,
+        power_model=power_model,
+        mode="full",
+    )
 
     timestamp = datetime.now(timezone.utc).isoformat()
     git_sha = get_git_sha(REPO_ROOT)
     run_id = f"stage1_snr_crosswalk_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
     params = {
         "seed": args.seed,
-        "n_events": n_events,
+        "n_events_cohort_a": n_events_a,
+        "n_events_cohort_b": n_events_b,
         "n_sensors": n_sensors,
-        "total_pairs": total_pairs,
+        "total_pairs_cohort_a": total_pairs_a,
+        "total_pairs_cohort_b": total_pairs_b,
+        "total_pairs_evaluated": total_pairs_evaluated,
+        "cohort_a_sampling": {
+            "latlon_center": "sensor_mean",
+            "lat_halfwidth_deg": 0.2,
+            "lon_halfwidth_deg": 0.2,
+            "depth_km_range": [5.0, 20.0],
+            "mag_range": [4.9, 5.1],
+        },
+        "cohort_b_sampling": "uniform_prior.generate_theta_data from inputs bounds",
         "noise_floors": noise_floors,
         "fidelity_map": fidelity_strategy,
         "inputs_file": str(inputs_path.relative_to(REPO_ROOT)),
@@ -336,11 +388,8 @@ def main() -> None:
     }
 
     records = []
-    cohort_a_df = pairs_df.loc[pairs_df["is_domain_valid"]].copy()
-    cohort_a_df["pred_log_power"] = cohort_a_df["pred_log_power_gated"]
-
-    cohort_b_df = pairs_df.copy()
-    cohort_b_df["pred_log_power"] = cohort_b_df["pred_log_power_full"]
+    cohort_a_df = pairs_a.loc[pairs_a["is_domain_valid"]].copy()
+    cohort_b_df = pairs_b.copy()
 
     for nf in noise_floors:
         records.append(
@@ -366,34 +415,34 @@ def main() -> None:
     metrics_csv = out_dir / "snr_crosswalk.csv"
     metrics_df.to_csv(metrics_csv, index=False)
 
-    gate_total = float(total_pairs)
-    domain_valid_count = int(gate_totals["domain_valid_count"])
     breakdown_rows = [
         {
             **metadata,
             "cohort": "A_domain_valid",
             "extrapolation": False,
-            "total_pairs": total_pairs,
-            "pair_count": domain_valid_count,
-            "pair_fraction": domain_valid_count / gate_total,
-            "failed_lat_local": gate_totals["failed_lat_local"],
-            "failed_lon_local": gate_totals["failed_lon_local"],
-            "failed_depth_m": gate_totals["failed_depth_m"],
-            "failed_gaussian_variance": gate_totals["failed_gaussian_variance"],
-            "failed_mt_norm": gate_totals["failed_mt_norm"],
+            "total_pairs": total_pairs_a,
+            "pair_count": int(cohort_a_df.shape[0]),
+            "pair_fraction": float(cohort_a_df.shape[0]) / max(total_pairs_a, 1),
+            "failed_lat_local": gates_a["failed_lat_local"],
+            "failed_lon_local": gates_a["failed_lon_local"],
+            "failed_depth_m": gates_a["failed_depth_m"],
+            "failed_gaussian_variance": gates_a["failed_gaussian_variance"],
+            "failed_mt_norm": gates_a["failed_mt_norm"],
+            "domain_valid_count": gates_a["domain_valid_count"],
         },
         {
             **metadata,
             "cohort": "B_full_domain_extrapolation",
             "extrapolation": True,
-            "total_pairs": total_pairs,
-            "pair_count": total_pairs,
+            "total_pairs": total_pairs_b,
+            "pair_count": total_pairs_b,
             "pair_fraction": 1.0,
-            "failed_lat_local": gate_totals["failed_lat_local"],
-            "failed_lon_local": gate_totals["failed_lon_local"],
-            "failed_depth_m": gate_totals["failed_depth_m"],
-            "failed_gaussian_variance": gate_totals["failed_gaussian_variance"],
-            "failed_mt_norm": gate_totals["failed_mt_norm"],
+            "failed_lat_local": gates_b["failed_lat_local"],
+            "failed_lon_local": gates_b["failed_lon_local"],
+            "failed_depth_m": gates_b["failed_depth_m"],
+            "failed_gaussian_variance": gates_b["failed_gaussian_variance"],
+            "failed_mt_norm": gates_b["failed_mt_norm"],
+            "domain_valid_count": gates_b["domain_valid_count"],
         },
     ]
     breakdown_df = pd.DataFrame(breakdown_rows)
@@ -480,8 +529,9 @@ def main() -> None:
         f"- run_id: `{run_id}`",
         f"- git_sha: `{git_sha}`",
         f"- timestamp_utc: `{timestamp}`",
-        f"- total_event_sensor_pairs: `{total_pairs}`",
-        f"- events: `{n_events}`",
+        f"- total_event_sensor_pairs: `{total_pairs_evaluated}`",
+        f"- events_cohort_a: `{n_events_a}`",
+        f"- events_cohort_b: `{n_events_b}`",
         f"- sensors: `{n_sensors}`",
         f"- fidelity_mapping: `{fidelity_strategy}`",
         f"- primary_noise_floor: `{primary_nf:.3e}` (power units)",
@@ -564,7 +614,10 @@ def main() -> None:
     )
 
     print("\nAcceptance checks:")
-    print(f"1) >=20k event-sensor pairs: {'PASS' if total_pairs >= 20000 else 'FAIL'} ({total_pairs})")
+    print(
+        f"1) >=20k event-sensor pairs: "
+        f"{'PASS' if total_pairs_evaluated >= 20000 else 'FAIL'} ({total_pairs_evaluated})"
+    )
     print(f"2) both cohorts present: {'PASS' if has_both_cohorts else 'FAIL'} ({sorted(set(metrics_df['cohort']))})")
     all_files_ok = all(ok for _, ok in file_checks)
     print(f"3) 5 required files exist and non-empty: {'PASS' if all_files_ok else 'FAIL'}")
