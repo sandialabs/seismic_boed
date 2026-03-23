@@ -22,6 +22,7 @@ DROPOUT = 0.0
 DEFAULT_MODEL_FILE = "checkpoint_N1000000_seed38_epoch999.pt"
 DEFAULT_X_SCALER_FILE = "x_scaler_38_1000000.pkl"
 DEFAULT_Y_SCALER_FILE = "y_scaler_38_1000000.pkl"
+REFERENCE_MW = 5.0
 
 
 if TORCH_AVAILABLE:
@@ -48,6 +49,13 @@ else:
 
 
 # --- 2. Helper: Mag -> Moment Tensor ---
+def scalar_moment_from_mw(mag):
+    """
+    Hanks & Kanamori (1979): M0 = 10^(1.5*Mw + 9.1) for N-m.
+    """
+    return 10 ** (1.5 * mag + 9.1)
+
+
 def magnitude_to_moment_tensor_isotropic(mag):
     """
     Converts Moment Magnitude (Mw) to a 6-component Moment Tensor
@@ -57,11 +65,27 @@ def magnitude_to_moment_tensor_isotropic(mag):
     """
     # Calculate Scalar Moment M0
     # Note: Ensure your MLP was trained on N-m. If dyne-cm, change 9.1 to 16.1.
-    m0 = 10 ** (1.5 * mag + 9.1)
+    m0 = scalar_moment_from_mw(mag)
 
     # For isotropic, diagonal terms are M0, off-diagonals are 0.
     # [m_rr, m_tt, m_pp, m_rt, m_rp, m_tp]
     return np.array([m0, m0, m0, 0.0, 0.0, 0.0])
+
+
+def log_power_magnitude_shift(mag, mw_ref=REFERENCE_MW):
+    """
+    Shift log integrated power from a reference Mw to a target Mw.
+
+    Power scales with the square of the waveform amplitude, while waveform
+    amplitude scales linearly with seismic moment M0. In natural-log units:
+
+        log P(Mw) = log P(Mw_ref) + 2 * log(M0(Mw) / M0(Mw_ref))
+
+    which simplifies to:
+
+        log P(Mw) = log P(Mw_ref) + 3 * ln(10) * (Mw - Mw_ref)
+    """
+    return 3.0 * np.log(10.0) * (float(mag) - float(mw_ref))
 
 
 def resolve_repo_root():
@@ -126,11 +150,11 @@ def evaluate_power_domain_gates(
         gaussian_variance <= float(gauss_max)
     )
 
-    mt = magnitude_to_moment_tensor_isotropic(src_mag)
-    mt_norm = float(np.linalg.norm(mt))
-    mt_ref_norm = training_mt_norm_reference(5.0)
-    ratio = mt_norm / max(mt_ref_norm, 1e-30)
-    mt_gate_scalar = (ratio >= float(mt_norm_ratio_min)) & (ratio <= float(mt_norm_ratio_max))
+    # The NN now always sees a fixed-norm Mw=5 isotropic tensor and magnitude
+    # differences are handled by an output-space log-power shift. That keeps the
+    # MT input features pinned to the training norm.
+    ratio = 1.0
+    mt_gate_scalar = True
     mt_gate = np.full(len(sensors), mt_gate_scalar, dtype=bool)
 
     enabled = lat_gate & lon_gate & depth_gate & gauss_gate & mt_gate
@@ -202,8 +226,10 @@ class SeismicPowerInterface:
             dists_deg.append(geodetics.locations2degrees(src_lat, src_lon, sl, slon))
         dists_km = geodetics.degrees2kilometers(np.array(dists_deg))
 
-        # 2. Get Moment Tensor (Isotropic Assumption)
-        mt = magnitude_to_moment_tensor_isotropic(src_mag)  # Shape (6,)
+        # 2. Get reference-norm moment tensor.
+        # The NN was trained with fixed Mw=5 tensors, so keep the MT input at
+        # the training norm and scale the predicted log-power afterward.
+        mt = magnitude_to_moment_tensor_isotropic(REFERENCE_MW)  # Shape (6,)
 
         # 3. Build Input Matrix (N_sensors x 11 features)
         # Columns: [Lat, Lon, Depth, Dist_km, Variance, m_rr, m_tt, m_pp, m_rt, m_rp, m_tp]
@@ -248,6 +274,12 @@ class SeismicPowerInterface:
         log_power_pred = self.y_scaler.inverse_transform(
             pred_std.reshape(-1, 1)
         ).ravel()
+
+        # Adjust the physical log-power for the requested source magnitude
+        # without pushing the MT input features out of the training domain.
+        log_power_pred = log_power_pred + log_power_magnitude_shift(
+            src_mag, mw_ref=REFERENCE_MW
+        )
 
         return log_power_pred
 
