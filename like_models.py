@@ -4,6 +4,7 @@ import warnings
 from pathlib import Path
 
 import ml_utils
+import mt_prior
 import numpy as np
 from obspy import geodetics
 from obspy.geodetics.base import (
@@ -14,6 +15,7 @@ from obspy.geodetics.base import (
 from obspy.taup import TauPyModel
 from obspy.taup.taup_geo import calc_dist
 from scipy import stats
+from scipy.special import logsumexp
 from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 
@@ -41,6 +43,12 @@ _POWER_GATE_DIAGNOSTICS = {
     "power_disabled_count": 0,
 }
 
+_MT_MARGINALIZATION_DIAGNOSTICS = {
+    "mt_samples_drawn": 0,
+    "nonfinite_sample_loglikes_dropped": 0,
+    "zero_usable_mt_events": 0,
+}
+
 
 def reset_power_gate_diagnostics():
     for key in _POWER_GATE_DIAGNOSTICS:
@@ -49,6 +57,15 @@ def reset_power_gate_diagnostics():
 
 def get_power_gate_diagnostics():
     return dict(_POWER_GATE_DIAGNOSTICS)
+
+
+def reset_mt_marginalization_diagnostics():
+    for key in _MT_MARGINALIZATION_DIAGNOSTICS:
+        _MT_MARGINALIZATION_DIAGNOSTICS[key] = 0
+
+
+def get_mt_marginalization_diagnostics():
+    return dict(_MT_MARGINALIZATION_DIAGNOSTICS)
 
 
 def _mt_power_enabled():
@@ -74,7 +91,7 @@ def observation_variance_power(
     return sigma**2
 
 
-def compute_power(theta, sensors, stype):
+def compute_power(theta, sensors, stype, mt_override=None):
     """
     Computes predicted power using the MLP and returns error components.
 
@@ -138,6 +155,7 @@ def compute_power(theta, sensors, stype):
                 theta,
                 sensors[enabled_mask],
                 gaussian_variance=gaussian_variance[enabled_mask],
+                mt_override=mt_override,
             )
             model_sigma[enabled_mask] = 0.3
             measure_sigma[enabled_mask] = np.sqrt(gaussian_variance[enabled_mask])
@@ -145,69 +163,123 @@ def compute_power(theta, sensors, stype):
     return np.column_stack([pred_log_power, model_sigma, measure_sigma, enabled_mask])
 
 
+def compute_power_distribution(theta, sensors, stype, mt_override=None):
+    """
+    Return Gaussian log-power distribution terms for the current MT sample.
+
+    Returns
+    -------
+    tuple
+        (pred_log_power, sigma_sq_total, enabled_mask)
+    """
+    power_components = compute_power(theta, sensors, stype, mt_override=mt_override)
+    pred_log_power = power_components[:, 0]
+    sigma_model = power_components[:, 1]
+    sigma_measure = power_components[:, 2]
+    enabled_mask = power_components[:, 3].astype(bool)
+    var_hetero = observation_variance_power(pred_log_power)
+    sigma_sq_total = sigma_model**2 + sigma_measure**2 + var_hetero
+    return pred_log_power, sigma_sq_total, enabled_mask
+
+
+def _power_loglike_from_distribution(
+    data, pred_log_power, sigma_sq_total, enabled_mask, require_detection=True
+):
+    [ndata, ndpt] = data.shape
+    nsens = int(ndpt / 5)
+    loglike = np.zeros(ndata)
+
+    obs_power_full = data[:, 4 * nsens : 5 * nsens]
+    if require_detection:
+        detection_mask = data[:, nsens : 2 * nsens].astype(bool)
+    else:
+        detection_mask = np.ones_like(obs_power_full, dtype=bool)
+
+    finite_pred = (
+        np.isfinite(pred_log_power)
+        & np.isfinite(sigma_sq_total)
+        & (sigma_sq_total > 0.0)
+    )
+    finite_obs = np.isfinite(obs_power_full)
+    valid = (
+        detection_mask
+        & enabled_mask[np.newaxis, :]
+        & finite_pred[np.newaxis, :]
+        & finite_obs
+    )
+
+    if not np.any(valid):
+        return loglike
+
+    pred_matrix = np.broadcast_to(pred_log_power, obs_power_full.shape)
+    var_matrix = np.broadcast_to(sigma_sq_total, obs_power_full.shape)
+    ll_terms = np.zeros_like(obs_power_full, dtype=float)
+    ll_terms[valid] = (
+        -0.5 * np.log(2 * np.pi * var_matrix[valid])
+        - 0.5 * (obs_power_full[valid] - pred_matrix[valid]) ** 2 / var_matrix[valid]
+    )
+    ll_terms[~np.isfinite(ll_terms)] = 0.0
+    return np.sum(ll_terms, axis=1)
+
+
 def power_likelihood(theta, sensors, data, stype):
     """
     Computes Log-Likelihood for Power data (Column Block 5).
     Uses a Heteroscedastic Gaussian on Log-Power.
     """
-    # Get predictions and base errors
-    # result shape: (N_sensors, 3) -> [pred, sigma_model, sigma_measure]
-    power_components = compute_power(theta, sensors, stype)
+    pred_log_power, sigma_sq_total, enabled_mask = compute_power_distribution(
+        theta, sensors, stype
+    )
+    return _power_loglike_from_distribution(
+        data, pred_log_power, sigma_sq_total, enabled_mask, require_detection=True
+    )
 
-    pred_log_power = power_components[:, 0]
-    sigma_model = power_components[:, 1]
-    sigma_measure = power_components[:, 2]
-    enabled_mask = power_components[:, 3].astype(bool)
 
-    # Calculate the Signal-Dependent Noise (The "Noise Floor" Effect)
-    # This adds variance when the signal is weak
-    var_hetero = observation_variance_power(pred_log_power)
+def power_likelihood_marginalized(theta, sensors, data, stype, mt_samples=None):
+    """
+    Marginalize MT uncertainty inside the power likelihood by Monte Carlo
+    averaging over prior draws of normalized MT directions.
+    """
+    if sensors.shape[0] == 0 or stype not in ["seismic", "array"] or not _mt_power_enabled():
+        return np.zeros(data.shape[0])
 
-    # Total Variance = Model^2 + Measure^2 + SignalDep^2
-    sigma_sq_total = sigma_model**2 + sigma_measure**2 + var_hetero
-
-    # Prepare Data Extraction
-    # Data shape is (ndata, Total_Cols)
-    # We need to find where the power data lives.
-    # Architecture: [Arrivals(N) | Detect(N) | Az(N) | Inc(N) | POWER(N)]
-    [ndata, ndpt] = data.shape
-    nsens = int(ndpt / 5)  # Updated stride to 5
-
-    loglike = np.zeros(ndata)
-
-    # Loop over data realizations (vectorizing this is possible but complex due to masking)
-    for idata in range(ndata):
-        # Power data is in the 5th block (indices 4*nsens to 5*nsens)
-        # However, we only evaluate power if the sensor DETECTED the event.
-        # Check Detections (Block 2: indices nsens to 2*nsens)
-        detection_mask = data[idata, nsens : 2 * nsens].astype(bool)
-        obs_power_full = data[idata, 4 * nsens : 5 * nsens]
-        finite_mask = np.isfinite(pred_log_power) & np.isfinite(sigma_sq_total)
-        finite_obs_mask = np.isfinite(obs_power_full)
-        maskidx = np.nonzero(detection_mask & enabled_mask & finite_mask & finite_obs_mask)[0]
-
-        if len(maskidx) == 0:
-            continue
-
-        # Extract observed power for detecting sensors
-        obs_power = obs_power_full[maskidx]
-
-        # Extract predictions for detecting sensors
-        curr_pred = pred_log_power[maskidx]
-        curr_var = sigma_sq_total[maskidx]
-
-        # Gaussian Log Likelihood
-        # -0.5 * log(2pi * sigma^2) - 0.5 * (obs - pred)^2 / sigma^2
-        ll_terms = (
-            -0.5 * np.log(2 * np.pi * curr_var)
-            - 0.5 * (obs_power - curr_pred) ** 2 / curr_var
+    config = mt_prior.get_mt_prior_config()
+    if mt_samples is None:
+        mt_samples = mt_prior.sample_mt_prior(
+            config["samples"],
+            mode=config["mode"],
+            df=config["df"],
+            dev_scale=config["dev_scale"],
+            seed=config["seed"],
         )
 
-        finite_terms = np.isfinite(ll_terms)
-        if np.any(finite_terms):
-            loglike[idata] = np.sum(ll_terms[finite_terms])
+    mt_samples = np.asarray(mt_samples, dtype=float)
+    if mt_samples.ndim == 1:
+        mt_samples = mt_samples.reshape(1, 6)
 
-    return loglike
+    _MT_MARGINALIZATION_DIAGNOSTICS["mt_samples_drawn"] += int(mt_samples.shape[0])
+
+    sample_loglikes = []
+    for mt_sample in mt_samples:
+        pred_log_power, sigma_sq_total, enabled_mask = compute_power_distribution(
+            theta, sensors, stype, mt_override=mt_sample
+        )
+        sample_ll = _power_loglike_from_distribution(
+            data, pred_log_power, sigma_sq_total, enabled_mask, require_detection=True
+        )
+        if not np.all(np.isfinite(sample_ll)):
+            _MT_MARGINALIZATION_DIAGNOSTICS[
+                "nonfinite_sample_loglikes_dropped"
+            ] += 1
+            continue
+        sample_loglikes.append(sample_ll)
+
+    if not sample_loglikes:
+        _MT_MARGINALIZATION_DIAGNOSTICS["zero_usable_mt_events"] += 1
+        return np.zeros(data.shape[0])
+
+    sample_loglikes = np.vstack(sample_loglikes)
+    return logsumexp(sample_loglikes, axis=0) - np.log(sample_loglikes.shape[0])
 
 
 # --------------------------------------------------------------------------
@@ -1054,9 +1126,14 @@ def compute_sensor_loglikes(theta, sensors, data, stype="seismic"):
     # NEW: Power likelihood
     # Only calculate for seismic/array sensors, others get 0
     if stype in ["seismic", "array"]:
-        power_loglikes = power_likelihood(theta, sensors, data, stype=stype)
+        if mt_prior.mt_marginalization_enabled():
+            power_loglikes = power_likelihood_marginalized(
+                theta, sensors, data, stype=stype
+            )
+        else:
+            power_loglikes = power_likelihood(theta, sensors, data, stype=stype)
     else:
-        power_loglikes = 0.0
+        power_loglikes = np.zeros(data.shape[0])
 
     loglikes = (
         detect_loglikes

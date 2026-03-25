@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import joblib
+import mt_prior
 import numpy as np
 from obspy import geodetics
 
@@ -119,7 +120,8 @@ def map_sensor_fidelity_to_gaussian_variance(
 
 
 def training_mt_norm_reference(mw_ref=5.0):
-    return float(np.linalg.norm(magnitude_to_moment_tensor_isotropic(mw_ref)))
+    mt = magnitude_to_moment_tensor_isotropic(mw_ref)
+    return float(np.sqrt(0.5 * np.sum(mt**2)))
 
 
 def evaluate_power_domain_gates(
@@ -192,7 +194,7 @@ class SeismicPowerInterface:
         self.x_scaler = joblib.load(x_scaler_path)
         self.y_scaler = joblib.load(y_scaler_path)
 
-    def predict_log_power(self, theta, sensors, gaussian_variance=None):
+    def predict_log_power(self, theta, sensors, gaussian_variance=None, mt_override=None):
         """
         Predicts log integrated power for a single event `theta` against multiple `sensors`.
 
@@ -207,6 +209,12 @@ class SeismicPowerInterface:
         -------
         log_power_pred : np.array (N,)
             Predicted log power for each sensor.
+
+        Notes
+        -----
+        `mt_override`, when provided, is interpreted as a normalized 6-component
+        MT direction in Voigt order. It is rescaled to the training reference
+        norm before entering the NN feature vector.
         """
         # Unpack event
         src_lat, src_lon, src_depth, src_mag = theta
@@ -229,7 +237,13 @@ class SeismicPowerInterface:
         # 2. Get reference-norm moment tensor.
         # The NN was trained with fixed Mw=5 tensors, so keep the MT input at
         # the training norm and scale the predicted log-power afterward.
-        mt = magnitude_to_moment_tensor_isotropic(REFERENCE_MW)  # Shape (6,)
+        if mt_override is None:
+            mt_direction = mt_prior.isotropic_mt_unit()
+        else:
+            mt_direction = mt_prior.normalize_mt(np.asarray(mt_override, dtype=float))
+            if mt_direction.shape != (6,):
+                raise ValueError("mt_override must be a single normalized 6-vector.")
+        mt = mt_direction * training_mt_norm_reference(REFERENCE_MW)
 
         # 3. Build Input Matrix (N_sensors x 11 features)
         # Columns: [Lat, Lon, Depth, Dist_km, Variance, m_rr, m_tt, m_pp, m_rt, m_rp, m_tp]
