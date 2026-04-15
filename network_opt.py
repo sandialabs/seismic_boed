@@ -4,6 +4,7 @@ import numpy as np
 import time
 import sys
 import os
+import pickle
 
 from subprocess import Popen, PIPE
 import shlex
@@ -11,13 +12,17 @@ import shlex
 from utils import read_opt_file, write_input_file
 from data_gen import sample_sensors
 
-from skopt import Optimizer, expected_minimum, dump
-from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
-from skopt.learning import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+from sklearn.gaussian_process import GaussianProcessRegressor
 from boundedbayesopt import BoundedBayesOpt as BBO
 
 import warnings
 warnings.filterwarnings('ignore')
+
+
+def dump(obj, path):
+    with open(path, "wb") as out:
+        pickle.dump(obj, out)
 
 if __name__ == '__main__':
     t0 = time.time()
@@ -63,22 +68,33 @@ if __name__ == '__main__':
         else:
             raise ValueError('Optimization types other than 0 are not supported')
 
-        sensor_lat_range = opt.sample_bounds[0]
-        sensor_long_range = opt.sample_bounds[1]
-
         #Randomly select the trial points (right now this is going to be the same every isamp stage)
         #becuase we are intializing the psuedo random seed the same each time.
-        sensor_loc_random = sample_sensors(sensor_lat_range,sensor_long_range, nopt_random,nlpts_data+nlpts_space)
-        
-        # Make sure trial points are within bounds
-        valid_loc_idx = opt.check_valid(sensor_loc_random)
-        valid_trial_pts = sensor_loc_random[valid_loc_idx]
-        it=0
-        while len(valid_trial_pts) < nopt_random:
-            addon_pts = sample_sensors(sensor_lat_range, sensor_long_range, nopt_random, nlpts_data+nlpts_space+it)
-            valid_addons_idx = opt.check_valid(addon_pts)
-            valid_trial_pts = np.vstack((valid_trial_pts, addon_pts[valid_addons_idx]))
-            it += 1
+        if opt.json:
+            valid_trial_pts = sample_sensors(
+                opt.spatial_domain, nopt_random, nlpts_data + nlpts_space
+            )
+        else:
+            sensor_lat_range = opt.sample_bounds[0]
+            sensor_long_range = opt.sample_bounds[1]
+            sensor_loc_random = sample_sensors(
+                sensor_lat_range, sensor_long_range, nopt_random, nlpts_data + nlpts_space
+            )
+
+            # Make sure trial points are within bounds
+            valid_loc_idx = opt.check_valid(sensor_loc_random)
+            valid_trial_pts = sensor_loc_random[valid_loc_idx]
+            it = 0
+            while len(valid_trial_pts) < nopt_random:
+                addon_pts = sample_sensors(
+                    sensor_lat_range,
+                    sensor_long_range,
+                    nopt_random,
+                    nlpts_data + nlpts_space + it,
+                )
+                valid_addons_idx = opt.check_valid(addon_pts)
+                valid_trial_pts = np.vstack((valid_trial_pts, addon_pts[valid_addons_idx]))
+                it += 1
         
         #For each trial point:
         #     Write the input file with the sensor info under consideration

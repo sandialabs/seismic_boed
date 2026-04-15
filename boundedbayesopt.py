@@ -4,18 +4,13 @@ import inspect
 # from GE_Beamforming_Utils import convert_coords_to_utm
 import os
 
-import matplotlib.path as mpltPath
 import numpy as np
-import skopt
-from matplotlib import pyplot as plt
 from scipy import stats
 from scipy.optimize import OptimizeResult, minimize
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.neighbors import BallTree
-from skopt import Optimizer, dump, expected_minimum
-from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 
-from utils import read_bounds
+from utils import read_spatial_domain
 
 
 class BoundedBayesOpt:
@@ -40,6 +35,7 @@ class BoundedBayesOpt:
 
         # Initialize surrogate function
         self.gpr = GaussianProcessRegressor(kernel=kernel, alpha=noise**2)
+        self._sample_counter = 0
 
         # Use bounds file to get boundaries for sampling valid points
         # Get file extension of bounds file
@@ -63,42 +59,8 @@ class BoundedBayesOpt:
         self.max_model_queue_size = max_model_queue_size
 
     def __handle_bounds(self, bounds_file):
-        bounds = read_bounds(bounds_file, sensor_bounds=True)
-
-        if not isinstance(bounds, np.ndarray):
-            bounds = np.array(bounds)
-
-        if len(bounds.shape) == 2:
-            bounds = bounds.reshape((1, *bounds.shape))
-        elif len(bounds.shape) > 3 or len(bounds.shape) < 2:
-            raise ValueError("Must pass array of arrays of 2d boundary coordinates")
-        self.bounds = []
-
-        for i in range(len(bounds)):
-            self.bounds.append(bounds[i][:, [1, 0]].copy())
-
-        min_x = self.bounds[0][:, 0].min()
-        min_y = self.bounds[0][:, 1].min()
-        max_x = self.bounds[0][:, 0].max()
-        max_y = self.bounds[0][:, 1].max()
-
-        for i in range(1, len(bounds)):
-            curr_minx = self.bounds[i][:, 0].min()
-            curr_miny = self.bounds[i][:, 1].min()
-            curr_maxx = self.bounds[i][:, 1].max()
-            curr_maxy = self.bounds[i][:, 1].max()
-
-            if curr_minx < min_x:
-                min_x = curr_minx
-            if curr_miny < min_y:
-                min_y = curr_miny
-            if curr_maxx > max_x:
-                max_x = curr_maxx
-            if curr_maxy > max_y:
-                max_y = curr_maxy
-
-        self.sample_bounds = np.array([[min_x, max_x], [min_y, max_y]])
-
+        self.spatial_domain = read_spatial_domain(bounds_file, sensor_bounds=True)
+        self.sample_bounds = self.spatial_domain.sample_bounds.copy()
         self.json = True
 
     def __get_kml_coords(self, filename):
@@ -217,12 +179,7 @@ class BoundedBayesOpt:
 
     def check_valid(self, points):
         if self.json:
-            masks = []
-            for polygon in self.bounds:
-                valid_region = mpltPath.Path(polygon)
-                valid_pts_idx = valid_region.contains_points(points)
-                masks.append(valid_pts_idx)
-            point_is_valid = np.any(masks, axis=0)
+            point_is_valid = self.spatial_domain.contains(points)
 
         else:
             # Get unit distances from points to nearest road
@@ -230,9 +187,30 @@ class BoundedBayesOpt:
             # Convert distances to kilometers by multiplying by radius of earth
             dists = dists * 6371
             # Check where distances are smaller than max allowed
-            point_is_valid = np.where(dists < self.max_kml_dist)[0]
+            point_is_valid = dists.ravel() < self.max_kml_dist
 
         return point_is_valid
+
+    def sample_valid_points(self, nsamp):
+        if self.json:
+            points = self.spatial_domain.sample_points(nsamp, self._sample_counter)
+            self._sample_counter += nsamp
+            return points
+
+        test_pts = np.random.uniform(
+            self.sample_bounds[:, 0], self.sample_bounds[:, 1], size=(nsamp, 2)
+        )
+        valid_test_pts_idx = self.check_valid(test_pts)
+        valid_test_pts = test_pts[valid_test_pts_idx]
+        while valid_test_pts.shape[0] < nsamp:
+            addon_pts = np.random.uniform(
+                self.sample_bounds[:, 0],
+                self.sample_bounds[:, 1],
+                size=(nsamp - valid_test_pts.shape[0], 2),
+            )
+            valid_addon_pts_idx = self.check_valid(addon_pts)
+            valid_test_pts = np.vstack((valid_test_pts, addon_pts[valid_addon_pts_idx]))
+        return valid_test_pts[:nsamp]
 
     def expected_improvement(self, X, xi=0.01):
         """
@@ -301,23 +279,7 @@ class BoundedBayesOpt:
             # Minimization objective is the negative acquisition function
             return -self.expected_improvement(X.reshape(-1, dim))
 
-        # Sample n_restarts initial points for minimizer
-        test_pts = np.random.uniform(
-            self.sample_bounds[:, 0], self.sample_bounds[:, 1], size=(n_restarts, dim)
-        )
-
-        # Only accept points inside bounds
-        valid_test_pts_idx = self.check_valid(test_pts)
-        valid_test_pts = test_pts[valid_test_pts_idx]
-        # Resample until we have n_restarts points
-        while valid_test_pts.shape[0] < n_restarts:
-            addon_pts = np.random.uniform(
-                self.sample_bounds[:, 0],
-                self.sample_bounds[:, 1],
-                size=(n_restarts - valid_test_pts.shape[0], dim),
-            )
-            valid_addon_pts_idx = self.check_valid(addon_pts)
-            valid_test_pts = np.vstack((valid_test_pts, addon_pts[valid_addon_pts_idx]))
+        valid_test_pts = self.sample_valid_points(n_restarts)
 
         # Find the best optimum by starting from n_restart different random points.
         for x0 in valid_test_pts:
@@ -326,7 +288,9 @@ class BoundedBayesOpt:
             if res.fun < min_val:
                 min_val = res.fun
                 min_x = res.x
-        return min_x.reshape(-1, 2)
+        if min_x is None:
+            min_x = valid_test_pts[0]
+        return np.asarray(min_x).reshape(-1, 2)
 
     def tell(self, X_next, Y_next):
         if not isinstance(Y_next, (list, np.ndarray)):

@@ -5,6 +5,7 @@ import numpy as np
 from scipy import stats
 
 import like_models as lm
+from spatial_domain import SpatialDomain, sobol_matrix
 
 warnings.filterwarnings("ignore")
 
@@ -328,13 +329,20 @@ def generate_data(theta, sensors, ndata):
     return total_data
 
 
-def sample_sensors(lat_range, long_range, nsamp, skip):
+def sample_sensors(lat_range, long_range=None, nsamp=None, skip=None):
     # Generate psuedo random sensor distribution for initial OED
+    if isinstance(lat_range, SpatialDomain):
+        domain = lat_range
+        if skip is None:
+            if long_range is None or nsamp is None:
+                raise ValueError(
+                    "Domain-based sensor sampling requires sample count and skip."
+                )
+            nsamp, skip = long_range, nsamp
+        return domain.sample_points(nsamp, skip)
 
     dim_num = 2
-    sbvals = np.full((nsamp, dim_num), np.nan)
-    for j in range(nsamp):
-        sbvals[j, :], _ = sq.i4_sobol(dim_num, seed=1 + skip + j)
+    sbvals = sobol_matrix(dim_num, nsamp, skip)
 
     sbvals[:, 0] = sbvals[:, 0] * (lat_range[1] - lat_range[0]) + lat_range[0]
     sbvals[:, 1] = sbvals[:, 1] * (long_range[1] - long_range[0]) + long_range[0]

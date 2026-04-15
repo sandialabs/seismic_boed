@@ -3,10 +3,13 @@ import os
 import time
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.gaussian_process import GaussianProcessRegressor as GPR
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+
+from spatial_domain import SpatialDomain
+
+
+def read_spatial_domain(bounds_file, sensor_bounds=False):
+    return SpatialDomain.from_file(bounds_file, sensor_bounds=sensor_bounds)
 
 
 def read_bounds(bounds_file, sensor_bounds=False):
@@ -29,75 +32,15 @@ def read_bounds(bounds_file, sensor_bounds=False):
     mag_bounds (array_like)    : Array containing two points defining the range from which valid
                                  magnitudes may be chosen. Returned only if sensor_bounds is False.
     """
-    # Load file
-    with open(bounds_file, "r") as f:
-        bounds = json.load(f)
-
-    # Check which types of keys the dict contains
-    has_lat = "lat_range" in bounds.keys()
-    has_lon = "lon_range" in bounds.keys()
-    has_ranges = has_lat and has_lon
-
-    coords_keys = [f"coordinates_{i}" for i in range(1, len(bounds.keys()) - 1)]
-    has_coords = any([key in coords_keys for key in bounds.keys()])
-
-    allowable_keys = [
-        "lat_range",
-        "lon_range",
-        "depth_range",
-        "mag_range",
-    ] + coords_keys
-
-    # Ensure only correct combination of keys exists
-    for key in bounds.keys():
-        if key not in allowable_keys:
-            raise ValueError(
-                f"Key {key} in bounds file is not supported. Please remove."
-            )
-    if has_lat and not has_lon:
-        raise ValueError(
-            "Bounds file contains 'lat_range' but not 'lon_range'. Both must be specified."
-        )
-    elif has_lon and not has_lat:
-        raise ValueError(
-            "Bounds file contains 'lon_range' but not 'lat_range'. Both must be specified."
-        )
-    elif has_ranges and has_coords:
-        raise ValueError(
-            "Bounds file contains keys 'lat_range', 'lon_range', and 'coordinates_*'. Only one type of bound specification (ranges or coordinates) may be used."
-        )
-
-    if has_ranges:
-        # Use range values to create a square boundary defined by corner coordinates
-
-        # Extract ranges
-        lat_range = bounds["lat_range"]
-        lon_range = bounds["lon_range"]
-
-        # Define square (polygons use longitude as x coordinate)
-        latlon_bounds = np.array(
-            [
-                [lon_range[0], lat_range[0]],
-                [lon_range[0], lat_range[1]],
-                [lon_range[1], lat_range[1]],
-                [lon_range[1], lat_range[0]],
-            ]
-        )
-
-    elif has_coords:
-        # Compile all polygons into one list
-        latlon_bounds = []
-        for key in coords_keys:
-            # Store each polygon as numpy array
-            latlon_bounds.append(np.array(bounds[key]))
-
+    domain = read_spatial_domain(bounds_file, sensor_bounds=sensor_bounds)
+    latlon_bounds = domain.to_legacy_bounds()
     if sensor_bounds:
         # Only return lat/lon boundary when dealing with sensors
         return latlon_bounds
 
     # When dealing with events return depth and mag ranges as well
-    depth_range = bounds["depth_range"]
-    mag_range = bounds["mag_range"]
+    depth_range = list(domain.depth_range)
+    mag_range = list(domain.mag_range)
 
     return latlon_bounds, depth_range, mag_range
 
@@ -264,6 +207,8 @@ def read_opt_file(file):
 
 
 def plot_surface(data, output_path="eig_plots", depth_step=1, mag_step=1, stepsize=100):
+    import matplotlib.pyplot as plt
+    from sklearn.gaussian_process import GaussianProcessRegressor as GPR
 
     t0 = time.time()
     print(f"Configuring data for plots: {time.time() - t0}")

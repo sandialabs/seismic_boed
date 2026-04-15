@@ -24,7 +24,7 @@ Y_SCALER_PATH = str(BASE_ML_DIR / "y_scaler_38_1000000.pkl")
 # from sample_gen import generate_theta_data, sample_theta_space, eval_theta_prior, eval_importance
 from data_gen import generate_data
 from like_models import compute_loglikes
-from utils import plot_surface, read_bounds, read_input_file
+from utils import plot_surface, read_bounds, read_input_file, read_spatial_domain
 
 # warnings.filterwarnings('error')
 
@@ -94,9 +94,17 @@ if __name__ == "__main__":
             eval_theta_prior = sampling_module.eval_theta_prior
 
             # Set up bounds for each dimension of theta
-            location_bounds, depth_range, mag_range = read_bounds(
+            spatial_domain = read_spatial_domain(bounds_fname, sensor_bounds=False)
+            legacy_bounds, depth_range, mag_range = read_bounds(
                 bounds_fname, sensor_bounds=False
             )
+            location_bounds = legacy_bounds
+            if getattr(sampling_module, "SPATIAL_DOMAIN_AWARE", False):
+                location_bounds = spatial_domain
+            elif spatial_domain.geometry_mode == "spherical":
+                raise ValueError(
+                    f"Sampling module {samplingfile_name} does not support spherical domains."
+                )
 
             if verbose == 1 or verbose == 2:
                 print("Configuring Run: " + str(t0), flush=True)
@@ -158,7 +166,15 @@ if __name__ == "__main__":
         sampling_module = importlib.import_module(samplingfile_name)
         eval_importance = sampling_module.eval_importance
         eval_theta_prior = sampling_module.eval_theta_prior
-        location_bounds = read_bounds(bounds_fname, sensor_bounds=False)[0]
+        spatial_domain = read_spatial_domain(bounds_fname, sensor_bounds=False)
+        legacy_bounds = read_bounds(bounds_fname, sensor_bounds=False)[0]
+        location_bounds = legacy_bounds
+        if getattr(sampling_module, "SPATIAL_DOMAIN_AWARE", False):
+            location_bounds = spatial_domain
+        elif spatial_domain.geometry_mode == "spherical":
+            raise ValueError(
+                f"Sampling module {samplingfile_name} does not support spherical domains."
+            )
 
     if rank == 0 and verbose == 1:
         t1 = time.time() - t0
