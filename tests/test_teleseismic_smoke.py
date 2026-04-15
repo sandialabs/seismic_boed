@@ -6,6 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
+
+from spatial_domain import SpatialDomain
+
 
 def _have_optional_deps():
     required = ["mpi4py", "obspy", "sklearn"]
@@ -67,12 +71,15 @@ class TeleseismicSmokeTests(unittest.TestCase):
     def test_network_opt_spherical_cap_smoke(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
-            event_bounds_path = tmpdir / "event_globe_bounds.json"
+            event_bounds_path = tmpdir / "event_cap_bounds.json"
             event_bounds_path.write_text(
                 json.dumps(
                     {
                         "geometry_mode": "spherical",
-                        "domain_type": "globe",
+                        "domain_type": "spherical_cap",
+                        "center_lat": 20.0,
+                        "center_lon": -150.0,
+                        "radius_deg": 12.0,
                         "depth_range": [5.0, 15.0],
                         "mag_range": [4.5, 5.5],
                     }
@@ -109,7 +116,7 @@ class TeleseismicSmokeTests(unittest.TestCase):
                         "",
                         "uniform_prior.py",
                         "1",
-                        "0.0,0.0,0.1,2,0",
+                        "20.0,-150.0,0.1,2,0",
                     ]
                 )
                 + "\n",
@@ -132,7 +139,12 @@ class TeleseismicSmokeTests(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(result.returncode, 0, msg=result.stderr)
-            self.assertTrue((save_dir / "network_result.npz").exists())
+            result_path = save_dir / "network_result.npz"
+            self.assertTrue(result_path.exists())
+
+            sensors = np.load(result_path)["sensors"]
+            cap_domain = SpatialDomain.from_file(str(sensor_bounds_path), sensor_bounds=True)
+            self.assertTrue(cap_domain.contains(sensors[:, :2]).all())
 
 
 if __name__ == "__main__":
