@@ -34,6 +34,12 @@ if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     size = comm.Get_size()  # Assume size, ndata, and nlpts all have divisiblity
     rank = comm.Get_rank()
+    requested_verbose = 0
+    if len(sys.argv) == 4:
+        try:
+            requested_verbose = int(sys.argv[3])
+        except ValueError:
+            requested_verbose = 0
 
     # make each rank of its own seed
     np.random.seed(int(time.time()) + rank)
@@ -43,20 +49,27 @@ if __name__ == "__main__":
         # Check existence on Rank 0 to fail fast
         if rank == 0:
             if not os.path.exists(MODEL_PATH):
-                print(f"CRITICAL ERROR: Model file not found at {MODEL_PATH}")
-                print(f"Current Working Dir: {os.getcwd()}")
-                sys.stdout.flush()
+                print(
+                    f"CRITICAL ERROR: Model file not found at {MODEL_PATH}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                print(
+                    f"Current Working Dir: {os.getcwd()}",
+                    file=sys.stderr,
+                    flush=True,
+                )
                 # We don't exit here immediately to allow other ranks to crash gracefully or sync
 
         # Initialize the model (Singleton)
         ml_utils.get_power_model(MODEL_PATH, X_SCALER_PATH, Y_SCALER_PATH)
 
-        if rank == 0:
-            print("ML Model successfully initialized on all ranks.")
+        if rank == 0 and requested_verbose > 0:
+            print("ML Model successfully initialized on all ranks.", flush=True)
 
     except Exception as e:
         if rank == 0:
-            print(f"CRITICAL ERROR loading ML model: {e}")
+            print(f"CRITICAL ERROR loading ML model: {e}", file=sys.stderr, flush=True)
         sys.exit(1)
 
     # Rank 0 intializes stuff

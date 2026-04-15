@@ -24,6 +24,45 @@ def dump(obj, path):
     with open(path, "wb") as out:
         pickle.dump(obj, out)
 
+
+def parse_eig_output(process, stdout_bytes, stderr_bytes):
+    stdout_text = stdout_bytes.decode("utf-8").strip()
+    stderr_text = stderr_bytes.decode("utf-8").strip()
+
+    if process.returncode != 0:
+        raise RuntimeError(
+            "eig_calc.py failed during optimization.\n"
+            f"Return code: {process.returncode}\n"
+            f"STDOUT:\n{stdout_text}\n"
+            f"STDERR:\n{stderr_text}"
+        )
+
+    lines = [line.strip() for line in stdout_text.splitlines() if line.strip()]
+    if not lines:
+        raise RuntimeError(
+            "eig_calc.py returned no stdout, so optimization could not parse EIG values."
+        )
+
+    last_line = lines[-1]
+    try:
+        values = np.array([float(item) for item in last_line.split()])
+    except ValueError as exc:
+        raise RuntimeError(
+            "Could not parse the final eig_calc.py stdout line as numeric output.\n"
+            f"Final stdout line: {last_line}\n"
+            f"Full STDOUT:\n{stdout_text}\n"
+            f"STDERR:\n{stderr_text}"
+        ) from exc
+
+    if values.shape[0] != 3:
+        raise RuntimeError(
+            "eig_calc.py did not return the expected three-value EIG summary.\n"
+            f"Final stdout line: {last_line}\n"
+            f"Parsed values: {values}"
+        )
+
+    return values
+
 if __name__ == '__main__':
     t0 = time.time()
     if len(sys.argv) == 5:
@@ -118,7 +157,7 @@ if __name__ == '__main__':
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
-            outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
+            outputdata = parse_eig_output(process, stdout, stderr)
 
             eigdata[inc,:] = outputdata
         
@@ -146,7 +185,7 @@ if __name__ == '__main__':
             #run my MPI
             process = Popen(shlex.split(mpirunstring + " python3 eig_calc.py " + os.path.join(save_path, fname) + " outputs.npz 0"), stdout=PIPE, stderr=PIPE, shell=False)
             stdout, stderr = process.communicate()
-            outputdata = np.array([float(item) for item in (stdout.decode("utf-8").rstrip("\n")).split()])
+            outputdata = parse_eig_output(process, stdout, stderr)
             eigdata_full[inc,:] = outputdata
 
             #update the optimizer
