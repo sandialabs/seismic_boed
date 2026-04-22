@@ -9,11 +9,10 @@ import pickle
 from subprocess import Popen, PIPE
 import shlex
 
-from utils import read_opt_file, write_input_file
+from geo_kernels import build_spatial_kernel
+from utils import read_opt_file, read_spatial_domain, write_input_file
 from data_gen import sample_sensors
 
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel
-from sklearn.gaussian_process import GaussianProcessRegressor
 from boundedbayesopt import BoundedBayesOpt as BBO
 
 import warnings
@@ -79,6 +78,7 @@ if __name__ == '__main__':
         save_path = sys.argv[3]
         verbose = int(sys.argv[4])
         os.makedirs(save_path, exist_ok=True)
+        opt_spatial_domain = read_spatial_domain(opt_bounds_file, sensor_bounds=True)
 
         if verbose == 1:
             t1 = time.time()-t0
@@ -98,10 +98,7 @@ if __name__ == '__main__':
         #Initialize the optimizer it minimizes
         #0 -> EI    
         if opt_type == 0:
-            # Specify appropriate length scale
-            kernel = 1.0 * RBF(length_scale=[1.0, 1.0,], length_scale_bounds=(0.2, 1)) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-2, 5e-1))
-            gp = GaussianProcessRegressor(kernel=kernel,alpha=0.0, normalize_y=True)
-
+            kernel = build_spatial_kernel(opt_spatial_domain)
             opt = BBO(kernel, opt_bounds_file)
 
         else:
