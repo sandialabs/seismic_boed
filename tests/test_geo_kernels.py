@@ -52,6 +52,26 @@ class GeoKernelTests(unittest.TestCase):
         self.assertEqual(grad.shape, (3, 3, 1))
         np.testing.assert_allclose(np.diag(grad[:, :, 0]), 0.0)
 
+    def test_spherical_rbf_kernel_matrix_is_psd(self):
+        domain = SpatialDomain.from_dict(
+            {
+                "geometry_mode": "spherical",
+                "domain_type": "spherical_cap",
+                "center_lat": 72.0,
+                "center_lon": -150.0,
+                "radius_deg": 15.0,
+            },
+            sensor_bounds=True,
+        )
+        points = domain.sample_points(24, 0)
+        kernel = SphericalRBF(length_scale=8.0, length_scale_bounds="fixed")
+
+        K = kernel(points)
+
+        np.testing.assert_allclose(K, K.T, atol=1e-12)
+        eigvals = np.linalg.eigvalsh(K)
+        self.assertGreater(eigvals.min(), -1e-10)
+
     def test_kernel_builder_switches_between_planar_and_spherical(self):
         spherical_domain = SpatialDomain.from_dict(
             {
