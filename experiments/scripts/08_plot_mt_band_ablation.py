@@ -15,7 +15,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
+from sklearn.gaussian_process.kernels import Matern, WhiteKernel
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -167,42 +171,69 @@ def fit_surface_with_model(
     mask: np.ndarray,
     lat_range: np.ndarray,
     lon_range: np.ndarray,
+    depth_slice: float,
+    magnitude_slice: float,
     grid_size: int,
     max_train_points: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, GaussianProcessRegressor]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, Pipeline, dict]:
     n_selected = int(np.count_nonzero(mask))
     if n_selected < 8:
         raise ValueError(
             f"Need at least 8 slice points to fit a map; only found {n_selected}."
         )
 
-    x_train = theta_data[mask][:, :2]
+    x_train = theta_data[mask]
     y_train = response[mask]
     x_train, y_train = maybe_subsample_training(x_train, y_train, max_train_points)
 
-    kernel = (
-        ConstantKernel(1.0, (1e-3, 1e3))
-        * RBF(length_scale=[0.25, 0.25], length_scale_bounds=(1e-2, 10.0))
-        + WhiteKernel(noise_level=1e-4, noise_level_bounds=(1e-8, 1e0))
+    x_fit, x_test, y_fit, y_test = train_test_split(
+        x_train, y_train, test_size=0.2, random_state=42
     )
-    model = GaussianProcessRegressor(
+
+    d = x_fit.shape[1]
+    kernel = Matern(
+        length_scale=np.ones(d, dtype=float),
+        length_scale_bounds=(1e-2, 1e2),
+        nu=1.5,
+    ) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-5, 1e1))
+    gp = GaussianProcessRegressor(
         kernel=kernel,
+        alpha=0.0,
         normalize_y=True,
-        n_restarts_optimizer=2,
-        random_state=0,
+        n_restarts_optimizer=8,
+        random_state=42,
     )
-    model.fit(x_train, y_train)
+    model = Pipeline(
+        [
+            ("scale", StandardScaler()),
+            ("gp", gp),
+        ]
+    )
+    model.fit(x_fit, y_fit)
+
+    y_pred_test = model.predict(x_test)
+    metrics = {
+        "r2": float(r2_score(y_test, y_pred_test)) if y_test.size > 1 else np.nan,
+        "mse": float(mean_squared_error(y_test, y_pred_test)) if y_test.size > 0 else np.nan,
+        "n_train": int(x_fit.shape[0]),
+        "n_test": int(x_test.shape[0]),
+    }
 
     lat = np.linspace(float(lat_range[0]), float(lat_range[1]), int(grid_size))
     lon = np.linspace(float(lon_range[0]), float(lon_range[1]), int(grid_size))
     lon_grid, lat_grid = np.meshgrid(lon, lat)
     grid_xy = np.column_stack([lat_grid.ravel(), lon_grid.ravel()])
-    pred = model.predict(grid_xy).reshape(lat_grid.shape)
-    return lat_grid, lon_grid, pred, model
+    grid = np.zeros((grid_xy.shape[0], 4), dtype=float)
+    grid[:, :2] = grid_xy
+    grid[:, 2] = float(depth_slice)
+    grid[:, 3] = float(magnitude_slice)
+    pred = model.predict(grid).reshape(lat_grid.shape)
+    return lat_grid, lon_grid, pred, model, metrics
 
 
-def format_kernel(model: GaussianProcessRegressor) -> str:
-    return str(model.kernel_) if hasattr(model, "kernel_") else str(model.kernel)
+def format_kernel(model: Pipeline) -> str:
+    gp = model.named_steps["gp"]
+    return str(gp.kernel_) if hasattr(gp, "kernel_") else str(gp.kernel)
 
 
 def build_band_slice_data(
@@ -260,21 +291,25 @@ def build_band_slice_data(
             f"Mw={magnitude_slice:.3f}."
         )
 
-    lat_grid, lon_grid, with_grid, with_model = fit_surface_with_model(
+    lat_grid, lon_grid, with_grid, with_model, with_metrics = fit_surface_with_model(
         theta_with,
         ig_with,
         mask,
         lat_range=lat_range,
         lon_range=lon_range,
+        depth_slice=depth_slice,
+        magnitude_slice=magnitude_slice,
         grid_size=grid_size,
         max_train_points=max_train_points,
     )
-    _, _, without_grid, without_model = fit_surface_with_model(
+    _, _, without_grid, without_model, without_metrics = fit_surface_with_model(
         theta_without,
         ig_without,
         mask,
         lat_range=lat_range,
         lon_range=lon_range,
+        depth_slice=depth_slice,
+        magnitude_slice=magnitude_slice,
         grid_size=grid_size,
         max_train_points=max_train_points,
     )
@@ -292,6 +327,8 @@ def build_band_slice_data(
         "delta_grid": delta_grid,
         "with_model": with_model,
         "without_model": without_model,
+        "with_metrics": with_metrics,
+        "without_metrics": without_metrics,
         "with_eig": float(with_mt["eig"]),
         "without_eig": float(without_mt["eig"]),
         "with_seig": float(with_mt["seig"]),
@@ -538,6 +575,14 @@ def main() -> None:
                     "n_slice_points": band["n_slice_points"],
                     "kernel_with": format_kernel(band["with_model"]),
                     "kernel_without": format_kernel(band["without_model"]),
+                    "with_r2": band["with_metrics"]["r2"],
+                    "with_mse": band["with_metrics"]["mse"],
+                    "with_n_train": band["with_metrics"]["n_train"],
+                    "with_n_test": band["with_metrics"]["n_test"],
+                    "without_r2": band["without_metrics"]["r2"],
+                    "without_mse": band["without_metrics"]["mse"],
+                    "without_n_train": band["without_metrics"]["n_train"],
+                    "without_n_test": band["without_metrics"]["n_test"],
                     "delta_grid_mean": float(np.mean(band["delta_grid"])),
                     "delta_grid_min": float(np.min(band["delta_grid"])),
                     "delta_grid_max": float(np.max(band["delta_grid"])),
@@ -562,7 +607,9 @@ def main() -> None:
             f"delta={band['with_eig'] - band['without_eig']:.4f} "
             f"slice_depth={band['depth_slice']:.2f} "
             f"slice_mw={band['magnitude_slice']:.2f} "
-            f"n={band['n_slice_points']}"
+            f"n={band['n_slice_points']} "
+            f"with_r2={band['with_metrics']['r2']:.3f} "
+            f"without_r2={band['without_metrics']['r2']:.3f}"
         )
 
 
