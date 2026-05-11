@@ -19,6 +19,13 @@ N_RANKS="${N_RANKS:-512}"
 VERBOSE="${VERBOSE:-1}"
 MAX_TRAIN_POINTS="${MAX_TRAIN_POINTS:-1200}"
 GRID_SIZE="${GRID_SIZE:-120}"
+DEPTH_SLICE_KM="${DEPTH_SLICE_KM:-10.0}"
+DEPTH_TOL_KM="${DEPTH_TOL_KM:-2.5}"
+LOW_MAG_SLICE="${LOW_MAG_SLICE:-1.5}"
+LOW_MAG_TOL="${LOW_MAG_TOL:-0.2}"
+HIGH_MAG_SLICE="${HIGH_MAG_SLICE:-4.75}"
+HIGH_MAG_TOL="${HIGH_MAG_TOL:-0.1}"
+MIN_SLICE_POINTS="${MIN_SLICE_POINTS:-150}"
 
 LOW_INPUT="${LOW_INPUT:-experiments/inputs/inputs_mw_0p5_2p0.dat}"
 HIGH_INPUT="${HIGH_INPUT:-experiments/inputs/inputs_mw_4p5_5p0.dat}"
@@ -42,6 +49,9 @@ echo "  high_input: $HIGH_INPUT"
 echo "  output_prefix: $OUTPUT_PREFIX"
 echo "  n_ranks: $N_RANKS"
 echo "  verbose: $VERBOSE"
+echo "  depth_slice_km: $DEPTH_SLICE_KM"
+echo "  low_mag_slice: $LOW_MAG_SLICE"
+echo "  high_mag_slice: $HIGH_MAG_SLICE"
 echo
 
 echo "[1/6] Low magnitude band: with MT vs without MT"
@@ -59,7 +69,14 @@ echo "[3/6] Rendering low/high band comparison figure"
   --output "$OUT_FIG" \
   --summary-csv "$OUT_CSV" \
   --grid-size "$GRID_SIZE" \
-  --max-train-points "$MAX_TRAIN_POINTS"
+  --max-train-points "$MAX_TRAIN_POINTS" \
+  --depth-slice "$DEPTH_SLICE_KM" \
+  --depth-tol "$DEPTH_TOL_KM" \
+  --low-magnitude-slice "$LOW_MAG_SLICE" \
+  --low-mag-tol "$LOW_MAG_TOL" \
+  --high-magnitude-slice "$HIGH_MAG_SLICE" \
+  --high-mag-tol "$HIGH_MAG_TOL" \
+  --min-slice-points "$MIN_SLICE_POINTS"
 
 echo
 echo "Done."
