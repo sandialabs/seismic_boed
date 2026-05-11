@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -18,6 +19,8 @@ from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 
 def get_git_sha(repo_root: Path) -> str:
@@ -116,18 +119,21 @@ def mean_ig_per_event(data) -> tuple[np.ndarray, np.ndarray]:
 
 def infer_lat_lon_bounds(data, theta_data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     if "location_bounds" in data.files:
-        location_bounds = data["location_bounds"]
-        if getattr(location_bounds, "shape", None) == ():
-            location_bounds = location_bounds.item()
+        try:
+            location_bounds = data["location_bounds"]
+            if getattr(location_bounds, "shape", None) == ():
+                location_bounds = location_bounds.item()
 
-        if hasattr(location_bounds, "sample_bounds"):
-            sample_bounds = np.asarray(location_bounds.sample_bounds, dtype=float)
-            if sample_bounds.shape == (2, 2):
-                return sample_bounds[0], sample_bounds[1]
+            if hasattr(location_bounds, "sample_bounds"):
+                sample_bounds = np.asarray(location_bounds.sample_bounds, dtype=float)
+                if sample_bounds.shape == (2, 2):
+                    return sample_bounds[0], sample_bounds[1]
 
-        location_bounds = np.asarray(location_bounds, dtype=float)
-        if location_bounds.shape == (2, 2):
-            return location_bounds[0], location_bounds[1]
+            location_bounds = np.asarray(location_bounds, dtype=float)
+            if location_bounds.shape == (2, 2):
+                return location_bounds[0], location_bounds[1]
+        except Exception:
+            pass
 
     if "lat_range" in data.files:
         lon_key = "long_range" if "long_range" in data.files else "lon_range"
