@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Plot low/high magnitude with-MT vs without-MT information surfaces "
-            "using fixed depth/magnitude slices within each band."
+            "using azimuth-averaged radial fits within fixed depth/magnitude slices."
         )
     )
     parser.add_argument("--low-with-mt", required=True, type=Path)
@@ -59,6 +59,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--high-magnitude-slice", type=float, default=4.75)
     parser.add_argument("--high-mag-tol", type=float, default=0.1)
     parser.add_argument("--min-slice-points", type=int, default=150)
+    parser.add_argument("--n-profile-bins", type=int, default=10)
     return parser.parse_args()
 
 
@@ -137,6 +138,7 @@ def adaptive_slice_mask(
     max_depth_tol = max(depth_tol_curr, float(theta_data[:, 2].max() - theta_data[:, 2].min()))
     max_mag_tol = max(mag_tol_curr, float(theta_data[:, 3].max() - theta_data[:, 3].min()))
 
+    mask = np.zeros(theta_data.shape[0], dtype=bool)
     for _ in range(12):
         mask = (
             (np.abs(theta_data[:, 2] - depth_slice) <= depth_tol_curr)
@@ -165,35 +167,51 @@ def maybe_subsample_training(
     return x_train[keep], y_train[keep]
 
 
-def fit_surface_with_model(
-    theta_data: np.ndarray,
+def latlon_offsets_km(
+    lat: np.ndarray | float,
+    lon: np.ndarray | float,
+    center_lat: float,
+    center_lon: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    lat_arr = np.asarray(lat, dtype=float)
+    lon_arr = np.asarray(lon, dtype=float)
+    km_per_deg_lat = 111.32
+    km_per_deg_lon = 111.32 * np.cos(np.deg2rad(center_lat))
+    lat_km = (lat_arr - float(center_lat)) * km_per_deg_lat
+    lon_km = (lon_arr - float(center_lon)) * km_per_deg_lon
+    return lat_km, lon_km
+
+
+def compute_radius_km(
+    lat: np.ndarray | float,
+    lon: np.ndarray | float,
+    center_lat: float,
+    center_lon: float,
+) -> np.ndarray:
+    lat_km, lon_km = latlon_offsets_km(lat, lon, center_lat, center_lon)
+    return np.sqrt(lat_km**2 + lon_km**2)
+
+
+def fit_radial_model(
+    radius_km: np.ndarray,
     response: np.ndarray,
-    mask: np.ndarray,
-    lat_range: np.ndarray,
-    lon_range: np.ndarray,
-    depth_slice: float,
-    magnitude_slice: float,
-    grid_size: int,
     max_train_points: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, Pipeline, dict]:
-    n_selected = int(np.count_nonzero(mask))
-    if n_selected < 8:
+) -> tuple[Pipeline, dict]:
+    radius_km = np.asarray(radius_km, dtype=float).reshape(-1, 1)
+    response = np.asarray(response, dtype=float)
+    if radius_km.shape[0] < 8:
         raise ValueError(
-            f"Need at least 8 slice points to fit a map; only found {n_selected}."
+            f"Need at least 8 slice points to fit a radial model; only found {radius_km.shape[0]}."
         )
 
-    x_train = theta_data[mask]
-    y_train = response[mask]
-    x_train, y_train = maybe_subsample_training(x_train, y_train, max_train_points)
-
+    x_train, y_train = maybe_subsample_training(radius_km, response, max_train_points)
     x_fit, x_test, y_fit, y_test = train_test_split(
         x_train, y_train, test_size=0.2, random_state=42
     )
 
-    d = x_fit.shape[1]
     kernel = Matern(
-        length_scale=np.ones(d, dtype=float),
-        length_scale_bounds=(1e-2, 1e2),
+        length_scale=np.ones(1, dtype=float),
+        length_scale_bounds=(1e-2, 1e3),
         nu=1.5,
     ) + WhiteKernel(noise_level=0.1, noise_level_bounds=(1e-5, 1e1))
     gp = GaussianProcessRegressor(
@@ -218,17 +236,89 @@ def fit_surface_with_model(
         "n_train": int(x_fit.shape[0]),
         "n_test": int(x_test.shape[0]),
     }
+    return model, metrics
 
+
+def radial_surface_from_model(
+    model: Pipeline,
+    lat_range: np.ndarray,
+    lon_range: np.ndarray,
+    center_lat: float,
+    center_lon: float,
+    grid_size: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     lat = np.linspace(float(lat_range[0]), float(lat_range[1]), int(grid_size))
     lon = np.linspace(float(lon_range[0]), float(lon_range[1]), int(grid_size))
     lon_grid, lat_grid = np.meshgrid(lon, lat)
-    grid_xy = np.column_stack([lat_grid.ravel(), lon_grid.ravel()])
-    grid = np.zeros((grid_xy.shape[0], 4), dtype=float)
-    grid[:, :2] = grid_xy
-    grid[:, 2] = float(depth_slice)
-    grid[:, 3] = float(magnitude_slice)
-    pred = model.predict(grid).reshape(lat_grid.shape)
-    return lat_grid, lon_grid, pred, model, metrics
+    grid_radius = compute_radius_km(
+        lat_grid.ravel(),
+        lon_grid.ravel(),
+        center_lat=center_lat,
+        center_lon=center_lon,
+    ).reshape(-1, 1)
+    pred_grid = model.predict(grid_radius).reshape(lat_grid.shape)
+
+    radius_curve_km = np.linspace(0.0, float(np.max(grid_radius)), 240)
+    radial_curve = model.predict(radius_curve_km.reshape(-1, 1))
+    return lat_grid, lon_grid, pred_grid, radius_curve_km, radial_curve
+
+
+def summarize_radial_profile(
+    radius_km: np.ndarray,
+    with_values: np.ndarray,
+    without_values: np.ndarray,
+    n_bins: int,
+) -> dict:
+    radius_km = np.asarray(radius_km, dtype=float)
+    with_values = np.asarray(with_values, dtype=float)
+    without_values = np.asarray(without_values, dtype=float)
+
+    quantiles = np.linspace(0.0, 1.0, int(max(n_bins, 2)) + 1)
+    edges = np.unique(np.quantile(radius_km, quantiles))
+    if edges.size < 3:
+        edges = np.linspace(float(radius_km.min()), float(radius_km.max()) + 1e-9, 3)
+
+    radius_mid = []
+    count = []
+    with_mean = []
+    with_sem = []
+    without_mean = []
+    without_sem = []
+
+    for idx in range(edges.size - 1):
+        lo = edges[idx]
+        hi = edges[idx + 1]
+        if idx == edges.size - 2:
+            keep = (radius_km >= lo) & (radius_km <= hi)
+        else:
+            keep = (radius_km >= lo) & (radius_km < hi)
+        if not np.any(keep):
+            continue
+
+        n_keep = int(np.count_nonzero(keep))
+        radius_mid.append(float(np.median(radius_km[keep])))
+        count.append(n_keep)
+        with_mean.append(float(np.mean(with_values[keep])))
+        without_mean.append(float(np.mean(without_values[keep])))
+
+        if n_keep > 1:
+            with_sem.append(float(np.std(with_values[keep], ddof=1) / np.sqrt(n_keep)))
+            without_sem.append(float(np.std(without_values[keep], ddof=1) / np.sqrt(n_keep)))
+        else:
+            with_sem.append(0.0)
+            without_sem.append(0.0)
+
+    with_mean_arr = np.asarray(with_mean, dtype=float)
+    without_mean_arr = np.asarray(without_mean, dtype=float)
+    return {
+        "radius_km": np.asarray(radius_mid, dtype=float),
+        "count": np.asarray(count, dtype=int),
+        "with_mean": with_mean_arr,
+        "with_sem": np.asarray(with_sem, dtype=float),
+        "without_mean": without_mean_arr,
+        "without_sem": np.asarray(without_sem, dtype=float),
+        "delta_mean": with_mean_arr - without_mean_arr,
+    }
 
 
 def format_kernel(model: Pipeline) -> str:
@@ -251,6 +341,7 @@ def build_band_slice_data(
     lon_range: np.ndarray,
     grid_size: int,
     max_train_points: int,
+    n_profile_bins: int,
 ) -> dict:
     with_mt = load_npz(with_mt_path)
     without_mt = load_npz(without_mt_path)
@@ -291,30 +382,55 @@ def build_band_slice_data(
             f"Mw={magnitude_slice:.3f}."
         )
 
-    lat_grid, lon_grid, with_grid, with_model, with_metrics = fit_surface_with_model(
-        theta_with,
-        ig_with,
-        mask,
-        lat_range=lat_range,
-        lon_range=lon_range,
-        depth_slice=depth_slice,
-        magnitude_slice=magnitude_slice,
-        grid_size=grid_size,
+    center_lat = float(np.mean(sensors_with[:, 0]))
+    center_lon = float(np.mean(sensors_with[:, 1]))
+    radius_km = compute_radius_km(
+        theta_with[mask, 0],
+        theta_with[mask, 1],
+        center_lat=center_lat,
+        center_lon=center_lon,
+    )
+
+    with_model, with_metrics = fit_radial_model(
+        radius_km=radius_km,
+        response=ig_with[mask],
         max_train_points=max_train_points,
     )
-    _, _, without_grid, without_model, without_metrics = fit_surface_with_model(
-        theta_without,
-        ig_without,
-        mask,
-        lat_range=lat_range,
-        lon_range=lon_range,
-        depth_slice=depth_slice,
-        magnitude_slice=magnitude_slice,
-        grid_size=grid_size,
+    without_model, without_metrics = fit_radial_model(
+        radius_km=radius_km,
+        response=ig_without[mask],
         max_train_points=max_train_points,
     )
 
-    delta_grid = with_grid - without_grid
+    (
+        lat_grid,
+        lon_grid,
+        with_grid,
+        radius_curve_km,
+        with_curve,
+    ) = radial_surface_from_model(
+        with_model,
+        lat_range=lat_range,
+        lon_range=lon_range,
+        center_lat=center_lat,
+        center_lon=center_lon,
+        grid_size=grid_size,
+    )
+    _, _, without_grid, _, without_curve = radial_surface_from_model(
+        without_model,
+        lat_range=lat_range,
+        lon_range=lon_range,
+        center_lat=center_lat,
+        center_lon=center_lon,
+        grid_size=grid_size,
+    )
+
+    profile = summarize_radial_profile(
+        radius_km=radius_km,
+        with_values=ig_with[mask],
+        without_values=ig_without[mask],
+        n_bins=n_profile_bins,
+    )
 
     return {
         "label": label,
@@ -324,7 +440,6 @@ def build_band_slice_data(
         "lon_grid": lon_grid,
         "with_grid": with_grid,
         "without_grid": without_grid,
-        "delta_grid": delta_grid,
         "with_model": with_model,
         "without_model": without_model,
         "with_metrics": with_metrics,
@@ -344,6 +459,17 @@ def build_band_slice_data(
         "depth_tol_used": float(depth_tol_used),
         "mag_tol_used": float(mag_tol_used),
         "n_slice_points": n_slice_points,
+        "center_lat": center_lat,
+        "center_lon": center_lon,
+        "radius_km": radius_km,
+        "radius_curve_km": radius_curve_km,
+        "with_curve": with_curve,
+        "without_curve": without_curve,
+        "profile": profile,
+        "raw_with": np.asarray(ig_with[mask], dtype=float),
+        "raw_without": np.asarray(ig_without[mask], dtype=float),
+        "slice_with_mean": float(np.mean(ig_with[mask])),
+        "slice_without_mean": float(np.mean(ig_without[mask])),
     }
 
 
@@ -412,6 +538,7 @@ def main() -> None:
             lon_range=lon_range,
             grid_size=args.grid_size,
             max_train_points=args.max_train_points,
+            n_profile_bins=args.n_profile_bins,
         ),
         build_band_slice_data(
             label="high",
@@ -427,24 +554,25 @@ def main() -> None:
             lon_range=lon_range,
             grid_size=args.grid_size,
             max_train_points=args.max_train_points,
+            n_profile_bins=args.n_profile_bins,
         ),
     ]
 
-    fig, axes = plt.subplots(2, 3, figsize=(17.5, 10.5), constrained_layout=True)
+    fig, axes = plt.subplots(2, 3, figsize=(18.0, 10.5), constrained_layout=True)
 
     for row_idx, band in enumerate(band_data):
         with_grid = band["with_grid"]
         without_grid = band["without_grid"]
-        delta_grid = band["delta_grid"]
         lat_grid = band["lat_grid"]
         lon_grid = band["lon_grid"]
         sensors = band["sensors"]
+        profile = band["profile"]
 
         shared_vmin = float(min(np.min(with_grid), np.min(without_grid)))
         shared_vmax = float(max(np.max(with_grid), np.max(without_grid)))
-        delta_abs = float(np.max(np.abs(delta_grid)))
-        if delta_abs <= 0.0:
-            delta_abs = 1e-12
+        run_delta = band["with_eig"] - band["without_eig"]
+        run_delta_pct = 100.0 * run_delta / max(abs(band["without_eig"]), 1e-12)
+        slice_delta = band["slice_with_mean"] - band["slice_without_mean"]
 
         ax0, ax1, ax2 = axes[row_idx]
         subtitle = (
@@ -469,7 +597,19 @@ def main() -> None:
             edgecolors="black",
             linewidths=0.9,
         )
-        ax0.set_title(f"{band['title']}\nWithout MT\n{subtitle}", fontsize=11)
+        ax0.scatter(
+            band["center_lon"],
+            band["center_lat"],
+            s=40,
+            c="black",
+            marker="+",
+            linewidths=1.2,
+        )
+        ax0.set_title(
+            f"{band['title']}\nWithout MT (azimuth-averaged)\n"
+            f"{subtitle}, run EIG={band['without_eig']:.3f}",
+            fontsize=11,
+        )
         ax0.set_xlabel("Longitude (deg)")
         ax0.set_ylabel("Latitude (deg)")
 
@@ -490,42 +630,113 @@ def main() -> None:
             edgecolors="black",
             linewidths=0.9,
         )
-        ax1.set_title(f"{band['title']}\nWith MT\n{subtitle}", fontsize=11)
+        ax1.scatter(
+            band["center_lon"],
+            band["center_lat"],
+            s=40,
+            c="black",
+            marker="+",
+            linewidths=1.2,
+        )
+        ax1.set_title(
+            f"{band['title']}\nWith MT (azimuth-averaged)\n"
+            f"{subtitle}, run EIG={band['with_eig']:.3f}",
+            fontsize=11,
+        )
         ax1.set_xlabel("Longitude (deg)")
         ax1.set_ylabel("Latitude (deg)")
 
-        pcm2 = ax2.pcolormesh(
-            lon_grid,
-            lat_grid,
-            delta_grid,
-            shading="auto",
-            cmap="coolwarm",
-            vmin=-delta_abs,
-            vmax=delta_abs,
+        ax2.scatter(
+            band["radius_km"],
+            band["raw_without"],
+            s=10,
+            alpha=0.10,
+            color="#355C7D",
+            label="Without MT points",
         )
         ax2.scatter(
-            sensors[:, 1],
-            sensors[:, 0],
-            s=42,
-            facecolors="white",
-            edgecolors="black",
-            linewidths=0.9,
+            band["radius_km"],
+            band["raw_with"],
+            s=10,
+            alpha=0.10,
+            color="#C06C84",
+            label="With MT points",
+        )
+        ax2.errorbar(
+            profile["radius_km"],
+            profile["without_mean"],
+            yerr=profile["without_sem"],
+            fmt="o",
+            ms=4,
+            lw=1,
+            capsize=2,
+            color="#355C7D",
+            label="Without MT bins",
+        )
+        ax2.errorbar(
+            profile["radius_km"],
+            profile["with_mean"],
+            yerr=profile["with_sem"],
+            fmt="o",
+            ms=4,
+            lw=1,
+            capsize=2,
+            color="#C06C84",
+            label="With MT bins",
+        )
+        ax2.plot(
+            band["radius_curve_km"],
+            band["without_curve"],
+            color="#355C7D",
+            lw=2,
+            label="Without MT fit",
+        )
+        ax2.plot(
+            band["radius_curve_km"],
+            band["with_curve"],
+            color="#C06C84",
+            lw=2,
+            label="With MT fit",
         )
         ax2.set_title(
-            f"{band['title']}\nWith MT - Without MT\n{subtitle}",
+            f"{band['title']}\nObserved Slice EIG vs Distance\n"
+            f"slice mean: {band['slice_without_mean']:.3f} -> {band['slice_with_mean']:.3f}",
             fontsize=11,
         )
-        ax2.set_xlabel("Longitude (deg)")
-        ax2.set_ylabel("Latitude (deg)")
+        ax2.set_xlabel("Distance From Array Center (km)")
+        ax2.set_ylabel("Observed Slice EIG")
+        ax2.grid(alpha=0.2, linewidth=0.6)
+        ax2.legend(frameon=False, fontsize=8, loc="best")
+        ax2.text(
+            0.02,
+            0.98,
+            f"run delta: {run_delta:+.3f} ({run_delta_pct:+.1f}%)\n"
+            f"slice delta: {slice_delta:+.3f}",
+            transform=ax2.transAxes,
+            ha="left",
+            va="top",
+            fontsize=9,
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85, "pad": 2.5},
+        )
 
         cbar_row = fig.colorbar(pcm1, ax=[ax0, ax1], shrink=0.93)
         cbar_row.set_label("Expected Information Gain")
-        cbar_delta = fig.colorbar(pcm2, ax=ax2, shrink=0.93)
-        cbar_delta.set_label("With MT - Without MT")
 
     fig.suptitle(
-        "Moment-Tensor Ablation by Magnitude Regime\nFixed-Slice Lat/Lon Surfaces",
+        "Moment-Tensor Ablation by Magnitude Regime\n"
+        "Circularized surfaces from actual slice values",
         fontsize=16,
+    )
+    fig.text(
+        0.5,
+        0.008,
+        (
+            "Left and middle panels are azimuth-averaged schematics derived from the "
+            "actual selected slice values. Right panels show the underlying distance-binned data."
+        ),
+        ha="center",
+        va="bottom",
+        fontsize=9,
     )
     fig.savefig(output_path, dpi=220)
     plt.close(fig)
@@ -548,11 +759,17 @@ def main() -> None:
                 "high_magnitude_slice": args.high_magnitude_slice,
                 "high_mag_tol": args.high_mag_tol,
                 "min_slice_points": args.min_slice_points,
+                "n_profile_bins": args.n_profile_bins,
             },
             sort_keys=True,
         )
         band_rows = []
         for band in band_data:
+            delta_mean = band["profile"]["delta_mean"]
+            peak_idx = int(np.argmax(delta_mean)) if delta_mean.size else 0
+            peak_radius = (
+                float(band["profile"]["radius_km"][peak_idx]) if delta_mean.size else np.nan
+            )
             band_rows.append(
                 {
                     "band": band["label"],
@@ -560,6 +777,9 @@ def main() -> None:
                     "with_eig": band["with_eig"],
                     "without_eig": band["without_eig"],
                     "delta_eig": band["with_eig"] - band["without_eig"],
+                    "delta_eig_pct": 100.0
+                    * (band["with_eig"] - band["without_eig"])
+                    / max(abs(band["without_eig"]), 1e-12),
                     "with_seig": band["with_seig"],
                     "without_seig": band["without_seig"],
                     "with_miness": band["with_miness"],
@@ -573,6 +793,8 @@ def main() -> None:
                     "depth_tol_used": band["depth_tol_used"],
                     "mag_tol_used": band["mag_tol_used"],
                     "n_slice_points": band["n_slice_points"],
+                    "center_lat": band["center_lat"],
+                    "center_lon": band["center_lon"],
                     "kernel_with": format_kernel(band["with_model"]),
                     "kernel_without": format_kernel(band["without_model"]),
                     "with_r2": band["with_metrics"]["r2"],
@@ -583,9 +805,12 @@ def main() -> None:
                     "without_mse": band["without_metrics"]["mse"],
                     "without_n_train": band["without_metrics"]["n_train"],
                     "without_n_test": band["without_metrics"]["n_test"],
-                    "delta_grid_mean": float(np.mean(band["delta_grid"])),
-                    "delta_grid_min": float(np.min(band["delta_grid"])),
-                    "delta_grid_max": float(np.max(band["delta_grid"])),
+                    "slice_with_mean": band["slice_with_mean"],
+                    "slice_without_mean": band["slice_without_mean"],
+                    "slice_delta_mean": band["slice_with_mean"] - band["slice_without_mean"],
+                    "profile_delta_peak": float(np.max(delta_mean)) if delta_mean.size else np.nan,
+                    "profile_delta_trough": float(np.min(delta_mean)) if delta_mean.size else np.nan,
+                    "profile_delta_peak_radius_km": peak_radius,
                 }
             )
         write_summary_csv(
@@ -608,6 +833,7 @@ def main() -> None:
             f"slice_depth={band['depth_slice']:.2f} "
             f"slice_mw={band['magnitude_slice']:.2f} "
             f"n={band['n_slice_points']} "
+            f"slice_delta={band['slice_with_mean'] - band['slice_without_mean']:.4f} "
             f"with_r2={band['with_metrics']['r2']:.3f} "
             f"without_r2={band['without_metrics']['r2']:.3f}"
         )
