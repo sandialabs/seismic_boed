@@ -31,6 +31,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bounds-file", type=Path, default=None)
     parser.add_argument("--output-path", type=Path, default=Path("eig_plots"))
     parser.add_argument("--stepsize", type=int, default=100)
+    parser.add_argument("--vmin", type=float, default=None)
+    parser.add_argument("--vmax", type=float, default=None)
+    parser.add_argument(
+        "--range-from-data-file",
+        type=Path,
+        action="append",
+        default=[],
+        help="Additional npz file(s) to include when computing a shared color scale.",
+    )
+    parser.add_argument(
+        "--range-pad-frac",
+        type=float,
+        default=0.02,
+        help="Fractional padding applied when deriving a shared color range from data.",
+    )
     return parser.parse_args()
 
 
@@ -103,6 +118,36 @@ def load_control(control_file: Path) -> tuple[float, float, float, float]:
     return float(depth_step), float(mag_step), float(depth_tol), float(mag_tol)
 
 
+def infer_color_range(
+    data_files: list[Path],
+    *,
+    explicit_vmin: float | None,
+    explicit_vmax: float | None,
+    range_pad_frac: float,
+) -> tuple[float | None, float | None]:
+    if explicit_vmin is not None or explicit_vmax is not None:
+        return explicit_vmin, explicit_vmax
+
+    mins = []
+    maxs = []
+    for data_file in data_files:
+        data = np.load(data_file, allow_pickle=True)
+        target = np.asarray(data["ig"], dtype=float)
+        inputs = np.asarray(data["theta_data"], dtype=float)
+        target = target.reshape(len(inputs), -1).mean(axis=1)
+        mins.append(float(np.min(target)))
+        maxs.append(float(np.max(target)))
+
+    if not mins:
+        return None, None
+
+    vmin = min(mins)
+    vmax = max(maxs)
+    span = vmax - vmin
+    pad = max(float(range_pad_frac) * span, 1e-9)
+    return vmin - pad, vmax + pad
+
+
 def plot_surface(
     data,
     t0: float,
@@ -114,6 +159,8 @@ def plot_surface(
     depth_tol: float,
     mag_tol: float,
     bounds_file: Path | None,
+    color_vmin: float | None,
+    color_vmax: float | None,
 ) -> None:
     print(f"Configuring data for plots: {time.time() - t0}")
     target = np.asarray(data["ig"], dtype=float)
@@ -184,6 +231,8 @@ def plot_surface(
                 preds.reshape((stepsize, stepsize)),
                 shading="auto",
                 cmap="viridis",
+                vmin=color_vmin,
+                vmax=color_vmax,
             )
             plt.colorbar()
             plt.scatter(
@@ -215,6 +264,7 @@ def main() -> None:
     control_file = resolve_path(args.control_file)
     bounds_file = resolve_path(args.bounds_file)
     output_path = resolve_path(args.output_path)
+    range_from_files = [resolve_path(path) for path in args.range_from_data_file]
     output_path.mkdir(parents=True, exist_ok=True)
 
     t0 = time.time()
@@ -222,6 +272,14 @@ def main() -> None:
 
     depth_step, mag_step, depth_tol, mag_tol = load_control(control_file)
     data = np.load(data_file, allow_pickle=True)
+    color_vmin, color_vmax = infer_color_range(
+        [data_file, *range_from_files],
+        explicit_vmin=args.vmin,
+        explicit_vmax=args.vmax,
+        range_pad_frac=args.range_pad_frac,
+    )
+    if color_vmin is not None and color_vmax is not None:
+        print(f"Using color range vmin={color_vmin:.4f}, vmax={color_vmax:.4f}")
 
     plot_surface(
         data,
@@ -233,6 +291,8 @@ def main() -> None:
         depth_tol=depth_tol,
         mag_tol=mag_tol,
         bounds_file=bounds_file,
+        color_vmin=color_vmin,
+        color_vmax=color_vmax,
     )
 
 
