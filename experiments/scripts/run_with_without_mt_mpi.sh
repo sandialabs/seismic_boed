@@ -3,7 +3,7 @@ set -euo pipefail
 
 if [[ "$#" -ne 4 ]]; then
   echo "Usage: $0 <inputs.dat> <output_prefix> <n_ranks> <verbose>"
-  echo "Example: $0 nonuniform_inputs.dat high_samples_nonuniform_outputs 512 1"
+  echo "Example: $0 inputs.dat experiments/figures/legacy_ta/default_compare 512 1"
   exit 1
 fi
 

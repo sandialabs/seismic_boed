@@ -3,7 +3,7 @@ set -euo pipefail
 
 if [[ "$#" -ne 4 ]]; then
   echo "Usage: $0 <inputs.dat> <output_npz> <n_ranks> <verbose>"
-  echo "Example: $0 experiments/inputs/inputs_small_ta_mw_0p5_2p0.dat experiments/figures/small_ta_low_legacy.npz 512 1"
+  echo "Example: $0 inputs.dat experiments/figures/legacy_ta/default_legacy.npz 512 1"
   exit 1
 fi
 
